@@ -7,7 +7,8 @@ from .endpoints import (
     activities,
     dashboard,
     auth,
-    parametrage
+    parametrage,
+    agriculture
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(production.router, prefix="/production", tags=["Produc
 api_router.include_router(weather.router, prefix="/weather", tags=["Météo"])
 api_router.include_router(activities.router, prefix="/activities", tags=["Activités"])
 api_router.include_router(parametrage.router, prefix="/parametrage", tags=["Paramétrage"])
+api_router.include_router(agriculture.router, prefix="/agriculture", tags=["Agriculture"])
