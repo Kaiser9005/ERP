@@ -3,8 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box, Typography, Paper } from '@mui/material';
 import { Parcelle } from '../../types/production';
-import api from '../../services/api';
-
+import { api } from "/home/user/ERP/src/services/api"
 interface ParcelleMapProps {
   onParcelleSelect?: (parcelle: Parcelle) => void;
 }
