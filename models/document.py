@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Enum, JSON, ForeignKey, Text
+from sqlalchemy import Column, String, Enum, JSON, ForeignKey, Text, Integer
 from sqlalchemy.orm import relationship
-from ..base import Base
+from models.base import BaseModel
 import enum
 from datetime import datetime
 from typing import Optional
@@ -15,7 +15,7 @@ class TypeDocument(str, enum.Enum):
     RAPPORT = "RAPPORT"
     AUTRE = "AUTRE"
 
-class Document(Base):
+class Document(BaseModel):
     """Modèle représentant un document"""
     __tablename__ = "documents"
 
