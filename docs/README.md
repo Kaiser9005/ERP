@@ -4,49 +4,110 @@
 
 FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFAL, spécialisée dans la culture du palmier à huile et des papayes.
 
-## Documentation
+## Documentation Technique
+
+### Diagrammes Techniques
+- [Vue d'ensemble des Composants](diagrammes/composants.md)
+- [Flux du Module Production](diagrammes/flux_production.md)
+- [Schéma de Base de Données](diagrammes/db_schema.md)
+- [Architecture d'Infrastructure](diagrammes/infrastructure.md)
 
 ### Guides
 - [Guide d'Installation](guides/installation.md)
 - [Guide de Développement](guides/developpement.md)
 
-### API
+### Documentation API
 - [Module Production](api/production.md)
 - [Module Inventaire](api/inventaire.md)
+- [Module Finance](api/finance.md)
+- [Module RH](api/hr.md)
+- [Paramétrage](api/parametrage.md)
+- [Documents](api/documents.md)
+- [Dashboard](api/dashboard.md)
+- [Météo](api/weather.md)
 
-## Architecture
+## Architecture Technique
 
-Le système est construit avec:
-- FastAPI (Backend)
+### Backend
+- FastAPI (API REST)
 - PostgreSQL (Base de données)
 - SQLAlchemy (ORM)
+- Alembic (Migrations)
 - Pydantic (Validation des données)
 
-## Modules
+### Frontend
+- React avec TypeScript
+- Material-UI
+- Redux pour la gestion d'état
+- React Router pour la navigation
 
-1. Production
-   - Gestion des parcelles
-   - Cycles de culture
-   - Suivi des récoltes
+## Modules Principaux
 
-2. Inventaire
-   - Gestion des stocks
-   - Mouvements de stock
-   - Traçabilité
+### 1. Production
+- Gestion des parcelles
+- Cycles de culture
+- Suivi des récoltes
+- Monitoring météorologique
+- Contrôle qualité
 
-3. Ressources Humaines
-   - Gestion des employés
-   - Paie
-   - Présences
+### 2. Inventaire
+- Gestion des stocks
+- Mouvements de stock
+- Traçabilité
+- Alertes de stock
+- Rapports d'inventaire
+
+### 3. Finance
+- Comptabilité générale
+- Gestion de trésorerie
+- Budgétisation
+- Rapports financiers
+- Analyses des coûts
+
+### 4. Ressources Humaines
+- Gestion des employés
+- Système de paie
+- Présences et congés
+- Évaluations
+- Formation
+
+### 5. Paramétrage
+- Configuration système
+- Gestion des modules
+- Droits d'accès
+- Personnalisation
+
+## Sécurité
+- Authentification JWT
+- Contrôle d'accès RBAC
+- Validation des données
+- Audit trail
+- Chiffrement des données sensibles
+
+## Déploiement
+- Configuration des environnements
+- Gestion des dépendances
+- Scripts de déploiement
+- Monitoring et logs
 
 ## Contribution
 
 1. Fork le projet
-2. Créer une branche feature
-3. Commiter les changements
-4. Pousser vers la branche
+2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commiter les changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
+4. Pousser vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
 5. Créer une Pull Request
+
+## Standards de Développement
+- Code style: PEP 8 pour Python, ESLint pour TypeScript
+- Tests unitaires obligatoires
+- Documentation des fonctions et API
+- Revue de code systématique
 
 ## Licence
 
 Propriétaire - FOFAL © 2024
+
+---
+
+Pour plus d'informations sur l'architecture technique et les diagrammes détaillés, consultez le [dossier diagrammes](diagrammes/README.md).
