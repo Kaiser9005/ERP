@@ -4,6 +4,17 @@
 
 FOFAL ERP est un système de gestion intégré spécialement conçu pour FOFAL (Family Land), une entreprise agricole spécialisée dans la culture du palmier à huile (70 ha) et des papayes (10 ha).
 
+## État du Projet
+
+Le projet est en développement actif avec plusieurs modules à différents stades d'avancement :
+- Production (70%) : Gestion des parcelles et cycles de culture
+- Gestion des Projets (40%) : Structure de base et API CRUD
+- Finance (30%) : Modèles de base implémentés
+- RH (25%) : Gestion basique des employés
+- Inventaire (35%) : Gestion des stocks de base
+
+Pour plus de détails sur l'état actuel et les prochaines étapes, consultez notre [Plan de Développement](docs/plan_developpement.md).
+
 ## Modules Principaux
 
 ### 1. Production Agricole
@@ -95,15 +106,22 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - [Guide de Développement](docs/guides/developpement.md)
 - [Documentation API](docs/api/)
 - [Diagrammes Techniques](docs/diagrammes/)
+- [Plan de Développement](docs/plan_developpement.md)
 
-## Développement
+## Standards de Développement
 
-### Standards
+### Code
 - PEP 8 pour Python
 - ESLint pour TypeScript
-- Tests unitaires obligatoires
+- Tests unitaires (coverage > 80%)
 - Documentation des fonctions
 - Revue de code
+
+### Base de Données
+- Modèles avec BaseModel
+- Timestamps UTC automatiques
+- UUIDs pour les IDs
+- Migrations versionnées
 
 ### Contribution
 1. Fork le projet
