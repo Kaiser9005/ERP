@@ -17,8 +17,13 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    }
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@types/*": ["src/types/*"]
+    },
+    "types": ["node", "react", "react-dom", "@mui/material", "@mui/icons-material"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
