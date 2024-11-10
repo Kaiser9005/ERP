@@ -142,7 +142,7 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 Pour toute question ou assistance :
 - Documentation : [docs/](docs/)
 - Issues : Utiliser le système d'issues GitHub
-- Contact : support@fofal.com
+- Contact : ivanfodjo@hotmail.com
 
 ## Licence
 
