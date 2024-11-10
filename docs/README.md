@@ -48,6 +48,14 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - Cycles de culture
 - Suivi des récoltes
 - Monitoring météorologique
+  - Dashboard météo en temps réel
+  - Affichage des conditions actuelles (température, humidité, précipitations)
+  - Prévisions météorologiques sur 3 jours
+  - Système d'alertes météo intelligent
+  - Recommandations agricoles basées sur les conditions
+  - Mise à jour automatique toutes les 30 minutes
+  - Métriques agricoles personnalisées
+  - Analyse des risques (précipitations, température)
 - Contrôle qualité
 
 ### 2. Inventaire
@@ -76,6 +84,10 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - Gestion des modules
 - Droits d'accès
 - Personnalisation
+- Configuration des services externes
+  - API météo
+  - Paramètres de localisation
+  - Seuils d'alerte personnalisables
 
 ## Sécurité
 - Authentification JWT
@@ -83,12 +95,15 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - Validation des données
 - Audit trail
 - Chiffrement des données sensibles
+- Sécurisation des clés API
 
 ## Déploiement
 - Configuration des environnements
 - Gestion des dépendances
 - Scripts de déploiement
 - Monitoring et logs
+- Variables d'environnement sécurisées
+- Intégration continue (CI/CD)
 
 ## Contribution
 
@@ -103,6 +118,8 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - Tests unitaires obligatoires
 - Documentation des fonctions et API
 - Revue de code systématique
+- Gestion sécurisée des secrets
+- Tests d'intégration pour les services externes
 
 ## Licence
 
