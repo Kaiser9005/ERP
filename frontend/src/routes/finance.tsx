@@ -1,28 +1,40 @@
-import { RouteObject } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import FinancePage from '../components/finance/FinancePage';
 import TransactionForm from '../components/finance/TransactionForm';
-import TransactionDetails from '../components/finance/TransactionDetails';
+import { ProtectedRoute } from '../routes/ProtectedRoute';
 
-export const financeRoutes: RouteObject[] = [
-  {
-    path: 'finance',
-    children: [
-      {
-        index: true,
-        element: <FinancePage />
-      },
-      {
-        path: 'transactions/new',
-        element: <TransactionForm />
-      },
-      {
-        path: 'transactions/:id',
-        element: <TransactionDetails />
-      },
-      {
-        path: 'transactions/:id/edit',
-        element: <TransactionForm />
-      }
-    ]
-  }
-];
+const FinanceRoutes: React.FC = () => {
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <FinancePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transactions/new"
+        element={
+          <ProtectedRoute>
+            <TransactionForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transactions/:id"
+        element={
+          <ProtectedRoute>
+            <TransactionForm />
+          </ProtectedRoute>
+        }
+      />
+      {/* Redirection par défaut */}
+      <Route path="*" element={<Navigate to="/finance" replace />} />
+    </Routes>
+  );
+};
+
+export default FinanceRoutes;
