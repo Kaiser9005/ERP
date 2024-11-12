@@ -40,7 +40,7 @@ jobs:
     - name: Run tests
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
+        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY || '' }}
       run: |
         pytest --cov=. --cov-report=xml
         
