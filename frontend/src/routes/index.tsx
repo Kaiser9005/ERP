@@ -1,24 +1,27 @@
-import { createBrowserRouter } from 'react-router-dom';
-import LoginPage from '../components/auth/LoginPage';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
-import { parametrageRoutes } from './parametrage';
-import DashboardLayout from '../components/layout/DashboardLayout';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import ProjectRoutes from './projects';
+import DashboardPage from '../components/dashboard/DashboardPage';
+import WeatherDashboard from '../components/production/WeatherDashboard';
 
-export const router = createBrowserRouter([
-  {
-    path: '/login',
-    element: <LoginPage />
-  },
-  {
-    path: '/',
-    element: (
-      <ProtectedRoute>
-        <DashboardLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      ...parametrageRoutes
-      // Autres routes à ajouter ici
-    ]
-  }
-]);
+const AppRoutes: React.FC = () => {
+  return (
+    <Routes>
+      {/* Page d'accueil - Dashboard */}
+      <Route path="/" element={<DashboardPage />} />
+
+      {/* Routes de production */}
+      <Route path="/production">
+        <Route path="weather" element={<WeatherDashboard />} />
+      </Route>
+
+      {/* Routes des projets et tâches */}
+      <Route path="/projects/*" element={<ProjectRoutes />} />
+
+      {/* Redirection par défaut */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+export default AppRoutes;

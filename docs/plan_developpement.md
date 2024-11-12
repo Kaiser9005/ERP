@@ -47,7 +47,7 @@
 - Optimisation des performances
 - Intégration avec le système de notifications
 
-2. Gestion de Projets (60% complété) :
+2. Gestion de Projets (75% complété) :
 ✓ Implémenté :
 - Structure de base de données
 - API CRUD
@@ -59,15 +59,21 @@
   - Allocation et suivi des ressources
   - Tests unitaires complets
   - Documentation API
-  - Service de gestion des tâches
-  - Endpoints REST API
-  - Validation des données avec Pydantic
-À faire :
 - Interface utilisateur des tâches
-- Tableaux de bord
+  - Liste des tâches avec filtres et pagination
+  - Formulaire de création/édition
+  - Gestion des ressources
+  - Suivi météorologique
+  - Gestion des dépendances
+  - Indicateurs de progression
+  - Intégration avec le service météo
+À faire :
 - Tests End-to-End
 - Tests d'intégration
 - Documentation utilisateur
+- Tableaux de bord avancés
+- Rapports de performance
+- Optimisation des performances
 
 3. Finance (30% complété) :
 ✓ Implémenté :
@@ -147,23 +153,23 @@
   - Tests unitaires
   - Documentation API
   - Gestion des ressources
+  - Interface utilisateur complète
 À faire :
-- Interface utilisateur des tâches
-- Tableaux de bord
 - Tests End-to-End
 - Tests d'intégration
 - Documentation utilisateur
+- Tableaux de bord avancés
 
 2. Intégrations :
 ✓ Complété :
 - Intégration avec données météo
 - Gestion des ressources
 - API REST documentée
-À faire :
-- Lien avec Production
-- Connexion Ressources Humaines
-- Tests d'intégration
 - Interface utilisateur
+À faire :
+- Tests d'intégration
+- Optimisation des performances
+- Rapports avancés
 
 ### Phase 3 : Finance et Inventaire (Sprint 5-6)
 
@@ -290,11 +296,12 @@
 - Gestion des ressources
 - API REST documentée
 - Tests unitaires
+- Interface utilisateur des tâches
 À faire :
-- Interface utilisateur
 - Tests End-to-End
 - Documentation utilisateur
-- Intégrations avec autres modules
+- Tableaux de bord
+- Optimisation performances
 
 ### Sprint 5-8 :
 - Modules finance/RH/inventaire
