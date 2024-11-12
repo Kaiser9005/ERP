@@ -47,7 +47,7 @@
 - Optimisation des performances
 - Intégration avec le système de notifications
 
-2. Gestion de Projets (75% complété) :
+2. Gestion de Projets (85% complété) :
 ✓ Implémenté :
 - Structure de base de données
 - API CRUD
@@ -67,10 +67,20 @@
   - Gestion des dépendances
   - Indicateurs de progression
   - Intégration avec le service météo
-À faire :
 - Tests End-to-End
+  - Tests de l'interface utilisateur
+  - Tests des interactions
+  - Tests des scénarios métier
 - Tests d'intégration
+  - Tests des services
+  - Tests des workflows complets
+  - Tests des intégrations météo
 - Documentation utilisateur
+  - Guide des fonctionnalités
+  - Bonnes pratiques
+  - Résolution des problèmes
+  - Intégrations avec autres modules
+À faire :
 - Tableaux de bord avancés
 - Rapports de performance
 - Optimisation des performances
@@ -154,11 +164,12 @@
   - Documentation API
   - Gestion des ressources
   - Interface utilisateur complète
+  - Tests End-to-End
+  - Tests d'intégration
+  - Documentation utilisateur complète
 À faire :
-- Tests End-to-End
-- Tests d'intégration
-- Documentation utilisateur
 - Tableaux de bord avancés
+- Optimisation performances
 
 2. Intégrations :
 ✓ Complété :
