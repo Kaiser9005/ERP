@@ -75,3 +75,105 @@ Récupère la liste des budgets.
 
 ### POST /api/v1/finance/budgets
 Crée un nouveau budget.
+
+### GET /api/v1/finance/budgets/analysis/{periode}
+Récupère l'analyse budgétaire détaillée pour une période.
+
+**Paramètres:**
+- periode: Format YYYY-MM
+
+**Réponse:**
+```json
+{
+  "total_prevu": 5000000,
+  "total_realise": 4800000,
+  "categories": {
+    "ACHAT_INTRANT": {
+      "prevu": 2000000,
+      "realise": 1900000,
+      "ecart": -100000,
+      "ecart_percentage": -5
+    }
+  },
+  "weather_impact": {
+    "score": 30,
+    "factors": ["Fortes précipitations"],
+    "projections": {
+      "TRANSPORT": "Augmentation probable des coûts"
+    }
+  },
+  "recommendations": [
+    "Ajustement recommandé du budget transport"
+  ]
+}
+```
+
+## Projections Financières
+
+### GET /api/v1/finance/projections
+Récupère les projections financières avec impact météo.
+
+**Paramètres:**
+- months_ahead (optionnel): Nombre de mois à projeter (défaut: 3)
+
+**Réponse:**
+```json
+{
+  "revenue": [
+    {
+      "period": "2024-02",
+      "amount": 12000000,
+      "weather_impact": 20
+    }
+  ],
+  "expenses": [
+    {
+      "period": "2024-02",
+      "amount": 8000000,
+      "weather_impact": 15
+    }
+  ],
+  "weather_factors": [
+    "Températures élevées prévues"
+  ]
+}
+```
+
+## Modèles de Données
+
+### Transaction
+```typescript
+{
+  id: UUID
+  reference: string
+  date_transaction: DateTime
+  type_transaction: "RECETTE" | "DEPENSE" | "VIREMENT"
+  categorie: "VENTE" | "ACHAT_INTRANT" | "SALAIRE" | "MAINTENANCE" | "TRANSPORT" | "AUTRE"
+  montant: number
+  devise: string
+  description?: string
+  statut: "EN_ATTENTE" | "VALIDEE" | "REJETEE" | "ANNULEE"
+  piece_jointe?: string
+}
+```
+
+### Budget
+```typescript
+{
+  id: UUID
+  periode: string // YYYY-MM
+  categorie: string
+  montant_prevu: number
+  montant_realise: number
+  notes?: string
+  metadata?: object
+}
+```
+
+## Sécurité
+
+Tous les endpoints nécessitent une authentification JWT valide.
+Les rôles suivants sont requis :
+- FINANCE_READ: Lecture des données financières
+- FINANCE_WRITE: Création/modification des transactions et budgets
+- FINANCE_ADMIN: Validation des transactions et accès aux analyses

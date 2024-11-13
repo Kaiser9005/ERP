@@ -85,16 +85,31 @@
 - Rapports de performance
 - Optimisation des performances
 
-3. Finance (30% complété) :
+3. Finance (60% complété) :
 ✓ Implémenté :
 - Modèles de transactions
 - API de base
+- Gestion budgétaire avancée
+  - Analyse détaillée des budgets
+  - Suivi des écarts budgétaires
+  - Recommandations automatiques
+  - Interface utilisateur avec visualisations
+- Intégration météo
+  - Analyse d'impact sur les finances
+  - Ajustement des projections
+  - Alertes et recommandations
+- Projections financières
+  - Prévisions sur 3 mois
+  - Analyse des tendances
+  - Facteurs météorologiques
+- Tests unitaires complets
+- Documentation API
+- Gestion des pièces jointes pour les transactions
 À faire :
 - Comptabilité complète
-- Gestion budgétaire
-- Rapports financiers
-- Analyse des coûts de production
-- Impact météo sur les projections
+- Système de paie
+- Rapports financiers avancés
+- Optimisation des performances
 
 4. Ressources Humaines (25% complété) :
 ✓ Implémenté :
@@ -185,11 +200,16 @@
 ### Phase 3 : Finance et Inventaire (Sprint 5-6)
 
 1. Module Finance :
+✓ Complété :
+- Gestion budgétaire avancée
+- Intégration météo
+- Projections financières
+- Tests unitaires
+À faire :
 - Comptabilité générale
-- Gestion budgétaire
 - Rapports financiers
-- Analyses
-- Impact météo sur projections financières
+- Analyses avancées
+- Impact météo sur projections
 
 2. Module Inventaire :
 - Interface utilisateur
