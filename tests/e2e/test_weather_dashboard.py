@@ -41,6 +41,13 @@ class TestWeatherDashboard:
             })
         ))
 
+        # Mock des notifications
+        page.route("**/api/v1/notifications/unread", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps([])
+        ))
+
         # Navigation vers le dashboard
         page.goto("/production/weather")
         
@@ -148,3 +155,72 @@ class TestWeatherDashboard:
 
         # Vérification de l'indicateur de chargement
         expect(page.get_by_role("progressbar")).to_be_visible()
+
+    def test_high_risk_notification(self, page: Page):
+        """Vérifie l'affichage des notifications de risque élevé"""
+        # Mock d'une notification de risque élevé
+        page.route("**/api/v1/notifications/unread", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps([{
+                "id": "1",
+                "type": "weather_alert",
+                "title": "Alerte Risque Météo",
+                "message": "ALERTE MÉTÉO: Risque HIGH\n- Température: Risque de stress thermique",
+                "created_at": datetime.now().isoformat(),
+                "read": False
+            }])
+        ))
+
+        # Rafraîchissement pour déclencher la vérification des notifications
+        page.reload()
+
+        # Vérification de l'affichage de la notification
+        expect(page.get_by_text("Alerte Risque Météo")).to_be_visible()
+        expect(page.get_by_text("Risque HIGH")).to_be_visible()
+
+    def test_cached_data_indicator(self, page: Page):
+        """Vérifie l'indicateur de données en cache"""
+        # Mock de données en cache
+        page.route("**/api/v1/weather/agricultural-metrics", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            headers={"X-Cache-Hit": "true"},
+            body=json.dumps({
+                "current_conditions": {
+                    "temperature": 28.5,
+                    "cached_at": (datetime.now() - timedelta(minutes=15)).isoformat()
+                }
+            })
+        ))
+
+        # Rafraîchissement de la page
+        page.reload()
+
+        # Vérification de l'indicateur de cache
+        expect(page.get_by_text("Dernière mise à jour il y a 15 minutes")).to_be_visible()
+
+    def test_retry_indicator(self, page: Page):
+        """Vérifie l'indicateur de tentatives de reconnexion"""
+        # Simulation de plusieurs erreurs suivies d'un succès
+        retry_count = 0
+        def handle_retry(route):
+            nonlocal retry_count
+            retry_count += 1
+            if retry_count < 3:
+                route.fulfill(status=500)
+            else:
+                route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps({"current_conditions": {"temperature": 28.5}})
+                )
+
+        page.route("**/api/v1/weather/agricultural-metrics", handle_retry)
+
+        # Rafraîchissement de la page
+        page.reload()
+
+        # Vérification des messages de tentative
+        expect(page.get_by_text("Tentative de reconnexion...")).to_be_visible()
+        expect(page.get_by_text("28.5°C")).to_be_visible()

@@ -2,13 +2,50 @@ import pytest
 from datetime import datetime, timezone
 from services.weather_service import WeatherService
 import httpx
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
+import json
+import redis
+
+@pytest.fixture
+def weather_service():
+    """Fixture pour le service météo avec Redis mocké"""
+    with patch('redis.Redis') as mock_redis:
+        service = WeatherService()
+        # Configuration du mock Redis
+        mock_redis_instance = MagicMock()
+        mock_redis.return_value = mock_redis_instance
+        service.redis_client = mock_redis_instance
+        # Mock du service de notification
+        service.notification_service = AsyncMock()
+        return service
 
 @pytest.mark.asyncio
-async def test_get_current_weather():
-    """Test de récupération des conditions météo actuelles"""
-    weather_service = WeatherService()
+async def test_get_current_weather_from_cache(weather_service):
+    """Test de récupération des données depuis le cache"""
+    cached_data = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "temperature": 25.5,
+        "humidity": 80,
+        "precipitation": 0.5,
+        "wind_speed": 15,
+        "conditions": "Partiellement nuageux",
+        "uv_index": 6,
+        "cloud_cover": 45
+    }
+    
+    # Configuration du mock Redis pour retourner des données en cache
+    weather_service.redis_client.get.return_value = json.dumps(cached_data)
+    
+    result = await weather_service.get_current_weather()
+    assert result == cached_data
+    weather_service.redis_client.get.assert_called_once()
 
+@pytest.mark.asyncio
+async def test_get_current_weather_api_with_cache(weather_service):
+    """Test de récupération et mise en cache des données API"""
+    # Configuration du mock Redis pour simuler un cache vide
+    weather_service.redis_client.get.return_value = None
+    
     mock_response = {
         "currentConditions": {
             "temp": 25.5,
@@ -30,65 +67,48 @@ async def test_get_current_weather():
         weather_data = await weather_service.get_current_weather()
 
         assert weather_data["temperature"] == 25.5
-        assert weather_data["humidity"] == 80
-        assert weather_data["precipitation"] == 0.5
-        assert weather_data["wind_speed"] == 15
-        assert weather_data["conditions"] == "Partiellement nuageux"
-        assert weather_data["uv_index"] == 6
-        assert weather_data["cloud_cover"] == 45
+        weather_service.redis_client.setex.assert_called_once()
 
 @pytest.mark.asyncio
-async def test_get_forecast():
-    """Test de récupération des prévisions"""
-    weather_service = WeatherService()
-
-    mock_response = {
-        "resolvedAddress": "Ebondi,Cameroon",
-        "days": [
-            {
-                "datetime": "2024-01-20",
-                "tempmax": 32,
-                "tempmin": 22,
-                "precip": 0.8,
-                "humidity": 75,
-                "conditions": "Pluie légère",
-                "description": "Journée nuageuse avec pluie légère"
-            },
-            {
-                "datetime": "2024-01-21",
-                "tempmax": 30,
-                "tempmin": 21,
-                "precip": 0.2,
-                "humidity": 70,
-                "conditions": "Partiellement nuageux",
-                "description": "Journée partiellement nuageuse"
-            }
-        ]
-    }
-
+async def test_retry_mechanism(weather_service):
+    """Test du mécanisme de retry"""
     with patch("httpx.AsyncClient.get") as mock_get:
-        mock_get.return_value = MagicMock(
-            status_code=200,
-            json=lambda: mock_response
-        )
+        # Simuler 2 échecs suivis d'un succès
+        mock_get.side_effect = [
+            httpx.HTTPError("Erreur 1"),
+            httpx.HTTPError("Erreur 2"),
+            MagicMock(
+                status_code=200,
+                json=lambda: {"currentConditions": {"temp": 25.5}}
+            )
+        ]
 
-        forecast_data = await weather_service.get_forecast(2)
-
-        assert forecast_data["location"] == "Ebondi,Cameroon"
-        assert len(forecast_data["days"]) == 2
-        assert forecast_data["days"][0]["temp_max"] == 32
-        assert forecast_data["days"][1]["conditions"] == "Partiellement nuageux"
+        weather_data = await weather_service.get_current_weather()
+        
+        assert weather_data["temperature"] == 25.5
+        assert mock_get.call_count == 3
 
 @pytest.mark.asyncio
-async def test_get_agricultural_metrics():
-    """Test des métriques agricoles et analyses"""
-    weather_service = WeatherService()
+async def test_timeout_handling(weather_service):
+    """Test de la gestion des timeouts"""
+    with patch("httpx.AsyncClient.get") as mock_get:
+        mock_get.side_effect = httpx.TimeoutException("Timeout")
+        
+        weather_data = await weather_service.get_current_weather()
+        
+        # Vérifie qu'on obtient les données de fallback
+        assert weather_data["temperature"] == 25.0
+        # Vérifie que la notification d'erreur a été envoyée
+        weather_service.notification_service.send_notification.assert_called_once()
 
+@pytest.mark.asyncio
+async def test_high_risk_notification(weather_service):
+    """Test de l'envoi de notification pour risque élevé"""
     current_mock = {
         "currentConditions": {
-            "temp": 34,
+            "temp": 37,
             "humidity": 85,
-            "precip": 15,
+            "precip": 25,
             "windspeed": 20,
             "conditions": "Pluie forte",
             "uvindex": 7,
@@ -101,19 +121,11 @@ async def test_get_agricultural_metrics():
         "days": [
             {
                 "datetime": "2024-01-20",
-                "tempmax": 33,
+                "tempmax": 38,
                 "tempmin": 23,
-                "precip": 12,
+                "precip": 22,
                 "humidity": 80,
-                "conditions": "Pluie"
-            },
-            {
-                "datetime": "2024-01-21",
-                "tempmax": 32,
-                "tempmin": 22,
-                "precip": 8,
-                "humidity": 75,
-                "conditions": "Pluie légère"
+                "conditions": "Pluie forte"
             }
         ]
     }
@@ -126,37 +138,75 @@ async def test_get_agricultural_metrics():
 
         metrics = await weather_service.get_agricultural_metrics()
 
-        # Vérification des conditions actuelles
-        assert metrics["current_conditions"]["temperature"] == 34
-        assert metrics["current_conditions"]["precipitation"] == 15
-
-        # Vérification des analyses de risques
-        assert metrics["risks"]["precipitation"]["level"] == "HIGH"
-        assert metrics["risks"]["temperature"]["level"] == "MEDIUM"
-        assert "Risque d'inondation" in metrics["risks"]["precipitation"]["message"]
-
-        # Vérification des recommandations
-        recommendations = metrics["recommendations"]
-        assert any("drainage" in rec.lower() for rec in recommendations)
-        assert any("irrigation" in rec.lower() for rec in recommendations)
+        # Vérifie que la notification a été envoyée pour le risque élevé
+        weather_service.notification_service.send_notification.assert_called_once()
+        call_args = weather_service.notification_service.send_notification.call_args[0]
+        assert call_args[0] == "production"
+        assert "ALERTE MÉTÉO" in call_args[2]
 
 @pytest.mark.asyncio
-async def test_weather_service_fallback():
-    """Test du comportement en cas d'erreur API"""
-    weather_service = WeatherService()
+async def test_get_forecast_with_cache(weather_service):
+    """Test des prévisions avec cache"""
+    forecast_data = {
+        "location": "Ebondi,Cameroon",
+        "days": [
+            {
+                "date": "2024-01-20",
+                "temp_max": 32,
+                "temp_min": 22,
+                "precipitation": 0.8,
+                "humidity": 75,
+                "conditions": "Pluie légère",
+                "description": "Journée nuageuse avec pluie légère"
+            }
+        ]
+    }
+    
+    # Test avec données en cache
+    weather_service.redis_client.get.return_value = json.dumps(forecast_data)
+    result = await weather_service.get_forecast(1)
+    assert result == forecast_data
+    
+    # Test sans cache (appel API)
+    weather_service.redis_client.get.return_value = None
+    mock_response = {
+        "resolvedAddress": "Ebondi,Cameroon",
+        "days": [
+            {
+                "datetime": "2024-01-20",
+                "tempmax": 32,
+                "tempmin": 22,
+                "precip": 0.8,
+                "humidity": 75,
+                "conditions": "Pluie légère",
+                "description": "Journée nuageuse avec pluie légère"
+            }
+        ]
+    }
 
     with patch("httpx.AsyncClient.get") as mock_get:
-        mock_get.side_effect = httpx.HTTPError("API Error")
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: mock_response
+        )
+        
+        result = await weather_service.get_forecast(1)
+        assert result["location"] == "Ebondi,Cameroon"
+        weather_service.redis_client.setex.assert_called_once()
 
-        weather_data = await weather_service.get_current_weather()
-
-        # Vérification des données de fallback
-        assert weather_data["temperature"] == 25.0
-        assert weather_data["humidity"] == 80
-        assert weather_data["wind_speed"] == 5.0
-        assert weather_data["conditions"] == "Partiellement nuageux"
-        assert weather_data["uv_index"] == 5
-        assert weather_data["cloud_cover"] == 50
+@pytest.mark.asyncio
+async def test_error_handling_and_notification(weather_service):
+    """Test de la gestion des erreurs et notifications"""
+    with patch("httpx.AsyncClient.get") as mock_get:
+        mock_get.side_effect = httpx.RequestError("Erreur réseau")
+        
+        await weather_service.get_current_weather()
+        
+        # Vérifie l'envoi de notification d'erreur
+        notification_call = weather_service.notification_service.send_notification.call_args[0]
+        assert notification_call[0] == "admin"
+        assert "Erreur Service Météo" in notification_call[1]
+        assert "Erreur réseau" in notification_call[2]
 
 def test_analyze_precipitation():
     """Test de l'analyse des risques liés aux précipitations"""

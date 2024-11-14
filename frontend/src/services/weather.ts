@@ -1,8 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const WEATHER_LOCATION = import.meta.env.VITE_WEATHER_LOCATION;
 const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
+const API_BASE_URL = '/api/v1/weather';
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000;
 
 interface WeatherConditions {
   timestamp: string;
@@ -13,6 +16,7 @@ interface WeatherConditions {
   conditions: string;
   uv_index: number;
   cloud_cover: number;
+  cached_at?: string;
 }
 
 interface WeatherForecastDay {
@@ -68,17 +72,32 @@ interface WeatherResponse {
 }
 
 class WeatherService {
+  private async fetchWithRetry<T>(
+    url: string,
+    retryCount = 0,
+    params: Record<string, string> = {}
+  ): Promise<T> {
+    try {
+      const response = await axios.get<T>(url, { params });
+      return response.data;
+    } catch (error) {
+      if (retryCount < MAX_RETRIES && error instanceof AxiosError) {
+        console.log(`Tentative de reconnexion ${retryCount + 1}/${MAX_RETRIES}...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return this.fetchWithRetry<T>(url, retryCount + 1, params);
+      }
+      throw error;
+    }
+  }
+
   private async fetchWeatherData<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
     try {
-      const response = await axios.get<T>(`${BASE_URL}/${endpoint}`, {
-        params: {
-          key: WEATHER_API_KEY,
-          unitGroup: 'metric',
-          contentType: 'json',
-          ...params
-        }
+      return await this.fetchWithRetry<T>(`${BASE_URL}/${endpoint}`, 0, {
+        key: WEATHER_API_KEY,
+        unitGroup: 'metric',
+        contentType: 'json',
+        ...params
       });
-      return response.data;
     } catch (error) {
       console.error('Erreur lors de la récupération des données météo:', error);
       throw error;
@@ -86,42 +105,69 @@ class WeatherService {
   }
 
   async getCurrentWeather(): Promise<WeatherConditions> {
-    const data = await this.fetchWeatherData<WeatherResponse>(`${WEATHER_LOCATION}/today`, {
-      include: 'current'
-    });
+    try {
+      // Essayer d'abord l'API locale avec cache
+      const data = await this.fetchWithRetry<WeatherConditions>(
+        `${API_BASE_URL}/current`
+      );
+      return data;
+    } catch (error) {
+      // Fallback sur l'API externe en cas d'erreur
+      const data = await this.fetchWeatherData<WeatherResponse>(
+        `${WEATHER_LOCATION}/today`,
+        { include: 'current' }
+      );
 
-    const current = data.currentConditions;
-    return {
-      timestamp: new Date().toISOString(),
-      temperature: current.temp,
-      humidity: current.humidity,
-      precipitation: current.precip,
-      wind_speed: current.windspeed,
-      conditions: current.conditions,
-      uv_index: current.uvindex,
-      cloud_cover: current.cloudcover
-    };
+      const current = data.currentConditions;
+      return {
+        timestamp: new Date().toISOString(),
+        temperature: current.temp,
+        humidity: current.humidity,
+        precipitation: current.precip,
+        wind_speed: current.windspeed,
+        conditions: current.conditions,
+        uv_index: current.uvindex,
+        cloud_cover: current.cloudcover
+      };
+    }
   }
 
   async getForecast(days: number = 7): Promise<WeatherForecast> {
-    const data = await this.fetchWeatherData<WeatherResponse>(`${WEATHER_LOCATION}/next/${days}days`);
+    try {
+      // Essayer d'abord l'API locale avec cache
+      const data = await this.fetchWithRetry<WeatherForecast>(
+        `${API_BASE_URL}/forecast?days=${days}`
+      );
+      return data;
+    } catch (error) {
+      // Fallback sur l'API externe en cas d'erreur
+      const data = await this.fetchWeatherData<WeatherResponse>(
+        `${WEATHER_LOCATION}/next/${days}days`
+      );
 
-    return {
-      location: data.resolvedAddress,
-      days: data.days.map(day => ({
-        date: day.datetime,
-        temp_max: day.tempmax,
-        temp_min: day.tempmin,
-        precipitation: day.precip,
-        humidity: day.humidity,
-        conditions: day.conditions,
-        description: day.description
-      }))
-    };
+      return {
+        location: data.resolvedAddress,
+        days: data.days.map(day => ({
+          date: day.datetime,
+          temp_max: day.tempmax,
+          temp_min: day.tempmin,
+          precipitation: day.precip,
+          humidity: day.humidity,
+          conditions: day.conditions,
+          description: day.description
+        }))
+      };
+    }
   }
 
   async getAgriculturalMetrics(): Promise<AgriculturalMetrics> {
     try {
+      // Essayer d'abord l'API locale avec cache
+      return await this.fetchWithRetry<AgriculturalMetrics>(
+        `${API_BASE_URL}/agricultural-metrics`
+      );
+    } catch (error) {
+      // Fallback sur le calcul local en cas d'erreur
       const [current, forecast] = await Promise.all([
         this.getCurrentWeather(),
         this.getForecast(3)
@@ -146,10 +192,13 @@ class WeatherService {
         },
         recommendations: this.generateRecommendations(precipitationRisk, temperatureRisk)
       };
-    } catch (error) {
-      console.error('Erreur lors du calcul des métriques agricoles:', error);
-      throw error;
     }
+  }
+
+  async refreshWeatherData(): Promise<AgriculturalMetrics> {
+    return this.fetchWithRetry<AgriculturalMetrics>(
+      `${API_BASE_URL}/agricultural-metrics?force_refresh=true`
+    );
   }
 
   private analyzePrecipitationRisk(current: number, forecast: number[]): WeatherRisk {
@@ -237,6 +286,48 @@ class WeatherService {
     return recommendations.length > 0
       ? recommendations
       : ["Conditions favorables pour les activités agricoles normales"];
+  }
+
+  isCacheValid(cachedAt?: string): boolean {
+    if (!cachedAt) return false;
+    
+    const cacheTime = new Date(cachedAt).getTime();
+    const currentTime = new Date().getTime();
+    const cacheAge = currentTime - cacheTime;
+    
+    // Considérer le cache valide pendant 30 minutes
+    return cacheAge < 30 * 60 * 1000;
+  }
+
+  getCacheAge(cachedAt?: string): string | null {
+    if (!cachedAt) return null;
+    
+    const cacheTime = new Date(cachedAt);
+    const currentTime = new Date();
+    const diffMinutes = Math.floor((currentTime.getTime() - cacheTime.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 1) return "à l'instant";
+    if (diffMinutes === 1) return "il y a 1 minute";
+    return `il y a ${diffMinutes} minutes`;
+  }
+
+  shouldShowWarning(risk: WeatherRisk): boolean {
+    return risk.level === 'HIGH';
+  }
+
+  getWarningMessage(metrics: AgriculturalMetrics): string | null {
+    const warnings: string[] = [];
+    
+    if (this.shouldShowWarning(metrics.risks.precipitation)) {
+      warnings.push(metrics.risks.precipitation.message);
+    }
+    if (this.shouldShowWarning(metrics.risks.temperature)) {
+      warnings.push(metrics.risks.temperature.message);
+    }
+    
+    return warnings.length > 0 
+      ? `ALERTE MÉTÉO: ${warnings.join(' - ')}`
+      : null;
   }
 }
 

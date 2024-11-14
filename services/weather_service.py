@@ -1,16 +1,35 @@
 import httpx
-from typing import Dict, Any
-from datetime import datetime, timezone
+from typing import Dict, Any, Optional
+from datetime import datetime, timezone, timedelta
+import json
+from redis import Redis
 from fastapi import HTTPException
+from core.config import settings
+from services.notification_service import NotificationService
 
 class WeatherService:
     def __init__(self):
-        self.api_key = "L6JNFAY48CA9P9G5NCGBYCNDA"
+        self.api_key = settings.WEATHER_API_KEY
         self.base_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline"
         self.location = "Ebondi,Cameroon"  # Localisation des plantations FOFAL
+        self.redis_client = Redis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            db=0,
+            decode_responses=True
+        )
+        self.notification_service = NotificationService()
+        self.cache_ttl = 1800  # 30 minutes en secondes
+        self.max_retries = 3
+        self.timeout = 10.0  # timeout en secondes
 
     async def get_current_weather(self) -> Dict[str, Any]:
         """Récupère les conditions météorologiques actuelles pour Ebondi"""
+        cache_key = f"weather:current:{self.location}"
+        cached_data = self._get_from_cache(cache_key)
+        if cached_data:
+            return cached_data
+
         url = f"{self.base_url}/{self.location}/today"
         params = {
             "key": self.api_key,
@@ -19,28 +38,40 @@ class WeatherService:
             "contentType": "json"
         }
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
+        for attempt in range(self.max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.get(url, params=params)
+                    response.raise_for_status()
+                    data = response.json()
 
-                current = data.get("currentConditions", {})
-                return {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "temperature": current.get("temp", 0),
-                    "humidity": current.get("humidity", 0),
-                    "precipitation": current.get("precip", 0),
-                    "wind_speed": current.get("windspeed", 0),
-                    "conditions": current.get("conditions", ""),
-                    "uv_index": current.get("uvindex", 0),
-                    "cloud_cover": current.get("cloudcover", 0)
-                }
-        except httpx.HTTPError as e:
-            return self._get_fallback_data()
+                    current = data.get("currentConditions", {})
+                    result = {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "temperature": current.get("temp", 0),
+                        "humidity": current.get("humidity", 0),
+                        "precipitation": current.get("precip", 0),
+                        "wind_speed": current.get("windspeed", 0),
+                        "conditions": current.get("conditions", ""),
+                        "uv_index": current.get("uvindex", 0),
+                        "cloud_cover": current.get("cloudcover", 0)
+                    }
+                    
+                    self._save_to_cache(cache_key, result)
+                    return result
+            except httpx.HTTPError as e:
+                if attempt == self.max_retries - 1:
+                    await self._handle_error("Erreur lors de la récupération des données météo actuelles", str(e))
+                    return self._get_fallback_data()
+                continue
 
     async def get_forecast(self, days: int = 7) -> Dict[str, Any]:
         """Récupère les prévisions météo pour les prochains jours"""
+        cache_key = f"weather:forecast:{self.location}:{days}"
+        cached_data = self._get_from_cache(cache_key)
+        if cached_data:
+            return cached_data
+
         url = f"{self.base_url}/{self.location}/next/{days}days"
         params = {
             "key": self.api_key,
@@ -48,32 +79,44 @@ class WeatherService:
             "contentType": "json"
         }
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
+        for attempt in range(self.max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.get(url, params=params)
+                    response.raise_for_status()
+                    data = response.json()
 
-                return {
-                    "location": data.get("resolvedAddress", ""),
-                    "days": [
-                        {
-                            "date": day.get("datetime", ""),
-                            "temp_max": day.get("tempmax", 0),
-                            "temp_min": day.get("tempmin", 0),
-                            "precipitation": day.get("precip", 0),
-                            "humidity": day.get("humidity", 0),
-                            "conditions": day.get("conditions", ""),
-                            "description": day.get("description", "")
-                        }
-                        for day in data.get("days", [])
-                    ]
-                }
-        except httpx.HTTPError as e:
-            return {"location": self.location, "days": []}
+                    result = {
+                        "location": data.get("resolvedAddress", ""),
+                        "days": [
+                            {
+                                "date": day.get("datetime", ""),
+                                "temp_max": day.get("tempmax", 0),
+                                "temp_min": day.get("tempmin", 0),
+                                "precipitation": day.get("precip", 0),
+                                "humidity": day.get("humidity", 0),
+                                "conditions": day.get("conditions", ""),
+                                "description": day.get("description", "")
+                            }
+                            for day in data.get("days", [])
+                        ]
+                    }
+                    
+                    self._save_to_cache(cache_key, result)
+                    return result
+            except httpx.HTTPError as e:
+                if attempt == self.max_retries - 1:
+                    await self._handle_error("Erreur lors de la récupération des prévisions météo", str(e))
+                    return {"location": self.location, "days": []}
+                continue
 
     async def get_agricultural_metrics(self) -> Dict[str, Any]:
         """Calcule les métriques agricoles basées sur les données météo"""
+        cache_key = f"weather:metrics:{self.location}"
+        cached_data = self._get_from_cache(cache_key)
+        if cached_data:
+            return cached_data
+
         current = await self.get_current_weather()
         forecast = await self.get_forecast(3)  # Prévisions sur 3 jours
 
@@ -88,7 +131,7 @@ class WeatherService:
             [day["temp_max"] for day in forecast["days"]]
         )
 
-        return {
+        result = {
             "current_conditions": current,
             "risks": {
                 "precipitation": precipitation_risk,
@@ -100,6 +143,13 @@ class WeatherService:
                 temperature_risk
             )
         }
+
+        # Envoyer des notifications si risque élevé
+        if result["risks"]["level"] == "HIGH":
+            await self._send_risk_notification(result["risks"])
+
+        self._save_to_cache(cache_key, result)
+        return result
 
     def _analyze_precipitation(self, current: float, forecast: list) -> Dict[str, Any]:
         """Analyse les risques liés aux précipitations"""
@@ -185,3 +235,46 @@ class WeatherService:
             "uv_index": 5,
             "cloud_cover": 50
         }
+
+    def _get_from_cache(self, key: str) -> Optional[Dict[str, Any]]:
+        """Récupère les données du cache Redis"""
+        data = self.redis_client.get(key)
+        if data:
+            return json.loads(data)
+        return None
+
+    def _save_to_cache(self, key: str, data: Dict[str, Any]) -> None:
+        """Sauvegarde les données dans le cache Redis"""
+        self.redis_client.setex(
+            key,
+            self.cache_ttl,
+            json.dumps(data)
+        )
+
+    async def _handle_error(self, message: str, error_details: str) -> None:
+        """Gère les erreurs du service météo"""
+        error_data = {
+            "service": "WeatherService",
+            "message": message,
+            "details": error_details,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await self.notification_service.send_notification(
+            "admin",
+            "Erreur Service Météo",
+            json.dumps(error_data)
+        )
+
+    async def _send_risk_notification(self, risks: Dict[str, Any]) -> None:
+        """Envoie une notification en cas de risque élevé"""
+        message = f"ALERTE MÉTÉO: Risque {risks['level']}\n"
+        if risks["precipitation"]["level"] == "HIGH":
+            message += f"- Précipitations: {risks['precipitation']['message']}\n"
+        if risks["temperature"]["level"] == "HIGH":
+            message += f"- Température: {risks['temperature']['message']}"
+        
+        await self.notification_service.send_notification(
+            "production",
+            "Alerte Risque Météo",
+            message
+        )
