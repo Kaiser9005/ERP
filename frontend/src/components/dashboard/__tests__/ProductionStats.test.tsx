@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import ProductionStats from '../ProductionStats';
 import { getProductionStats } from '../../../services/production';
