@@ -82,24 +82,17 @@ jobs:
         node-version: '16'
         
     - name: Install dependencies
-      run: |
-        cd frontend
-        npm install
+      run: npm install
         
     - name: Create env file
       run: |
-        cd frontend
         echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" >> .env
         echo "VITE_WEATHER_LOCATION=Ebondi,Cameroon" >> .env
         
     - name: Build frontend
-      run: |
-        cd frontend
-        npm run build
+      run: npm run build
         
     - name: Run frontend tests
       env:
         VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
-      run: |
-        cd frontend
-        npm test -- --coverage
+      run: npm test -- --config ./vitest.config.ts
