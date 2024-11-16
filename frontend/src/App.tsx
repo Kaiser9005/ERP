@@ -1,9 +1,14 @@
 import React from 'react';
-import { createBrowserRouter, RouterProvider, RouterProviderProps } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './hooks/useAuth';
 import { ThemeModeProvider } from './contexts/ThemeModeContext';
+
+// Import des routes
+import AppRoutes from './routes/index';
+import ComptabilitePage from './components/comptabilite/ComptabilitePage';
+import { ProtectedRoute } from './routes/ProtectedRoute';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,7 +26,22 @@ const App: React.FC = () => {
       <ThemeModeProvider>
         <CssBaseline />
         <AuthProvider>
-          <RouterProvider router={router} />
+          <Router>
+            <Routes>
+              {/* Route pour la comptabilité */}
+              <Route
+                path="/comptabilite/*"
+                element={
+                  <ProtectedRoute>
+                    <ComptabilitePage />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Autres routes de l'application */}
+              <Route path="/*" element={<AppRoutes />} />
+            </Routes>
+          </Router>
         </AuthProvider>
       </ThemeModeProvider>
     </QueryClientProvider>
@@ -29,10 +49,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-const router = createBrowserRouter([
-
-  // your routes here
-
-]);
-

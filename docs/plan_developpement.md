@@ -1,35 +1,35 @@
 # Plan de Développement ERP FOFAL - Version Finale
 
-## I. État Actuel du Projet
-
-### A. Infrastructure Technique
-
-1. Backend :
-- FastAPI configuré avec structure de base
-- PostgreSQL avec modèles de données définis
-- Système d'authentification JWT
-- Structure API REST en place
-- BaseModel avec gestion UTC implémenté
-- Services externes intégrés (API météo)
-- Cache Redis pour optimisation
-- Gestion des timeouts et retries
-
-2. Frontend :
-- React/TypeScript configuré
-- Material-UI intégré
-- Structure des composants établie
-- Routing de base en place
-- Gestion sécurisée des variables d'environnement
-- Composants réutilisables développés
+[Conserver tout le contenu existant jusqu'à la section "Modules Implémentés"]
 
 ### B. Modules Implémentés
 
 1. Production (98% complété) :
-✓ Implémenté :
-- Modèles de données parcelles/récoltes
-- API de base
-- Interface carte des parcelles
-- Suivi des cycles de culture
+[Conserver la section Production existante]
+
+2. Gestion de Projets (85% complété) :
+[Conserver la section Gestion de Projets existante]
+
+3. Comptabilité (75% complété) :
+Voir [Mises à jour du Module Comptabilité](modules/comptabilite_updates.md) pour les détails complets.
+
+4. Ressources Humaines (25% complété) :
+[Conserver la section RH existante]
+
+5. Inventaire (35% complété) :
+[Conserver la section Inventaire existante]
+
+[Conserver tout le reste du contenu existant]
+
+## Note de Mise à Jour
+
+Le module comptabilité a été significativement amélioré avec l'ajout de nouvelles fonctionnalités :
+- Dashboard comptable avec intégration météo
+- Analyse budgétaire avancée
+- Suivi de trésorerie en temps réel
+- Rapports financiers intelligents
+
+Pour plus de détails, consultez :
 - Dashboard météo complet
   - Affichage conditions actuelles
   - Prévisions sur 3 jours
@@ -120,8 +120,8 @@
 - Documentation API
 - Gestion des pièces jointes pour les transactions
 À faire :
-- Comptabilité complète
-- Système de paie
+3. Comptabilité (75% complété) :
+Voir [Mises à jour du Module Comptabilité](modules/comptabilite_updates.md) pour les détails complets.- Système de paie
 - Rapports financiers avancés
 - Optimisation des performances
 
@@ -223,8 +223,8 @@
 - Projections financières
 - Tests unitaires
 À faire :
-- Comptabilité générale
-- Rapports financiers
+ Comptabilité (75% complété) :
+Voir [Mises à jour du Module Comptabilité](modules/comptabilite_updates.md) pour les détails complets.- Rapports financiers
 - Analyses avancées
 - Impact météo sur projections
 
@@ -413,3 +413,17 @@ Cette feuille de route assure :
 - Une intégration cohérente des modules
 - Une maintenance efficace à long terme
 - Une adaptation continue aux besoins métier
+
+
+
+## Note de Mise à Jour
+
+Le module comptabilité a été significativement amélioré avec l'ajout de nouvelles fonctionnalités :
+- Dashboard comptable avec intégration météo
+- Analyse budgétaire avancée
+- Suivi de trésorerie en temps réel
+- Rapports financiers intelligents
+
+Pour plus de détails, consultez :
+- [Documentation API Comptabilité](api/comptabilite.md)
+- [Mises à jour du Module Comptabilité](modules/comptabilite_updates.md)
