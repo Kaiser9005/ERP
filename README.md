@@ -25,7 +25,18 @@ Le projet est en développement actif avec plusieurs modules à différents stad
   - Projections financières
   - Tests unitaires complets
   - Documentation API
-  - Gestion des pièces jointes
+  - Gestion des pièces jointes  
+
+  - Comptabilité (75%) :
+  - Gestion complète des comptes et écritures
+  - Dashboard financier avancé
+  - Analyse budgétaire avec impact météo
+  - Suivi de trésorerie en temps réel
+  - Rapports comptables intelligents
+  - Tests unitaires backend
+  - Documentation API complète
+  - Cache Redis optimisé
+  - Intégration météo pour prévisions
 - RH (25%) : 
   - Gestion basique des employés
   - Structure des présences
@@ -51,8 +62,15 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Rapports d'avancement
 - Calendrier des projets
 
-### 3. Finance et Comptabilité
-- Comptabilité générale
+### 3. Comptabilité et Finance
+- Comptabilité générale complète
+- Dashboard financier interactif
+- Analyse budgétaire intelligente
+- Suivi de trésorerie en temps réel
+- Intégration météo pour prévisions
+- Rapports financiers avancés
+- Recommandations contextuelles
+- Cache optimisé pour performances
 - Gestion de trésorerie
 - Budgétisation avancée
 - Rapports financiers
@@ -88,6 +106,7 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - SQLAlchemy (ORM)
 - Alembic (Migrations)
 - JWT (Authentification)
+- Redis (Cache)
 
 ### Frontend
 - React 18+
@@ -95,6 +114,7 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Material-UI
 - Redux
 - React Router
+- React Query
 
 ## Installation
 
@@ -126,8 +146,10 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - [Guide d'Installation](docs/guides/installation.md)
 - [Guide de Développement](docs/guides/developpement.md)
 - [Documentation API](docs/api/)
+  - [API Comptabilité](docs/api/comptabilite.md)
 - [Diagrammes Techniques](docs/diagrammes/)
 - [Plan de Développement](docs/plan_developpement.md)
+- [Mises à jour Comptabilité](docs/modules/comptabilite_updates.md)
 
 ## Standards de Développement
 
@@ -143,6 +165,7 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - Timestamps UTC automatiques
 - UUIDs pour les IDs
 - Migrations versionnées
+- Cache Redis optimisé
 
 ### Contribution
 1. Fork le projet
@@ -157,6 +180,9 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - Validation des données
 - Audit trail
 - SSL/TLS
+- Chiffrement des données sensibles
+- Protection CSRF
+- Gestion sécurisée des clés API
 
 ## Support
 

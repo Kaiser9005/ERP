@@ -8,6 +8,9 @@ import GrandLivre from './rapports/GrandLivre';
 import Balance from './rapports/Balance';
 import Bilan from './rapports/Bilan';
 import CompteResultat from './rapports/CompteResultat';
+import BudgetOverview from './BudgetOverview';
+import FinanceStats from './FinanceStats';
+import CashFlowChart from './CashFlowChart';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -44,16 +47,6 @@ const a11yProps = (index: number) => {
   };
 };
 
-const TABS = [
-  { label: 'Plan Comptable', component: ComptesList },
-  { label: 'Saisie d\'Écritures', component: EcrituresForm },
-  { label: 'Journaux', component: JournauxList },
-  { label: 'Grand Livre', component: GrandLivre },
-  { label: 'Balance', component: Balance },
-  { label: 'Bilan', component: Bilan },
-  { label: 'Compte de Résultat', component: CompteResultat }
-];
-
 const ComptabilitePage: React.FC = () => {
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(0);
@@ -74,6 +67,21 @@ const ComptabilitePage: React.FC = () => {
         }}
       />
 
+      {/* Vue d'ensemble */}
+      <Box sx={{ mb: 4 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <FinanceStats />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <CashFlowChart />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <BudgetOverview />
+          </Grid>
+        </Grid>
+      </Box>
+
       {/* Navigation par onglets */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
@@ -88,32 +96,44 @@ const ComptabilitePage: React.FC = () => {
             }
           }}
         >
-          {TABS.map((tab, index) => (
-            <Tab 
-              key={index}
-              label={tab.label}
-              {...a11yProps(index)}
-              sx={{
-                minHeight: 48,
-                textTransform: 'none',
-                fontSize: '0.875rem',
-                fontWeight: 'medium'
-              }}
-            />
-          ))}
+          <Tab label="Plan Comptable" {...a11yProps(0)} />
+          <Tab label="Saisie d'Écritures" {...a11yProps(1)} />
+          <Tab label="Journaux" {...a11yProps(2)} />
+          <Tab label="Grand Livre" {...a11yProps(3)} />
+          <Tab label="Balance" {...a11yProps(4)} />
+          <Tab label="Bilan" {...a11yProps(5)} />
+          <Tab label="Compte de Résultat" {...a11yProps(6)} />
         </Tabs>
       </Box>
 
       {/* Contenu des onglets */}
-      {TABS.map((tab, index) => (
-        <TabPanel key={index} value={currentTab} index={index}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              {React.createElement(tab.component)}
-            </Grid>
-          </Grid>
-        </TabPanel>
-      ))}
+      <TabPanel value={currentTab} index={0}>
+        <ComptesList />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={1}>
+        <EcrituresForm />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={2}>
+        <JournauxList />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={3}>
+        <GrandLivre />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={4}>
+        <Balance />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={5}>
+        <Bilan />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={6}>
+        <CompteResultat />
+      </TabPanel>
     </>
   );
 };
