@@ -5,6 +5,7 @@ from services.finance_service import FinanceService
 from models.finance import Budget, Transaction, Compte
 from schemas.finance import BudgetCreate, TransactionCreate
 from decimal import Decimal
+from typing import Dict, Any
 
 @pytest.fixture
 def db_session():
@@ -104,7 +105,7 @@ class TestFinanceService:
         }
 
         # Exécution
-        impact = await finance_service._analyze_weather_impact("2024-01")
+        impact: Dict[str, Any] = await finance_service._analyze_weather_impact("2024-01")
 
         # Vérifications
         assert impact["score"] > 0
