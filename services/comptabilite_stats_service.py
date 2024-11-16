@@ -15,7 +15,7 @@ class ComptabiliteStatsService:
 
     async def get_stats(self) -> Dict[str, Any]:
         """Calcule les statistiques financières"""
-        now = datetime.utcnow()
+        now = datetime.now(datetime.timezone.utc)
         current_month = now.strftime("%Y-%m")
         last_month = (now - timedelta(days=30)).strftime("%Y-%m")
 
