@@ -38,7 +38,7 @@ const InventoryStats: React.FC = () => {
           value={stats?.alerts || 0}
           variation={stats?.alertsVariation}
           icon={<Warning />}
-          color="error"
+          color="warning"
         />
       </Grid>
 

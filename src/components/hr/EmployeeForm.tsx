@@ -15,23 +15,32 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createEmployee, updateEmployee, getEmployee } from '../../services/hr';
+import { createEmployee, updateEmployee, getEmployee, Employee } from '../../services/hr';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
+
+type EmployeeFormData = Omit<Employee, 'id'>;
 
 const schema = yup.object({
   matricule: yup.string().required('Le matricule est requis'),
   nom: yup.string().required('Le nom est requis'),
   prenom: yup.string().required('Le prénom est requis'),
-  date_naissance: yup.date().required('La date de naissance est requise'),
-  sexe: yup.string().required('Le sexe est requis'),
+  date_naissance: yup.string().required('La date de naissance est requise'),
+  sexe: yup.string().oneOf(['M', 'F']).required('Le sexe est requis'),
+  email: yup.string().email('Email invalide').required('L\'email est requis'),
+  telephone: yup.string().required('Le téléphone est requis'),
   departement: yup.string().required('Le département est requis'),
   poste: yup.string().required('Le poste est requis'),
-  date_embauche: yup.date().required('La date d\'embauche est requise'),
-  type_contrat: yup.string().required('Le type de contrat est requis'),
+  date_embauche: yup.string().required('La date d\'embauche est requise'),
+  type_contrat: yup.string()
+    .oneOf(['CDI', 'CDD', 'STAGE', 'TEMPORAIRE'])
+    .required('Le type de contrat est requis'),
   salaire_base: yup.number()
     .required('Le salaire est requis')
-    .positive('Le salaire doit être positif')
+    .positive('Le salaire doit être positif'),
+  statut: yup.string()
+    .oneOf(['ACTIF', 'CONGE', 'FORMATION', 'INACTIF'])
+    .default('ACTIF')
 }).required();
 
 const EmployeeForm: React.FC = () => {
@@ -41,38 +50,50 @@ const EmployeeForm: React.FC = () => {
   const isEdit = Boolean(id);
 
   const { data: employee, isLoading: isLoadingEmployee } = useQuery(
-    ['employee', id],
+    ['employees', id],
     () => getEmployee(id!),
     { enabled: isEdit }
   );
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const defaultValues: EmployeeFormData = {
+    matricule: '',
+    nom: '',
+    prenom: '',
+    date_naissance: new Date().toISOString(),
+    sexe: 'M',
+    email: '',
+    telephone: '',
+    departement: '',
+    poste: '',
+    date_embauche: new Date().toISOString(),
+    type_contrat: 'CDI',
+    salaire_base: 0,
+    statut: 'ACTIF'
+  };
+
+  const { control, handleSubmit, formState: { errors } } = useForm<EmployeeFormData>({
     resolver: yupResolver(schema),
-    defaultValues: employee || {
-      matricule: '',
-      nom: '',
-      prenom: '',
-      date_naissance: null,
-      sexe: '',
-      departement: '',
-      poste: '',
-      date_embauche: null,
-      type_contrat: '',
-      salaire_base: ''
-    }
+    defaultValues: employee || defaultValues
   });
 
   const mutation = useMutation(
-    (data: any) => isEdit ? updateEmployee(id!, data) : createEmployee(data),
+    (data: EmployeeFormData) => {
+      const employeeData = {
+        ...data,
+        date_naissance: new Date(data.date_naissance).toISOString(),
+        date_embauche: new Date(data.date_embauche).toISOString()
+      };
+      return isEdit ? updateEmployee(id!, employeeData) : createEmployee(employeeData);
+    },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('employees');
+        queryClient.invalidateQueries(['employees']);
         navigate('/hr');
       }
     }
   );
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: EmployeeFormData) => {
     mutation.mutate(data);
   };
 
@@ -89,9 +110,9 @@ const EmployeeForm: React.FC = () => {
 
       <Card>
         <CardContent>
-          {mutation.error && (
+          {mutation.error instanceof Error && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              Une erreur est survenue
+              {mutation.error.message || 'Une erreur est survenue'}
             </Alert>
           )}
 
@@ -181,6 +202,39 @@ const EmployeeForm: React.FC = () => {
                       <MenuItem value="M">Masculin</MenuItem>
                       <MenuItem value="F">Féminin</MenuItem>
                     </TextField>
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Email"
+                      type="email"
+                      fullWidth
+                      error={!!errors.email}
+                      helperText={errors.email?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="telephone"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Téléphone"
+                      fullWidth
+                      error={!!errors.telephone}
+                      helperText={errors.telephone?.message}
+                    />
                   )}
                 />
               </Grid>
@@ -281,6 +335,28 @@ const EmployeeForm: React.FC = () => {
                       error={!!errors.salaire_base}
                       helperText={errors.salaire_base?.message}
                     />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="statut"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      select
+                      label="Statut"
+                      fullWidth
+                      error={!!errors.statut}
+                      helperText={errors.statut?.message}
+                    >
+                      <MenuItem value="ACTIF">Actif</MenuItem>
+                      <MenuItem value="CONGE">En congé</MenuItem>
+                      <MenuItem value="FORMATION">En formation</MenuItem>
+                      <MenuItem value="INACTIF">Inactif</MenuItem>
+                    </TextField>
                   )}
                 />
               </Grid>

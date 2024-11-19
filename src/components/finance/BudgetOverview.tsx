@@ -10,10 +10,10 @@ import {
   Box
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { getBudgetOverview } from '../../services/finance';
+import { getBudgetOverview, Budget } from '../../services/finance';
 
 const BudgetOverview: React.FC = () => {
-  const { data: budgets } = useQuery('budget-overview', getBudgetOverview);
+  const { data: budgets = [] } = useQuery<Budget[]>(['budget-overview'], getBudgetOverview);
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return 'error';
@@ -29,7 +29,7 @@ const BudgetOverview: React.FC = () => {
         </Typography>
 
         <List>
-          {budgets?.map((budget) => {
+          {budgets.map((budget) => {
             const percentage = (budget.spent / budget.allocated) * 100;
             return (
               <ListItem key={budget.category}>

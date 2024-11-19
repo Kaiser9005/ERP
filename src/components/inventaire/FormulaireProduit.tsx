@@ -10,13 +10,23 @@ import {
   MenuItem,
   Button,
   Box,
-  Alert
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createProduct, updateProduct, getProduct } from '../../services/inventory';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { creerProduit, modifierProduit, getProduit } from '../../services/inventaire';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
+
+interface ProduitFormData {
+  code: string;
+  nom: string;
+  categorie: string;
+  description?: string;
+  unite_mesure: string;
+  seuil_alerte: number;
+  prix_unitaire: number;
+  specifications?: Record<string, unknown>;
+}
 
 const schema = yup.object({
   code: yup.string().required('Le code est requis'),
@@ -25,15 +35,15 @@ const schema = yup.object({
   description: yup.string(),
   unite_mesure: yup.string().required('L\'unité de mesure est requise'),
   seuil_alerte: yup.number()
-    .required('Le seuil d\'alerte est requis')
-    .positive('Le seuil doit être positif'),
+    .positive('Le seuil doit être positif')
+    .required('Le seuil d\'alerte est requis'),
   prix_unitaire: yup.number()
-    .required('Le prix unitaire est requis')
-    .positive('Le prix doit être positif'),
-  specifications: yup.object()
+    .positive('Le prix doit être positif')
+    .required('Le prix unitaire est requis'),
+  specifications: yup.object().optional()
 }).required();
 
-const ProductForm: React.FC = () => {
+const FormulaireProduit: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -41,11 +51,11 @@ const ProductForm: React.FC = () => {
 
   const { data: product, isLoading: isLoadingProduct } = useQuery(
     ['product', id],
-    () => getProduct(id!),
+    () => getProduit(id!),
     { enabled: isEdit }
   );
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const { control, handleSubmit, formState: { errors } } = useForm<ProduitFormData>({
     resolver: yupResolver(schema),
     defaultValues: product || {
       code: '',
@@ -53,23 +63,23 @@ const ProductForm: React.FC = () => {
       categorie: '',
       description: '',
       unite_mesure: '',
-      seuil_alerte: '',
-      prix_unitaire: '',
+      seuil_alerte: 0,
+      prix_unitaire: 0,
       specifications: {}
     }
   });
 
   const mutation = useMutation(
-    (data: any) => isEdit ? updateProduct(id!, data) : createProduct(data),
+    (data: ProduitFormData) => isEdit ? modifierProduit(id!, data) : creerProduit(data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('products');
-        navigate('/inventory');
+        navigate('/inventaire');
       }
     }
   );
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: ProduitFormData) => {
     mutation.mutate(data);
   };
 
@@ -86,12 +96,7 @@ const ProductForm: React.FC = () => {
 
       <Card>
         <CardContent>
-          {mutation.error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              Une erreur est survenue
-            </Alert>
-          )}
-
+         
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
@@ -194,12 +199,14 @@ const ProductForm: React.FC = () => {
                 <Controller
                   name="seuil_alerte"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { onChange, value, ...field } }) => (
                     <TextField
                       {...field}
                       label="Seuil d'Alerte"
                       type="number"
                       fullWidth
+                      value={value}
+                      onChange={(e) => onChange(Number(e.target.value))}
                       error={!!errors.seuil_alerte}
                       helperText={errors.seuil_alerte?.message}
                     />
@@ -211,12 +218,14 @@ const ProductForm: React.FC = () => {
                 <Controller
                   name="prix_unitaire"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { onChange, value, ...field } }) => (
                     <TextField
                       {...field}
                       label="Prix Unitaire"
                       type="number"
                       fullWidth
+                      value={value}
+                      onChange={(e) => onChange(Number(e.target.value))}
                       error={!!errors.prix_unitaire}
                       helperText={errors.prix_unitaire?.message}
                     />
@@ -228,7 +237,7 @@ const ProductForm: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate('/inventory')}
+                    onClick={() => navigate('/inventaire')}
                   >
                     Annuler
                   </Button>
@@ -249,4 +258,4 @@ const ProductForm: React.FC = () => {
   );
 };
 
-export default ProductForm;
+export default FormulaireProduit;

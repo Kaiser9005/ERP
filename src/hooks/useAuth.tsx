@@ -1,19 +1,29 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { api } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  token: string | null;
+  user: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
+
+  const setToken = (token: string | null) => {
+    if (token !== null) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
+  };
 
   const login = useCallback(async (username: string, password: string) => {
+    setToken(localStorage.getItem('token'));
     try {
       const response = await api.post('/auth/token', {
         username,
@@ -41,7 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!user,
       user,
       login,
-      logout
+      logout,
+      token: localStorage.getItem('token')
     }}>
       {children}
     </AuthContext.Provider>

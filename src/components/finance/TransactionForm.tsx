@@ -15,28 +15,42 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createTransaction, updateTransaction, getTransaction, getComptes } from '../../services/finance';
+import { createTransaction, updateTransaction, getTransaction, getComptes, Transaction } from '../../services/finance';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 
-const schema = yup.object({
+interface TransactionFormData extends Omit<Transaction, 'id'> {
+  compte_source?: string;
+  compte_destination?: string;
+}
+
+const schema = yup.object().shape({
   reference: yup.string().required('La référence est requise'),
-  date_transaction: yup.date().required('La date est requise'),
+  date_transaction: yup.string().required('La date est requise'),
   type_transaction: yup.string().required('Le type est requis'),
   categorie: yup.string().required('La catégorie est requise'),
   montant: yup.number()
     .required('Le montant est requis')
     .positive('Le montant doit être positif'),
-  description: yup.string(),
-  compte_source_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'DEPENSE' || val === 'VIREMENT',
-    then: yup.string().required('Le compte source est requis')
-  }),
-  compte_destination_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'RECETTE' || val === 'VIREMENT',
-    then: yup.string().required('Le compte destination est requis')
-  })
-}).required();
+  description: yup.string().optional(),
+  compte_source: yup.string()
+    .test('compte-source-required', 'Le compte source est requis', function(value) {
+      const type = this.parent.type_transaction;
+      if (type === 'DEPENSE' || type === 'VIREMENT') {
+        return !!value;
+      }
+      return true;
+    }),
+  compte_destination: yup.string()
+    .test('compte-destination-required', 'Le compte destination est requis', function(value) {
+      const type = this.parent.type_transaction;
+      if (type === 'RECETTE' || type === 'VIREMENT') {
+        return !!value;
+      }
+      return true;
+    }),
+  statut: yup.string().default('BROUILLON')
+});
 
 const TransactionForm: React.FC = () => {
   const { id } = useParams();
@@ -45,40 +59,49 @@ const TransactionForm: React.FC = () => {
   const isEdit = Boolean(id);
 
   const { data: transaction, isLoading: isLoadingTransaction } = useQuery(
-    ['transaction', id],
+    ['transactions', id],
     () => getTransaction(id!),
     { enabled: isEdit }
   );
 
-  const { data: comptes } = useQuery('comptes', getComptes);
+  const { data: comptes = [] } = useQuery(['comptes'], getComptes);
 
-  const { control, handleSubmit, watch, formState: { errors } } = useForm({
+  const defaultValues: TransactionFormData = {
+    reference: '',
+    date_transaction: new Date().toISOString(),
+    type_transaction: '',
+    categorie: '',
+    montant: 0,
+    description: '',
+    compte_source: '',
+    compte_destination: '',
+    statut: 'BROUILLON'
+  };
+
+  const { control, handleSubmit, watch, formState: { errors } } = useForm<TransactionFormData>({
     resolver: yupResolver(schema),
-    defaultValues: transaction || {
-      reference: '',
-      date_transaction: new Date(),
-      type_transaction: '',
-      categorie: '',
-      montant: '',
-      description: '',
-      compte_source_id: '',
-      compte_destination_id: ''
-    }
+    defaultValues: transaction || defaultValues
   });
 
   const typeTransaction = watch('type_transaction');
 
   const mutation = useMutation(
-    (data: any) => isEdit ? updateTransaction(id!, data) : createTransaction(data),
+    (data: TransactionFormData) => {
+      const transactionData = {
+        ...data,
+        date_transaction: new Date(data.date_transaction).toISOString()
+      };
+      return isEdit ? updateTransaction(id!, transactionData) : createTransaction(transactionData);
+    },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('transactions');
+        queryClient.invalidateQueries(['transactions']);
         navigate('/finance');
       }
     }
   );
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: TransactionFormData) => {
     mutation.mutate(data);
   };
 
@@ -95,9 +118,9 @@ const TransactionForm: React.FC = () => {
 
       <Card>
         <CardContent>
-          {mutation.error && (
+          {mutation.error instanceof Error && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              Une erreur est survenue
+              {mutation.error.message || 'Une erreur est survenue'}
             </Alert>
           )}
 
@@ -204,7 +227,7 @@ const TransactionForm: React.FC = () => {
               {(typeTransaction === 'DEPENSE' || typeTransaction === 'VIREMENT') && (
                 <Grid item xs={12} md={6}>
                   <Controller
-                    name="compte_source_id"
+                    name="compte_source"
                     control={control}
                     render={({ field }) => (
                       <TextField
@@ -212,10 +235,10 @@ const TransactionForm: React.FC = () => {
                         select
                         label="Compte Source"
                         fullWidth
-                        error={!!errors.compte_source_id}
-                        helperText={errors.compte_source_id?.message}
+                        error={!!errors.compte_source}
+                        helperText={errors.compte_source?.message}
                       >
-                        {comptes?.map((compte) => (
+                        {comptes.map((compte) => (
                           <MenuItem key={compte.id} value={compte.id}>
                             {compte.libelle}
                           </MenuItem>
@@ -229,7 +252,7 @@ const TransactionForm: React.FC = () => {
               {(typeTransaction === 'RECETTE' || typeTransaction === 'VIREMENT') && (
                 <Grid item xs={12} md={6}>
                   <Controller
-                    name="compte_destination_id"
+                    name="compte_destination"
                     control={control}
                     render={({ field }) => (
                       <TextField
@@ -237,10 +260,10 @@ const TransactionForm: React.FC = () => {
                         select
                         label="Compte Destination"
                         fullWidth
-                        error={!!errors.compte_destination_id}
-                        helperText={errors.compte_destination_id?.message}
+                        error={!!errors.compte_destination}
+                        helperText={errors.compte_destination?.message}
                       >
-                        {comptes?.map((compte) => (
+                        {comptes.map((compte) => (
                           <MenuItem key={compte.id} value={compte.id}>
                             {compte.libelle}
                           </MenuItem>

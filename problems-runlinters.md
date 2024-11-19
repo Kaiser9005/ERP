@@ -1,0 +1,3 @@
+The error in your GitHub Actions job is due to multiple lines exceeding the maximum allowed length of 79 characters in typing_extensions.py. This is indicated by the E501 line too long error messages.
+
+To fix this, you need to reformat the lines in typing_extensions.py to ensure that they do not exceed 79 characters. You can use tools like black or autopep8 to automatically format the code according to PEP 8 guidelines.

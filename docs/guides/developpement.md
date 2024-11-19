@@ -1,241 +1,157 @@
-# Guide de Développement FOFAL ERP
+## Guide de Développement FOFAL ERP
 
-## Structure du Projet
+### Mise à Jour des Composants Frontend
 
-```
-fofal_erp/
-├── api/
-│   └── v1/
-│       ├── endpoints/
-│       │   ├── production.py
-│       │   ├── projects.py
-│       │   ├── inventaire.py
-│       │   ├── finance.py
-│       │   ├── employes.py
-│       │   └── parametrage.py
-│       └── __init__.py
-├── core/
-│   ├── config.py
-│   └── security.py
-├── db/
-│   └── database.py
-├── models/
-│   ├── production.py
-│   ├── project.py
-│   ├── inventory.py
-│   ├── finance.py
-│   ├── hr.py
-│   └── parametrage.py
-├── schemas/
-│   ├── production.py
-│   ├── project.py
-│   ├── inventaire.py
-│   ├── finance.py
-│   ├── employe.py
-│   └── parametrage.py
-├── services/
-│   ├── production_service.py
-│   ├── project_service.py
-│   ├── inventory_service.py
-│   ├── finance_service.py
-│   └── hr_service.py
-└── docs/
-    ├── api/
-    ├── diagrammes/
-    └── guides/
+#### Composant StatCard
+
+Nous avons amélioré le composant StatCard pour une meilleure cohérence linguistique et technique :
+
+- Utilisation de termes en français pour les variations de données
+- Amélioration du typage TypeScript
+- Standardisation des propriétés de variation
+
+Exemple de mise à jour :
+```typescript
+interface StatCardProps {
+  title: string;
+  value: number;
+  unit?: string;
+  variation?: {
+    valeur: number;  // Nouveau nom de propriété
+    type: 'hausse' | 'baisse';  // Termes français
+  };
+  icon: React.ReactNode;
+  color: 'primary' | 'success' | 'warning' | 'info';
+}
 ```
 
-## Standards de Code
+#### Améliorations des Composants de Statistiques
 
-### Python
-- Suivre PEP 8
-- Utiliser les type hints
-- Documenter avec docstrings
-- Tests unitaires obligatoires
-- Coverage minimum : 80%
+- Mise à jour des composants FinanceStats, EmployeeStats et StatsInventaire
+- Transformation cohérente des données
+- Gestion des variations de manière standardisée
+- Amélioration de la lisibilité et de la maintenabilité du code
 
-### TypeScript/React
-- ESLint configuration stricte
+#### Détails des Modifications
+
+1. Transformation des Variations
+   - Remplacement de `value` par `valeur`
+   - Conversion des types de variation en français
+   ```typescript
+   // Avant
+   variation: { value: number; type: 'increase' | 'decrease' }
+   
+   // Après
+   variation: { valeur: number; type: 'hausse' | 'baisse' }
+   ```
+
+2. Composants Mis à Jour
+   - `src/components/finance/FinanceStats.tsx`
+   - `src/components/hr/EmployeeStats.tsx`
+   - `src/components/inventaire/StatsInventaire.tsx`
+
+3. Gestion des Transformations de Données
+   ```typescript
+   const transformStatsInventaire = (stats: StatsInventaireService): StatistiquesInventaire => ({
+     valeurTotale: stats.valeur_totale,
+     variationValeur: stats.valeur_stock,
+     // Autres transformations similaires
+   });
+   ```
+
+### Standards de Développement Frontend
+
+#### Typage TypeScript
+
+- Utilisation de types stricts
+- Éviter `any` autant que possible
+- Créer des interfaces spécifiques pour chaque composant
+- Utiliser des unions de types pour les variations
+
+#### Gestion des Erreurs
+
+- Utilisation de try/catch dans les services
+- Gestion explicite des erreurs dans les composants
+- Affichage de messages d'erreur traduits en français
+
+#### Conventions de Nommage
+
+- Noms de variables et fonctions en camelCase
+- Noms de composants en PascalCase
+- Préfixes descriptifs (`use` pour les hooks, `handle` pour les gestionnaires d'événements)
+
+### Intégration Continue
+
+#### Configuration GitHub Actions
+
+- Gestion sécurisée des secrets d'environnement
+- Tests automatisés sur chaque pull request
+- Vérification de la couverture de tests
+- Lint et formatage du code
+
+### Bonnes Pratiques
+
+1. Modularité
+   - Composants petits et réutilisables
+   - Séparation claire des responsabilités
+   - Utilisation de hooks personnalisés
+
+2. Performance
+   - Memoization avec `useMemo` et `useCallback`
+   - Lazy loading des composants
+   - Optimisation des requêtes API
+
+3. Accessibilité
+   - Utilisation de composants Material-UI accessibles
+   - Gestion des contrastes et tailles de police
+   - Support des lecteurs d'écran
+
+### Outils Recommandés
+
+- ESLint pour le linting TypeScript
 - Prettier pour le formatage
-- Components fonctionnels
-- Hooks personnalisés
-- Tests avec Jest et React Testing Library
+- Jest et React Testing Library pour les tests
+- Redux DevTools pour le débogage
+- Lighthouse pour les audits de performance
 
-### Base de Données
-- Utiliser les migrations Alembic
-- Nommer les tables en français
-- UUID pour les clés primaires
-- Timestamps sur toutes les tables
-- Indexation appropriée
+### Processus de Développement
 
-## Architecture des Modules
+1. Créer une branche feature
+2. Implémenter la fonctionnalité
+3. Écrire des tests unitaires
+4. Vérifier la couverture des tests
+5. Effectuer une revue de code
+6. Merger sur la branche principale après validation
 
-### 1. Production
-- Gestion des parcelles
-- Cycles de culture
-- Monitoring météo
-- Qualité des récoltes
+### Notes Spécifiques aux Dernières Mises à Jour
 
-### 2. Gestion de Projets
-- Planification
-- Suivi des tâches
-- Gestion des ressources
-- Documentation projet
+#### Améliorations Techniques
 
-### 3. Finance
-- Comptabilité
-- Trésorerie
-- Budgétisation
-- Reporting
+- Standardisation du composant StatCard
+  - Typage strict des variations
+  - Utilisation de termes en français
+  - Transformation cohérente des données
 
-### 4. Ressources Humaines
-- Gestion du personnel
-- Paie
-- Présences
-- Évaluations
+- Corrections de Typage
+  - Résolution des erreurs TypeScript dans plusieurs composants
+  - Amélioration de la gestion des types de données
+  - Réduction de l'utilisation de `any`
 
-### 5. Inventaire
-- Stocks
-- Mouvements
-- Traçabilité
-- Alertes
+- Optimisation des Composants
+  - Transformation des données plus explicite
+  - Amélioration de la lisibilité du code
+  - Standardisation des méthodes de transformation
 
-## Processus de Développement
+#### Recommandations pour les Développeurs
 
-1. Planification
-   - Analyse des besoins
-   - Design technique
-   - Revue d'architecture
+- Privilégier les types stricts
+- Utiliser des transformations de données explicites
+- Documenter les changements de type
+- Maintenir la cohérence linguistique
+- Effectuer des tests approfondis après modifications
 
-2. Développement
-   - Créer une branche feature
-   - Implémenter les tests
-   - Développer la fonctionnalité
-   - Documentation
+### Références
 
-3. Validation
-   - Tests unitaires
-   - Tests d'intégration
-   - Review de code
-   - Tests de performance
-
-4. Déploiement
-   - Merge vers develop
-   - Tests en staging
-   - Déploiement production
-   - Monitoring
-
-## Tests
-
-```bash
-# Tests unitaires
-pytest
-
-# Avec couverture
-pytest --cov=app
-
-# Tests spécifiques
-pytest tests/test_production.py
-pytest tests/test_projects.py
-
-# Tests d'intégration
-pytest tests/integration/
-
-# Tests frontend
-npm test
-npm run test:coverage
-```
-
-## Documentation
-
-### API
-- Swagger/OpenAPI
-- Exemples de requêtes
-- Descriptions détaillées
-- Codes d'erreur
-
-### Code
-- Docstrings Python
-- JSDoc pour TypeScript
-- Commentaires pertinents
-- Diagrammes explicatifs
-
-### Modèles
-- Schémas de données
-- Relations
-- Contraintes
-- Migrations
-
-## Sécurité
-
-### Authentification
-- JWT avec refresh tokens
-- Sessions sécurisées
-- 2FA pour admin
-
-### Autorisation
-- RBAC
-- Permissions granulaires
-- Audit trail
-
-### Données
-- Validation stricte
-- Sanitization
-- Encryption sensible
-- Backups réguliers
-
-## Performance
-
-### Optimisation
-- Requêtes SQL
-- Caching Redis
-- Lazy loading
-- Compression
-
-### Monitoring
-- Temps de réponse
-- Utilisation ressources
-- Erreurs
-- Métriques business
-
-## Déploiement
-
-### Environnements
-- Développement
-- Test
-- Staging
-- Production
-
-### CI/CD
-- Tests automatisés
-- Linting
-- Build
-- Déploiement automatique
-
-## Maintenance
-
-### Logs
-- Niveau approprié
-- Rotation
-- Agrégation
-- Alerting
-
-### Backups
-- Base de données
-- Fichiers
-- Configuration
-- Documentation
-
-## Support
-
-### Debugging
-- Logs détaillés
-- Sentry pour erreurs
-- Monitoring temps réel
-- Outils diagnostic
-
-### Documentation
-- Guides utilisateur
-- Documentation technique
-- Procédures maintenance
-- Troubleshooting
+- [Documentation TypeScript](https://www.typescriptlang.org/docs/)
+- [React avec TypeScript](https://react-typescript-cheatsheet.netlify.app/)
+- [Material-UI Documentation](https://mui.com/material-ui/getting-started/overview/)

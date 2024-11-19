@@ -1,7 +1,26 @@
 from pydantic import BaseModel, UUID4
 from datetime import datetime
 from typing import Optional, Dict
-from models.inventory import CategoryProduit, UniteMesure, TypeMouvement
+from enum import Enum
+
+class CategoryProduit(str, Enum):
+    INTRANT = "INTRANT"
+    EQUIPEMENT = "EQUIPEMENT"
+    RECOLTE = "RECOLTE"
+    EMBALLAGE = "EMBALLAGE"
+    PIECE_RECHANGE = "PIECE_RECHANGE"
+
+class UniteMesure(str, Enum):
+    KG = "KG"
+    LITRE = "LITRE"
+    UNITE = "UNITE"
+    TONNE = "TONNE"
+    METRE = "METRE"
+
+class TypeMouvement(str, Enum):
+    ENTREE = "ENTREE"
+    SORTIE = "SORTIE"
+    TRANSFERT = "TRANSFERT"
 
 class ProduitBase(BaseModel):
     code: str

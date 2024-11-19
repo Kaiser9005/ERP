@@ -6,7 +6,6 @@ import {
   Typography,
   Chip,
   Box,
-  Button,
   Link
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -17,10 +16,46 @@ import { Edit, Download } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+interface Compte {
+  id: string;
+  libelle: string;
+  type: string;
+  solde: number;
+}
+
+interface Utilisateur {
+  id: string;
+  nom: string;
+  prenom: string;
+}
+
+interface TransactionDetailsData {
+  id: string;
+  reference: string;
+  date_transaction: string;
+  type_transaction: string;
+  categorie: string;
+  montant: number;
+  description?: string;
+  statut: string;
+  piece_jointe?: string;
+  compte_source?: Compte;
+  compte_destination?: Compte;
+  validee_par?: Utilisateur;
+  date_validation?: string;
+}
+
 const TransactionDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: transaction } = useQuery(['transaction', id], () => getTransaction(id!));
+  
+  const { data: transaction } = useQuery<TransactionDetailsData>(
+    ['transaction', id],
+    async () => {
+      const data = await getTransaction(id!);
+      return data as unknown as TransactionDetailsData;
+    }
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {

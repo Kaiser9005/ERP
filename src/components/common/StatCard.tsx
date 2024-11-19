@@ -7,8 +7,8 @@ interface StatCardProps {
   value: number;
   unit?: string;
   variation?: {
-    value: number;
-    type: 'increase' | 'decrease';
+    valeur: number;
+    type: 'hausse' | 'baisse';
   };
   icon: React.ReactNode;
   color: 'primary' | 'success' | 'warning' | 'info';
@@ -22,7 +22,7 @@ const StatCard: React.FC<StatCardProps> = ({
   icon,
   color
 }) => {
-  const formatValue = (val: number): string => {
+  const formaterValeur = (val: number): string => {
     if (val >= 1000000) {
       return `${(val / 1000000).toFixed(1)}M`;
     }
@@ -51,7 +51,7 @@ const StatCard: React.FC<StatCardProps> = ({
         </Box>
 
         <Typography variant="h4" component="div" gutterBottom>
-          {formatValue(value)}
+          {formaterValeur(value)}
           {unit && (
             <Typography
               component="span"
@@ -66,17 +66,17 @@ const StatCard: React.FC<StatCardProps> = ({
 
         {variation && (
           <Box display="flex" alignItems="center">
-            {variation.type === 'increase' ? (
+            {variation.type === 'hausse' ? (
               <TrendingUp color="success" />
             ) : (
               <TrendingDown color="error" />
             )}
             <Typography
               variant="body2"
-              color={variation.type === 'increase' ? 'success.main' : 'error.main'}
+              color={variation.type === 'hausse' ? 'success.main' : 'error.main'}
               sx={{ ml: 1 }}
             >
-              {variation.value}%
+              {variation.valeur}%
             </Typography>
           </Box>
         )}

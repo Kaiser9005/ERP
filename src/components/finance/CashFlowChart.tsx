@@ -1,72 +1,31 @@
 import React from 'react';
 import { Card, CardContent, Typography } from '@mui/material';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { getCashFlowData } from '../../services/finance';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { getCashFlowData, CashFlowData } from '../../services/finance';
 
 const CashFlowChart: React.FC = () => {
-  const { data: cashFlow } = useQuery('cash-flow', getCashFlowData);
+  const { data: cashflowData, isLoading } = useQuery<CashFlowData>(
+    ['cashflow'],
+    getCashFlowData
+  );
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Montant (FCFA)'
-        }
-      }
-    }
-  };
+  if (isLoading) {
+    return <Typography>Chargement...</Typography>;
+  }
 
-  const data = {
-    labels: cashFlow?.labels || [],
-    datasets: [
-      {
-        label: 'Recettes',
-        data: cashFlow?.recettes || [],
-        borderColor: 'rgb(46, 125, 50)',
-        backgroundColor: 'rgba(46, 125, 50, 0.5)',
-        tension: 0.3
-      },
-      {
-        label: 'Dépenses',
-        data: cashFlow?.depenses || [],
-        borderColor: 'rgb(211, 47, 47)',
-        backgroundColor: 'rgba(211, 47, 47, 0.5)',
-        tension: 0.3
-      }
-    ]
-  };
+  if (!cashflowData) {
+    return null;
+  }
+
+  const chartData = cashflowData.labels.map((label, index) => ({
+    name: label,
+    recettes: cashflowData.recettes[index],
+    depenses: cashflowData.depenses[index],
+    solde: cashflowData.solde?.[index],
+    previsions: cashflowData.previsions?.[index],
+    impact_meteo: cashflowData.impact_meteo?.[index]
+  }));
 
   return (
     <Card>
@@ -74,9 +33,36 @@ const CashFlowChart: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Flux de Trésorerie
         </Typography>
-        <div style={{ height: '300px' }}>
-          <Line options={options} data={data} />
-        </div>
+        <LineChart width={800} height={400} data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="recettes" stroke="#4caf50" name="Recettes" />
+          <Line type="monotone" dataKey="depenses" stroke="#f44336" name="Dépenses" />
+          {cashflowData.solde && (
+            <Line type="monotone" dataKey="solde" stroke="#2196f3" name="Solde" />
+          )}
+          {cashflowData.previsions && (
+            <Line
+              type="monotone"
+              dataKey="previsions"
+              stroke="#9c27b0"
+              name="Prévisions"
+              strokeDasharray="5 5"
+            />
+          )}
+          {cashflowData.impact_meteo && (
+            <Line
+              type="monotone"
+              dataKey="impact_meteo"
+              stroke="#ff9800"
+              name="Impact Météo"
+              strokeDasharray="3 3"
+            />
+          )}
+        </LineChart>
       </CardContent>
     </Card>
   );

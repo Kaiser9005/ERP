@@ -1,13 +1,13 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
-import InventoryStats from './InventoryStats';
-import StockList from './StockList';
-import MovementHistory from './MovementHistory';
+import StatsInventaire from './StatsInventaire';
+import ListeStock from './ListeStock';
+import HistoriqueMouvements from './HistoriqueMouvements';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const InventoryPage: React.FC = () => {
+const PageInventaire: React.FC = () => {
   const navigate = useNavigate();
 
   return (
@@ -17,7 +17,7 @@ const InventoryPage: React.FC = () => {
         subtitle="Gestion des stocks et mouvements"
         action={{
           label: "Nouveau Produit",
-          onClick: () => navigate('/inventory/products/new'),
+          onClick: () => navigate('/inventaire/produits/nouveau'),
           icon: <Add />
         }}
       />
@@ -25,21 +25,21 @@ const InventoryPage: React.FC = () => {
       <Grid container spacing={3}>
         {/* Statistiques d'inventaire */}
         <Grid item xs={12}>
-          <InventoryStats />
+          <StatsInventaire />
         </Grid>
 
         {/* Liste des stocks */}
         <Grid item xs={12} lg={8}>
-          <StockList />
+          <ListeStock />
         </Grid>
 
         {/* Historique des mouvements */}
         <Grid item xs={12} lg={4}>
-          <MovementHistory />
+          <HistoriqueMouvements />
         </Grid>
       </Grid>
     </>
   );
 };
 
-export default InventoryPage;
+export default PageInventaire;

@@ -13,31 +13,37 @@ import {
   Button
 } from '@mui/material';
 import { useMutation, useQueryClient } from 'react-query';
-import { createMovement } from '../../services/inventory';
+import { creerMouvement } from '../../services/inventaire';
 import { LoadingButton } from '@mui/lab';
+
+interface MouvementData {
+  type: string;
+  quantity: number;
+  reference: string;
+}
 
 const schema = yup.object({
   type: yup.string().required('Le type de mouvement est requis'),
   quantity: yup.number()
     .required('La quantité est requise')
     .positive('La quantité doit être positive'),
-  reference: yup.string()
+  reference: yup.string().required('La référence est requise')
 }).required();
 
-interface StockMovementDialogProps {
+interface DialogueMouvementStockProps {
   open: boolean;
   onClose: () => void;
   productId: string | null;
 }
 
-const StockMovementDialog: React.FC<StockMovementDialogProps> = ({
+const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
   open,
   onClose,
   productId
 }) => {
   const queryClient = useQueryClient();
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const { control, handleSubmit, formState: { errors } } = useForm<MouvementData>({
     resolver: yupResolver(schema),
     defaultValues: {
       type: '',
@@ -46,7 +52,7 @@ const StockMovementDialog: React.FC<StockMovementDialogProps> = ({
     }
   });
 
-  const mutation = useMutation(createMovement, {
+  const mutation = useMutation(creerMouvement, {
     onSuccess: () => {
       queryClient.invalidateQueries('stocks');
       queryClient.invalidateQueries('recent-movements');
@@ -54,10 +60,10 @@ const StockMovementDialog: React.FC<StockMovementDialogProps> = ({
     }
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: MouvementData) => {
     if (productId) {
       mutation.mutate({
-        productId,
+        produit_id: productId,
         ...data
       });
     }
@@ -95,12 +101,14 @@ const StockMovementDialog: React.FC<StockMovementDialogProps> = ({
               <Controller
                 name="quantity"
                 control={control}
-                render={({ field }) => (
+                render={({ field: { onChange, value, ...field } }) => (
                   <TextField
                     {...field}
                     label="Quantité"
                     type="number"
                     fullWidth
+                    value={value}
+                    onChange={(e) => onChange(Number(e.target.value))}
                     error={!!errors.quantity}
                     helperText={errors.quantity?.message}
                   />
@@ -143,4 +151,4 @@ const StockMovementDialog: React.FC<StockMovementDialogProps> = ({
   );
 };
 
-export default StockMovementDialog;
+export default DialogueMouvementStock;

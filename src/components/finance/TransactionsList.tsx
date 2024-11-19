@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Edit, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import { getTransactions } from '../../services/finance';
+import { getTransactions, Transaction } from '../../services/finance';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,10 +24,10 @@ import { fr } from 'date-fns/locale';
 const TransactionsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  const { data: transactions } = useQuery('transactions', getTransactions);
+  const { data: transactions = [] } = useQuery<Transaction[]>(['transactions'], getTransactions);
 
-  const filteredTransactions = transactions?.filter(transaction =>
-    transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredTransactions = transactions.filter(transaction =>
+    transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.reference.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -75,7 +75,7 @@ const TransactionsList: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTransactions?.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
                   {format(new Date(transaction.date_transaction), 'Pp', { locale: fr })}
