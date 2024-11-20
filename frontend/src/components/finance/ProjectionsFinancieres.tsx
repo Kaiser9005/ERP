@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Card,
@@ -17,49 +17,31 @@ import {
   Chip,
   LinearProgress
 } from '@mui/material';
+import { useQuery } from 'react-query';
+import { getProjectionsFinancieres, ProjectionsFinancieres as IProjectionsFinancieres } from '../../services/finance';
 import { formatCurrency, formatPercentage } from '../../utils/format';
 import { useTheme } from '@mui/material/styles';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 
-interface Projection {
-  period: string;
-  amount: number;
-  weather_impact: number;
-}
-
-interface FinancialProjections {
-  revenue: Projection[];
-  expenses: Projection[];
-  weather_factors: string[];
-}
-
-const FinancialProjectionsComponent: React.FC = () => {
-  const [projections, setProjections] = useState<FinancialProjections | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const ProjectionsFinancieres: React.FC = () => {
   const theme = useTheme();
 
-  useEffect(() => {
-    const fetchProjections = async () => {
-      try {
-        const response = await fetch('/api/finance/projections?months_ahead=3');
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des projections');
-        }
-        const data = await response.json();
-        setProjections(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      } finally {
-        setLoading(false);
-      }
+  const { data: projections, isLoading, error } = useQuery<IProjectionsFinancieres>(
+    'projections-financieres',
+    () => getProjectionsFinancieres(3)
+  );
+
+  const calculerTendance = (actuel: number, precedent: number) => {
+    const variation = ((actuel - precedent) / precedent) * 100;
+    return {
+      valeur: Math.abs(variation),
+      type: variation >= 0 ? 'hausse' : 'baisse',
+      icone: variation >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
     };
+  };
 
-    fetchProjections();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
@@ -68,21 +50,12 @@ const FinancialProjectionsComponent: React.FC = () => {
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return <Alert severity="error">Une erreur est survenue lors du chargement des projections</Alert>;
   }
 
   if (!projections) {
     return <Alert severity="info">Aucune projection disponible</Alert>;
   }
-
-  const calculateTrend = (current: number, previous: number) => {
-    const variation = ((current - previous) / previous) * 100;
-    return {
-      value: Math.abs(variation),
-      type: variation >= 0 ? 'increase' : 'decrease',
-      icon: variation >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
-    };
-  };
 
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
@@ -97,24 +70,25 @@ const FinancialProjectionsComponent: React.FC = () => {
             Facteurs Météorologiques
           </Typography>
           <Box sx={{ mb: 2 }}>
-            {projections.weather_factors.map((factor, index) => (
+            {projections.facteurs_meteo.map((facteur, index) => (
               <Chip
                 key={index}
-                label={factor}
+                label={facteur}
                 sx={{ mr: 1, mb: 1 }}
                 color="primary"
                 variant="outlined"
+                data-testid="facteur-meteo"
               />
             ))}
           </Box>
         </CardContent>
       </Card>
 
-      {/* Projections des Revenus */}
+      {/* Projections des Recettes */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Projections des Revenus
+            Projections des Recettes
           </Typography>
           <TableContainer component={Paper}>
             <Table>
@@ -127,22 +101,22 @@ const FinancialProjectionsComponent: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {projections.revenue.map((projection, index) => {
-                  const trend = index > 0 
-                    ? calculateTrend(projection.amount, projections.revenue[index - 1].amount)
+                {projections.recettes.map((projection, index) => {
+                  const tendance = index > 0 
+                    ? calculerTendance(projection.montant, projections.recettes[index - 1].montant)
                     : null;
                   
                   return (
-                    <TableRow key={projection.period}>
-                      <TableCell>{projection.period}</TableCell>
+                    <TableRow key={projection.periode}>
+                      <TableCell>{projection.periode}</TableCell>
                       <TableCell align="right">
-                        {formatCurrency(projection.amount)}
+                        {formatCurrency(projection.montant)}
                       </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <LinearProgress
                             variant="determinate"
-                            value={projection.weather_impact}
+                            value={projection.impact_meteo}
                             sx={{ 
                               width: '100px',
                               mr: 1,
@@ -150,16 +124,17 @@ const FinancialProjectionsComponent: React.FC = () => {
                               borderRadius: 4
                             }}
                           />
-                          {formatPercentage(projection.weather_impact)}
+                          {formatPercentage(projection.impact_meteo)}
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        {trend && (
+                        {tendance && (
                           <Chip
-                            icon={trend.icon}
-                            label={`${formatPercentage(trend.value)}`}
-                            color={trend.type === 'increase' ? 'success' : 'error'}
+                            icon={tendance.icone}
+                            label={`${formatPercentage(tendance.valeur)}`}
+                            color={tendance.type === 'hausse' ? 'success' : 'error'}
                             size="small"
+                            data-testid={tendance.type === 'hausse' ? 'success-chip' : 'error-chip'}
                           />
                         )}
                       </TableCell>
@@ -189,22 +164,22 @@ const FinancialProjectionsComponent: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {projections.expenses.map((projection, index) => {
-                  const trend = index > 0 
-                    ? calculateTrend(projection.amount, projections.expenses[index - 1].amount)
+                {projections.depenses.map((projection, index) => {
+                  const tendance = index > 0 
+                    ? calculerTendance(projection.montant, projections.depenses[index - 1].montant)
                     : null;
                   
                   return (
-                    <TableRow key={projection.period}>
-                      <TableCell>{projection.period}</TableCell>
+                    <TableRow key={projection.periode}>
+                      <TableCell>{projection.periode}</TableCell>
                       <TableCell align="right">
-                        {formatCurrency(projection.amount)}
+                        {formatCurrency(projection.montant)}
                       </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <LinearProgress
                             variant="determinate"
-                            value={projection.weather_impact}
+                            value={projection.impact_meteo}
                             sx={{ 
                               width: '100px',
                               mr: 1,
@@ -212,16 +187,17 @@ const FinancialProjectionsComponent: React.FC = () => {
                               borderRadius: 4
                             }}
                           />
-                          {formatPercentage(projection.weather_impact)}
+                          {formatPercentage(projection.impact_meteo)}
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        {trend && (
+                        {tendance && (
                           <Chip
-                            icon={trend.icon}
-                            label={`${formatPercentage(trend.value)}`}
-                            color={trend.type === 'increase' ? 'error' : 'success'}
+                            icon={tendance.icone}
+                            label={`${formatPercentage(tendance.valeur)}`}
+                            color={tendance.type === 'hausse' ? 'error' : 'success'}
                             size="small"
+                            data-testid={tendance.type === 'hausse' ? 'error-chip' : 'success-chip'}
                           />
                         )}
                       </TableCell>
@@ -237,4 +213,4 @@ const FinancialProjectionsComponent: React.FC = () => {
   );
 };
 
-export default FinancialProjectionsComponent;
+export default ProjectionsFinancieres;

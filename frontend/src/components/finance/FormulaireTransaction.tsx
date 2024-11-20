@@ -15,61 +15,80 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { createTransaction, updateTransaction, getTransaction, getComptes } from '../../services/finance';
+import { creerTransaction, modifierTransaction, getTransaction, getComptes, Transaction, TypeTransaction, StatutTransaction, Compte } from '../../services/finance';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 
+interface FormData extends Omit<Transaction, 'id' | 'date'> {
+  date: Date;
+  compte_source_id?: string;
+  compte_destination_id?: string;
+}
+
 const schema = yup.object({
   reference: yup.string().required('La référence est requise'),
-  date_transaction: yup.date().required('La date est requise'),
-  type_transaction: yup.string().required('Le type est requis'),
-  categorie: yup.string().required('La catégorie est requise'),
+  date: yup.date().required('La date est requise'),
+  type_transaction: yup.string().oneOf(['RECETTE', 'DEPENSE'], 'Type invalide').required('Le type est requis'),
   montant: yup.number()
     .required('Le montant est requis')
     .positive('Le montant doit être positif'),
   description: yup.string(),
   compte_source_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'DEPENSE' || val === 'VIREMENT',
-    then: yup.string().required('Le compte source est requis')
+    is: (val: string) => val === 'DEPENSE',
+    then: (schema) => schema.required('Le compte source est requis')
   }),
   compte_destination_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'RECETTE' || val === 'VIREMENT',
-    then: yup.string().required('Le compte destination est requis')
+    is: (val: string) => val === 'RECETTE',
+    then: (schema) => schema.required('Le compte destination est requis')
   })
 }).required();
 
-const TransactionForm: React.FC = () => {
+const FormulaireTransaction: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isEdit = Boolean(id);
+  const estModification = Boolean(id);
 
-  const { data: transaction, isLoading: isLoadingTransaction } = useQuery(
+  const { data: transaction, isLoading: chargementTransaction } = useQuery(
     ['transaction', id],
     () => getTransaction(id!),
-    { enabled: isEdit }
+    { 
+      enabled: estModification,
+      select: (data) => ({
+        ...data,
+        date: new Date(data.date)
+      })
+    }
   );
 
-  const { data: comptes } = useQuery('comptes', getComptes);
+  const { data: comptes = [] } = useQuery<Compte[]>('comptes', getComptes);
 
-  const { control, handleSubmit, watch, formState: { errors } } = useForm({
-    resolver: yupResolver(schema),
+  const { control, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+    resolver: yupResolver(schema) as any,
     defaultValues: transaction || {
       reference: '',
-      date_transaction: new Date(),
-      type_transaction: '',
-      categorie: '',
-      montant: '',
+      date: new Date(),
+      type_transaction: undefined,
+      montant: 0,
       description: '',
       compte_source_id: '',
-      compte_destination_id: ''
+      compte_destination_id: '',
+      statut: 'EN_ATTENTE' as StatutTransaction
     }
   });
 
   const typeTransaction = watch('type_transaction');
 
   const mutation = useMutation(
-    (data: any) => isEdit ? updateTransaction(id!, data) : createTransaction(data),
+    (data: FormData) => {
+      const transactionData: Omit<Transaction, 'id'> = {
+        ...data,
+        date: data.date.toISOString()
+      };
+      return estModification 
+        ? modifierTransaction(id!, transactionData)
+        : creerTransaction(transactionData);
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries('transactions');
@@ -78,26 +97,26 @@ const TransactionForm: React.FC = () => {
     }
   );
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: FormData) => {
     mutation.mutate(data);
   };
 
-  if (isEdit && isLoadingTransaction) {
+  if (estModification && chargementTransaction) {
     return <div>Chargement...</div>;
   }
 
   return (
     <>
       <PageHeader
-        title={isEdit ? 'Modifier la Transaction' : 'Nouvelle Transaction'}
-        subtitle={isEdit ? `Modification de ${transaction?.reference}` : 'Création d\'une nouvelle transaction'}
+        title={estModification ? 'Modifier la Transaction' : 'Nouvelle Transaction'}
+        subtitle={estModification ? `Modification de ${transaction?.reference}` : 'Création d\'une nouvelle transaction'}
       />
 
       <Card>
         <CardContent>
-          {mutation.error && (
+          {mutation.error instanceof Error && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              Une erreur est survenue
+              {mutation.error.message || 'Une erreur est survenue'}
             </Alert>
           )}
 
@@ -121,7 +140,7 @@ const TransactionForm: React.FC = () => {
 
               <Grid item xs={12} md={6}>
                 <Controller
-                  name="date_transaction"
+                  name="date"
                   control={control}
                   render={({ field }) => (
                     <DateTimePicker
@@ -130,8 +149,8 @@ const TransactionForm: React.FC = () => {
                       slotProps={{
                         textField: {
                           fullWidth: true,
-                          error: !!errors.date_transaction,
-                          helperText: errors.date_transaction?.message
+                          error: !!errors.date,
+                          helperText: errors.date?.message
                         }
                       }}
                     />
@@ -154,31 +173,6 @@ const TransactionForm: React.FC = () => {
                     >
                       <MenuItem value="RECETTE">Recette</MenuItem>
                       <MenuItem value="DEPENSE">Dépense</MenuItem>
-                      <MenuItem value="VIREMENT">Virement</MenuItem>
-                    </TextField>
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="categorie"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      label="Catégorie"
-                      fullWidth
-                      error={!!errors.categorie}
-                      helperText={errors.categorie?.message}
-                    >
-                      <MenuItem value="VENTE">Vente</MenuItem>
-                      <MenuItem value="ACHAT_INTRANT">Achat d'intrants</MenuItem>
-                      <MenuItem value="SALAIRE">Salaire</MenuItem>
-                      <MenuItem value="MAINTENANCE">Maintenance</MenuItem>
-                      <MenuItem value="TRANSPORT">Transport</MenuItem>
-                      <MenuItem value="AUTRE">Autre</MenuItem>
                     </TextField>
                   )}
                 />
@@ -201,7 +195,7 @@ const TransactionForm: React.FC = () => {
                 />
               </Grid>
 
-              {(typeTransaction === 'DEPENSE' || typeTransaction === 'VIREMENT') && (
+              {typeTransaction === 'DEPENSE' && (
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="compte_source_id"
@@ -215,7 +209,7 @@ const TransactionForm: React.FC = () => {
                         error={!!errors.compte_source_id}
                         helperText={errors.compte_source_id?.message}
                       >
-                        {comptes?.map((compte) => (
+                        {comptes.map((compte) => (
                           <MenuItem key={compte.id} value={compte.id}>
                             {compte.libelle}
                           </MenuItem>
@@ -226,7 +220,7 @@ const TransactionForm: React.FC = () => {
                 </Grid>
               )}
 
-              {(typeTransaction === 'RECETTE' || typeTransaction === 'VIREMENT') && (
+              {typeTransaction === 'RECETTE' && (
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="compte_destination_id"
@@ -240,7 +234,7 @@ const TransactionForm: React.FC = () => {
                         error={!!errors.compte_destination_id}
                         helperText={errors.compte_destination_id?.message}
                       >
-                        {comptes?.map((compte) => (
+                        {comptes.map((compte) => (
                           <MenuItem key={compte.id} value={compte.id}>
                             {compte.libelle}
                           </MenuItem>
@@ -282,7 +276,7 @@ const TransactionForm: React.FC = () => {
                     type="submit"
                     loading={mutation.isLoading}
                   >
-                    {isEdit ? 'Modifier' : 'Créer'}
+                    {estModification ? 'Modifier' : 'Créer'}
                   </LoadingButton>
                 </Box>
               </Grid>
@@ -294,4 +288,4 @@ const TransactionForm: React.FC = () => {
   );
 };
 
-export default TransactionForm;
+export default FormulaireTransaction;

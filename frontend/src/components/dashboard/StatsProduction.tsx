@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, LinearProgress } from '@mui/material';
 import { useQuery } from 'react-query';
-import { getProductionStats } from '../../services/production';
+import { getStatsProduction } from '../../services/production';
 
-const ProductionStats: React.FC = () => {
-  const { data: stats } = useQuery('production-stats', getProductionStats);
+const StatsProduction: React.FC = () => {
+  const { data: stats } = useQuery('stats-production', getStatsProduction);
 
   return (
     <Card>
@@ -23,10 +23,10 @@ const ProductionStats: React.FC = () => {
           {stats?.variation && (
             <Typography
               variant="body2"
-              color={stats.variation.type === 'increase' ? 'success.main' : 'error.main'}
+              color={stats.variation.type === 'hausse' ? 'success.main' : 'error.main'}
             >
-              {stats.variation.type === 'increase' ? '+' : '-'}
-              {stats.variation.value}% par rapport au mois dernier
+              {stats.variation.type === 'hausse' ? '+' : '-'}
+              {stats.variation.valeur}% par rapport au mois dernier
             </Typography>
           )}
         </Box>
@@ -46,4 +46,4 @@ const ProductionStats: React.FC = () => {
   );
 };
 
-export default ProductionStats;
+export default StatsProduction;

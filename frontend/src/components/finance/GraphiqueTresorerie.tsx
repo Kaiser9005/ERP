@@ -12,7 +12,7 @@ import {
   Legend
 } from 'chart.js';
 import { useQuery } from 'react-query';
-import { getProductionHistory } from '../../services/production';
+import { getDonneesTresorerie } from '../../services/finance';
 
 ChartJS.register(
   CategoryScale,
@@ -24,8 +24,8 @@ ChartJS.register(
   Legend
 );
 
-const ProductionChart: React.FC = () => {
-  const { data: history } = useQuery('production-history', getProductionHistory);
+const GraphiqueTresorerie: React.FC = () => {
+  const { data: tresorerie } = useQuery('tresorerie', getDonneesTresorerie);
 
   const options = {
     responsive: true,
@@ -42,27 +42,27 @@ const ProductionChart: React.FC = () => {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Production (tonnes)'
+          text: 'Montant (FCFA)'
         }
       }
     }
   };
 
   const data = {
-    labels: history?.labels || [],
+    labels: tresorerie?.labels || [],
     datasets: [
       {
-        label: 'Palmier à huile',
-        data: history?.palmier || [],
+        label: 'Recettes',
+        data: tresorerie?.recettes || [],
         borderColor: 'rgb(46, 125, 50)',
         backgroundColor: 'rgba(46, 125, 50, 0.5)',
         tension: 0.3
       },
       {
-        label: 'Papaye',
-        data: history?.papaye || [],
-        borderColor: 'rgb(255, 160, 0)',
-        backgroundColor: 'rgba(255, 160, 0, 0.5)',
+        label: 'Dépenses',
+        data: tresorerie?.depenses || [],
+        borderColor: 'rgb(211, 47, 47)',
+        backgroundColor: 'rgba(211, 47, 47, 0.5)',
         tension: 0.3
       }
     ]
@@ -72,7 +72,7 @@ const ProductionChart: React.FC = () => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Production par Culture
+          Flux de Trésorerie
         </Typography>
         <div style={{ height: '300px' }}>
           <Line options={options} data={data} />
@@ -82,4 +82,4 @@ const ProductionChart: React.FC = () => {
   );
 };
 
-export default ProductionChart;
+export default GraphiqueTresorerie;

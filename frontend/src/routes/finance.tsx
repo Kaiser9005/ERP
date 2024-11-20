@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import FinancePage from '../components/finance/FinancePage';
-import TransactionForm from '../components/finance/TransactionForm';
+import FormulaireTransaction from '../components/finance/FormulaireTransaction';
 import { ProtectedRoute } from '../routes/ProtectedRoute';
 
 const FinanceRoutes: React.FC = () => {
@@ -19,7 +19,7 @@ const FinanceRoutes: React.FC = () => {
         path="/transactions/new"
         element={
           <ProtectedRoute>
-            <TransactionForm />
+            <FormulaireTransaction />
           </ProtectedRoute>
         }
       />
@@ -27,7 +27,7 @@ const FinanceRoutes: React.FC = () => {
         path="/transactions/:id"
         element={
           <ProtectedRoute>
-            <TransactionForm />
+            <FormulaireTransaction />
           </ProtectedRoute>
         }
       />

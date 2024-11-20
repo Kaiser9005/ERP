@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Card,
@@ -16,58 +16,21 @@ import {
   Paper,
   Chip
 } from '@mui/material';
+import { useQuery } from 'react-query';
+import { getAnalyseBudget, AnalyseBudgetaire } from '../../services/finance';
 import { formatCurrency } from '../../utils/format';
 import { useTheme } from '@mui/material/styles';
 
-interface BudgetAnalysis {
-  total_prevu: number;
-  total_realise: number;
-  categories: {
-    [key: string]: {
-      prevu: number;
-      realise: number;
-      ecart: number;
-      ecart_percentage: number;
-    };
-  };
-  weather_impact: {
-    score: number;
-    factors: string[];
-    projections: {
-      [key: string]: string;
-    };
-  };
-  recommendations: string[];
-}
-
-const BudgetAnalysisComponent: React.FC = () => {
-  const [analysis, setAnalysis] = useState<BudgetAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const AnalyseBudget: React.FC = () => {
   const theme = useTheme();
+  const periodeActuelle = new Date().toISOString().slice(0, 7); // YYYY-MM
 
-  const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const { data: analyse, isLoading, error } = useQuery<AnalyseBudgetaire>(
+    ['analyse-budget', periodeActuelle],
+    () => getAnalyseBudget(periodeActuelle)
+  );
 
-  useEffect(() => {
-    const fetchAnalysis = async () => {
-      try {
-        const response = await fetch(`/api/finance/budgets/analysis/${currentPeriod}`);
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des données');
-        }
-        const data = await response.json();
-        setAnalysis(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalysis();
-  }, [currentPeriod]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
@@ -76,17 +39,17 @@ const BudgetAnalysisComponent: React.FC = () => {
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return <Alert severity="error">Une erreur est survenue lors du chargement des données</Alert>;
   }
 
-  if (!analysis) {
+  if (!analyse) {
     return <Alert severity="info">Aucune donnée disponible</Alert>;
   }
 
   return (
     <Box sx={{ width: '100%', mb: 4 }}>
       <Typography variant="h5" gutterBottom>
-        Analyse Budgétaire - {currentPeriod}
+        Analyse Budgétaire - {periodeActuelle}
       </Typography>
 
       {/* Résumé Global */}
@@ -98,7 +61,7 @@ const BudgetAnalysisComponent: React.FC = () => {
                 Budget Total
               </Typography>
               <Typography variant="h4">
-                {formatCurrency(analysis.total_prevu)}
+                {formatCurrency(analyse.total_prevu)}
               </Typography>
             </CardContent>
           </Card>
@@ -110,7 +73,7 @@ const BudgetAnalysisComponent: React.FC = () => {
                 Réalisé
               </Typography>
               <Typography variant="h4">
-                {formatCurrency(analysis.total_realise)}
+                {formatCurrency(analyse.total_realise)}
               </Typography>
             </CardContent>
           </Card>
@@ -122,7 +85,7 @@ const BudgetAnalysisComponent: React.FC = () => {
                 Impact Météo
               </Typography>
               <Typography variant="h4">
-                {analysis.weather_impact.score}%
+                {analyse.impact_meteo.score}%
               </Typography>
             </CardContent>
           </Card>
@@ -142,16 +105,16 @@ const BudgetAnalysisComponent: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(analysis.categories).map(([category, data]) => (
-              <TableRow key={category}>
-                <TableCell>{category}</TableCell>
-                <TableCell align="right">{formatCurrency(data.prevu)}</TableCell>
-                <TableCell align="right">{formatCurrency(data.realise)}</TableCell>
-                <TableCell align="right">{formatCurrency(data.ecart)}</TableCell>
+            {Object.entries(analyse.categories).map(([categorie, donnees]) => (
+              <TableRow key={categorie}>
+                <TableCell>{categorie}</TableCell>
+                <TableCell align="right">{formatCurrency(donnees.prevu)}</TableCell>
+                <TableCell align="right">{formatCurrency(donnees.realise)}</TableCell>
+                <TableCell align="right">{formatCurrency(donnees.ecart)}</TableCell>
                 <TableCell align="right">
                   <Chip
-                    label={`${data.ecart_percentage}%`}
-                    color={data.ecart_percentage < 0 ? 'error' : 'success'}
+                    label={`${donnees.ecart_pourcentage}%`}
+                    color={donnees.ecart_pourcentage < 0 ? 'error' : 'success'}
                     size="small"
                   />
                 </TableCell>
@@ -168,10 +131,10 @@ const BudgetAnalysisComponent: React.FC = () => {
             Impact Météorologique
           </Typography>
           <Box sx={{ mb: 2 }}>
-            {analysis.weather_impact.factors.map((factor, index) => (
+            {analyse.impact_meteo.facteurs.map((facteur, index) => (
               <Chip
                 key={index}
-                label={factor}
+                label={facteur}
                 sx={{ mr: 1, mb: 1 }}
                 color="primary"
               />
@@ -180,9 +143,9 @@ const BudgetAnalysisComponent: React.FC = () => {
           <Typography variant="subtitle1" gutterBottom>
             Projections par catégorie :
           </Typography>
-          {Object.entries(analysis.weather_impact.projections).map(([category, projection]) => (
-            <Typography key={category} color="textSecondary" paragraph>
-              <strong>{category}:</strong> {projection}
+          {Object.entries(analyse.impact_meteo.projections).map(([categorie, projection]) => (
+            <Typography key={categorie} color="textSecondary" paragraph>
+              <strong>{categorie}:</strong> {projection}
             </Typography>
           ))}
         </CardContent>
@@ -194,9 +157,9 @@ const BudgetAnalysisComponent: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Recommandations
           </Typography>
-          {analysis.recommendations.map((recommendation, index) => (
+          {analyse.recommandations.map((recommandation, index) => (
             <Alert key={index} severity="info" sx={{ mb: 1 }}>
-              {recommendation}
+              {recommandation}
             </Alert>
           ))}
         </CardContent>
@@ -205,4 +168,4 @@ const BudgetAnalysisComponent: React.FC = () => {
   );
 };
 
-export default BudgetAnalysisComponent;
+export default AnalyseBudget;

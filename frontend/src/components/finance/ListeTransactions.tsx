@@ -16,26 +16,26 @@ import {
 } from '@mui/material';
 import { Edit, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getTransactions } from '../../services/finance';
+import { getTransactions, Transaction } from '../../services/finance';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-const TransactionList: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+const ListeTransactions: React.FC = () => {
+  const [recherche, setRecherche] = useState('');
   const navigate = useNavigate();
-  const { data: transactions, isLoading } = useQuery('transactions', getTransactions);
+  const { data: transactions = [], isLoading } = useQuery<Transaction[]>('transactions', getTransactions);
 
-  const filteredTransactions = transactions?.filter(transaction =>
-    transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.reference.toLowerCase().includes(searchTerm.toLowerCase())
+  const transactionsFiltrees = transactions.filter(transaction =>
+    transaction.description.toLowerCase().includes(recherche.toLowerCase()) ||
+    (transaction.reference?.toLowerCase() || '').includes(recherche.toLowerCase())
   );
 
-  const getTransactionColor = (type: string) => {
+  const getCouleurTransaction = (type: Transaction['type']) => {
     switch (type) {
-      case 'RECETTE':
+      case 'ENTREE':
         return 'success';
-      case 'DEPENSE':
+      case 'SORTIE':
         return 'error';
       default:
         return 'default';
@@ -50,8 +50,8 @@ const TransactionList: React.FC = () => {
           <TextField
             size="small"
             placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -68,20 +68,21 @@ const TransactionList: React.FC = () => {
               <TableCell>Date</TableCell>
               <TableCell>Référence</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell>Catégorie</TableCell>
               <TableCell align="right">Montant</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell>Statut</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTransactions?.map((transaction) => (
+            {transactionsFiltrees.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
-                  {format(new Date(transaction.date_transaction), 'Pp', { locale: fr })}
+                  {format(new Date(transaction.date), 'Pp', { locale: fr })}
                 </TableCell>
-                <TableCell>{transaction.reference}</TableCell>
+                <TableCell>{transaction.reference || '-'}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
+                <TableCell>{transaction.categorie}</TableCell>
                 <TableCell align="right">
                   {new Intl.NumberFormat('fr-FR', {
                     style: 'currency',
@@ -91,15 +92,8 @@ const TransactionList: React.FC = () => {
                 <TableCell>
                   <Chip
                     size="small"
-                    label={transaction.type_transaction}
-                    color={getTransactionColor(transaction.type_transaction)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    label={transaction.statut}
-                    variant="outlined"
+                    label={transaction.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
+                    color={getCouleurTransaction(transaction.type)}
                   />
                 </TableCell>
                 <TableCell align="right">
@@ -111,7 +105,7 @@ const TransactionList: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => navigate(`/finance/transactions/${transaction.id}/edit`)}
+                    onClick={() => navigate(`/finance/transactions/${transaction.id}/modifier`)}
                   >
                     <Edit />
                   </IconButton>
@@ -125,4 +119,4 @@ const TransactionList: React.FC = () => {
   );
 };
 
-export default TransactionList;
+export default ListeTransactions;

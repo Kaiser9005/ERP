@@ -1,141 +1,150 @@
-# Module Finance - Documentation API
+# API Finance
 
-## Statistiques
+## Vue d'ensemble
 
-### GET /api/v1/finance/stats
-Récupère les statistiques financières.
+L'API Finance fournit les endpoints nécessaires pour la gestion financière de FOFAL, incluant :
+- Analyse budgétaire
+- Projections financières
+- Gestion des transactions
+- Statistiques financières
 
-**Réponse:**
-```json
-{
-  "revenue": 1500000,
-  "revenueVariation": {
-    "value": 15,
-    "type": "increase"
-  },
-  "profit": 300000,
-  "profitVariation": {
-    "value": 5,
-    "type": "decrease"
-  },
-  "cashflow": 500000,
-  "cashflowVariation": {
-    "value": 10,
-    "type": "increase"
-  },
-  "expenses": 1200000,
-  "expensesVariation": {
-    "value": 8,
-    "type": "increase"
-  }
-}
-```
+## Endpoints
 
-## Transactions
+### Analyse Budgétaire
 
-### GET /api/v1/finance/transactions
-Récupère la liste des transactions.
+#### GET /api/finance/budget/analyse/{periode}
+Récupère l'analyse budgétaire détaillée pour une période donnée.
 
-**Paramètres de requête:**
-- `type` (optionnel): Type de transaction (RECETTE, DEPENSE, VIREMENT)
-- `statut` (optionnel): Statut de la transaction
-- `date_debut` (optionnel): Date de début de la période
-- `date_fin` (optionnel): Date de fin de la période
-- `skip` (optionnel): Pagination
-- `limit` (optionnel): Limite de résultats
+**Paramètres**
+- `periode`: Format YYYY-MM
 
-### POST /api/v1/finance/transactions
-Crée une nouvelle transaction.
-
-**Corps de la requête:**
-- Multipart form data avec:
-  - Transaction (JSON)
-  - Pièce jointe (fichier)
-
-## Comptes
-
-### GET /api/v1/finance/comptes
-Récupère la liste des comptes.
-
-**Paramètres de requête:**
-- `type` (optionnel): Type de compte (BANQUE, CAISSE, EPARGNE)
-- `actif` (optionnel): État du compte
-
-### POST /api/v1/finance/comptes
-Crée un nouveau compte.
-
-## Budgets
-
-### GET /api/v1/finance/budgets
-Récupère la liste des budgets.
-
-**Paramètres de requête:**
-- `periode` (optionnel): Période (format: YYYY-MM)
-- `categorie` (optionnel): Catégorie de budget
-
-### POST /api/v1/finance/budgets
-Crée un nouveau budget.
-
-### GET /api/v1/finance/budgets/analysis/{periode}
-Récupère l'analyse budgétaire détaillée pour une période.
-
-**Paramètres:**
-- periode: Format YYYY-MM
-
-**Réponse:**
+**Réponse**
 ```json
 {
   "total_prevu": 5000000,
-  "total_realise": 4800000,
+  "total_realise": 4500000,
   "categories": {
-    "ACHAT_INTRANT": {
+    "Équipement": {
       "prevu": 2000000,
-      "realise": 1900000,
-      "ecart": -100000,
-      "ecart_percentage": -5
+      "realise": 1800000,
+      "ecart": -200000,
+      "ecart_pourcentage": -10
     }
   },
-  "weather_impact": {
-    "score": 30,
-    "factors": ["Fortes précipitations"],
+  "impact_meteo": {
+    "score": 15,
+    "facteurs": ["Précipitations abondantes"],
     "projections": {
-      "TRANSPORT": "Augmentation probable des coûts"
+      "Équipement": "Usure accélérée due aux conditions météo"
     }
   },
-  "recommendations": [
-    "Ajustement recommandé du budget transport"
+  "recommandations": [
+    "Prévoir un budget supplémentaire pour la maintenance"
   ]
 }
 ```
 
-## Projections Financières
+### Projections Financières
 
-### GET /api/v1/finance/projections
-Récupère les projections financières avec impact météo.
+#### GET /api/finance/projections
+Récupère les projections financières avec impact météorologique.
 
-**Paramètres:**
-- months_ahead (optionnel): Nombre de mois à projeter (défaut: 3)
+**Paramètres**
+- `mois_avenir`: Nombre de mois à projeter (défaut: 3)
 
-**Réponse:**
+**Réponse**
 ```json
 {
-  "revenue": [
+  "recettes": [
     {
-      "period": "2024-02",
-      "amount": 12000000,
-      "weather_impact": 20
+      "periode": "2024-01",
+      "montant": 1500000,
+      "impact_meteo": 15
     }
   ],
-  "expenses": [
+  "depenses": [
     {
-      "period": "2024-02",
-      "amount": 8000000,
-      "weather_impact": 15
+      "periode": "2024-01",
+      "montant": 1200000,
+      "impact_meteo": 10
     }
   ],
-  "weather_factors": [
-    "Températures élevées prévues"
+  "facteurs_meteo": [
+    "Précipitations abondantes",
+    "Température élevée"
   ]
+}
+```
+
+### Statistiques Financières
+
+#### GET /api/finance/stats
+Récupère les statistiques financières globales.
+
+**Réponse**
+```json
+{
+  "tresorerie_actuelle": 5000000,
+  "recettes_mois": 1500000,
+  "depenses_mois": 1200000,
+  "variation_mensuelle": 10
+}
+```
+
+### Transactions
+
+#### GET /api/finance/transactions
+Liste toutes les transactions.
+
+**Paramètres de requête**
+- `page`: Numéro de page (défaut: 1)
+- `limite`: Nombre d'éléments par page (défaut: 20)
+- `type`: Type de transaction (RECETTE/DEPENSE)
+- `statut`: Statut de la transaction
+
+**Réponse**
+```json
+{
+  "total": 100,
+  "page": 1,
+  "limite": 20,
+  "transactions": [
+    {
+      "id": "uuid",
+      "date": "2024-01-15",
+      "montant": 150000,
+      "type": "RECETTE",
+      "description": "Vente production",
+      "statut": "VALIDEE"
+    }
+  ]
+}
+```
+
+#### POST /api/finance/transactions
+Crée une nouvelle transaction.
+
+**Corps de la requête**
+```json
+{
+  "date": "2024-01-15",
+  "montant": 150000,
+  "type": "RECETTE",
+  "description": "Vente production"
+}
+```
+
+#### PUT /api/finance/transactions/{id}
+Met à jour une transaction existante.
+
+**Paramètres**
+- `id`: Identifiant de la transaction
+
+**Corps de la requête**
+```json
+{
+  "montant": 160000,
+  "description": "Vente production modifiée"
 }
 ```
 
@@ -143,37 +152,70 @@ Récupère les projections financières avec impact météo.
 
 ### Transaction
 ```typescript
-{
-  id: UUID
-  reference: string
-  date_transaction: DateTime
-  type_transaction: "RECETTE" | "DEPENSE" | "VIREMENT"
-  categorie: "VENTE" | "ACHAT_INTRANT" | "SALAIRE" | "MAINTENANCE" | "TRANSPORT" | "AUTRE"
-  montant: number
-  devise: string
-  description?: string
-  statut: "EN_ATTENTE" | "VALIDEE" | "REJETEE" | "ANNULEE"
-  piece_jointe?: string
+interface Transaction {
+  id: string;
+  date: string;
+  montant: number;
+  type: 'RECETTE' | 'DEPENSE';
+  description: string;
+  statut: 'BROUILLON' | 'VALIDEE' | 'ANNULEE';
+  pieces_jointes?: string[];
+  metadata?: Record<string, any>;
 }
 ```
 
-### Budget
+### AnalyseBudgetaire
 ```typescript
-{
-  id: UUID
-  periode: string // YYYY-MM
-  categorie: string
-  montant_prevu: number
-  montant_realise: number
-  notes?: string
-  metadata?: object
+interface AnalyseBudgetaire {
+  total_prevu: number;
+  total_realise: number;
+  categories: {
+    [key: string]: {
+      prevu: number;
+      realise: number;
+      ecart: number;
+      ecart_pourcentage: number;
+    };
+  };
+  impact_meteo: {
+    score: number;
+    facteurs: string[];
+    projections: Record<string, string>;
+  };
+  recommandations: string[];
 }
 ```
 
-## Sécurité
+### ProjectionsFinancieres
+```typescript
+interface ProjectionsFinancieres {
+  recettes: Array<{
+    periode: string;
+    montant: number;
+    impact_meteo: number;
+  }>;
+  depenses: Array<{
+    periode: string;
+    montant: number;
+    impact_meteo: number;
+  }>;
+  facteurs_meteo: string[];
+}
+```
 
-Tous les endpoints nécessitent une authentification JWT valide.
-Les rôles suivants sont requis :
-- FINANCE_READ: Lecture des données financières
-- FINANCE_WRITE: Création/modification des transactions et budgets
-- FINANCE_ADMIN: Validation des transactions et accès aux analyses
+## Codes d'Erreur
+
+- `400`: Requête invalide
+- `401`: Non authentifié
+- `403`: Non autorisé
+- `404`: Ressource non trouvée
+- `409`: Conflit (ex: transaction déjà validée)
+- `500`: Erreur serveur
+
+## Notes d'Implémentation
+
+- Toutes les dates sont au format ISO 8601
+- Les montants sont en XAF (Franc CFA)
+- L'impact météo est exprimé en pourcentage
+- Les projections sont calculées sur la base des données historiques et des prévisions météo
+- Les transactions validées ne peuvent plus être modifiées

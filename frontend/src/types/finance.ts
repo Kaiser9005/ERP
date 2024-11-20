@@ -13,3 +13,16 @@ export interface FinanceStats {
   cashflow: number;
   cashflowVariation: Variation;
 }
+
+export type TypeTransaction = 'RECETTE' | 'DEPENSE';
+export type StatutTransaction = 'EN_ATTENTE' | 'VALIDEE' | 'ANNULEE';
+
+export interface Transaction {
+  id: string;
+  date: string;
+  reference: string;
+  description: string;
+  montant: number;
+  type_transaction: TypeTransaction;
+  statut: StatutTransaction;
+}

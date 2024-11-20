@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
 import { useQuery } from 'react-query';
-import { getInventoryStats } from '../../services/inventory';
+import { getStatsInventaire } from '../../services/inventaire';
 
-const InventoryStats: React.FC = () => {
-  const { data: stats } = useQuery('inventory-stats', getInventoryStats);
+const StatsInventaire: React.FC = () => {
+  const { data: stats } = useQuery('stats-inventaire', getStatsInventaire);
 
   return (
     <Card>
@@ -33,7 +33,7 @@ const InventoryStats: React.FC = () => {
             size="small"
           />
           <Chip
-            label={`${stats?.mouvements_jour || 0} Mouvements`}
+            label={`${stats?.mouvements || 0} Mouvements`}
             color="info"
             size="small"
           />
@@ -43,4 +43,4 @@ const InventoryStats: React.FC = () => {
   );
 };
 
-export default InventoryStats;
+export default StatsInventaire;

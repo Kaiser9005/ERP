@@ -1,16 +1,16 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
-import ProductionStats from './ProductionStats';
-import InventoryStats from './InventoryStats';
-import FinanceStats from './FinanceStats';
-import HRStats from './HRStats';
-import WeatherWidget from './WeatherWidget';
-import RecentActivities from './RecentActivities';
-import ProductionChart from './ProductionChart';
-import CashFlowChart from './CashFlowChart';
+import StatsProduction from './StatsProduction';
+import StatsInventaire from './StatsInventaire';
+import StatsFinance from './StatsFinance';
+import StatsRH from './StatsRH';
+import WidgetMeteo from './WidgetMeteo';
+import ActivitesRecentes from './ActivitesRecentes';
+import GraphiqueProduction from './GraphiqueProduction';
+import GraphiqueTresorerie from './GraphiqueTresorerie';
 
-const DashboardPage: React.FC = () => {
+const TableauBord: React.FC = () => {
   return (
     <>
       <PageHeader
@@ -21,46 +21,46 @@ const DashboardPage: React.FC = () => {
       <Grid container spacing={3}>
         {/* Statistiques de production */}
         <Grid item xs={12} lg={3}>
-          <ProductionStats />
+          <StatsProduction />
         </Grid>
 
         {/* Statistiques d'inventaire */}
         <Grid item xs={12} lg={3}>
-          <InventoryStats />
+          <StatsInventaire />
         </Grid>
 
         {/* Statistiques financières */}
         <Grid item xs={12} lg={3}>
-          <FinanceStats />
+          <StatsFinance />
         </Grid>
 
         {/* Statistiques RH */}
         <Grid item xs={12} lg={3}>
-          <HRStats />
+          <StatsRH />
         </Grid>
 
         {/* Graphique de production */}
         <Grid item xs={12} lg={8}>
-          <ProductionChart />
+          <GraphiqueProduction />
         </Grid>
 
         {/* Widget météo */}
         <Grid item xs={12} lg={4}>
-          <WeatherWidget />
+          <WidgetMeteo />
         </Grid>
 
         {/* Graphique des flux financiers */}
         <Grid item xs={12} lg={8}>
-          <CashFlowChart />
+          <GraphiqueTresorerie />
         </Grid>
 
         {/* Activités récentes */}
         <Grid item xs={12} lg={4}>
-          <RecentActivities />
+          <ActivitesRecentes />
         </Grid>
       </Grid>
     </>
   );
 };
 
-export default DashboardPage;
+export default TableauBord;

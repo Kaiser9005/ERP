@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Grid, Box, Tabs, Tab } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
-import FinanceStats from './FinanceStats';
-import TransactionsList from './TransactionsList';
-import CashFlowChart from './CashFlowChart';
-import BudgetOverview from './BudgetOverview';
-import BudgetAnalysis from './BudgetAnalysis';
-import FinancialProjections from './FinancialProjections';
+import StatsFinance from './StatsFinance';
+import ListeTransactions from './ListeTransactions';
+import GraphiqueTresorerie from './GraphiqueTresorerie';
+import VueBudget from './VueBudget';
+import AnalyseBudget from './AnalyseBudget';
+import ProjectionsFinancieres from './ProjectionsFinancieres';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,12 +36,12 @@ const TabPanel = (props: TabPanelProps) => {
   );
 };
 
-const FinancePage: React.FC = () => {
+const PageFinance: React.FC = () => {
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(0);
+  const [ongletActuel, setOngletActuel] = useState(0);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
+  const handleChangementOnglet = (event: React.SyntheticEvent, nouvelOnglet: number) => {
+    setOngletActuel(nouvelOnglet);
   };
 
   return (
@@ -59,16 +59,16 @@ const FinancePage: React.FC = () => {
       {/* Vue d'ensemble - Toujours visible */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12}>
-          <FinanceStats />
+          <StatsFinance />
         </Grid>
       </Grid>
 
       {/* Onglets */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
-          value={currentTab}
-          onChange={handleTabChange}
-          aria-label="finance tabs"
+          value={ongletActuel}
+          onChange={handleChangementOnglet}
+          aria-label="onglets finance"
           variant="scrollable"
           scrollButtons="auto"
         >
@@ -80,29 +80,29 @@ const FinancePage: React.FC = () => {
       </Box>
 
       {/* Contenu des onglets */}
-      <TabPanel value={currentTab} index={0}>
+      <TabPanel value={ongletActuel} index={0}>
         <Grid container spacing={3}>
           <Grid item xs={12} lg={8}>
-            <CashFlowChart />
+            <GraphiqueTresorerie />
           </Grid>
           <Grid item xs={12} lg={4}>
-            <BudgetOverview />
+            <VueBudget />
           </Grid>
         </Grid>
       </TabPanel>
 
-      <TabPanel value={currentTab} index={1}>
-        <BudgetAnalysis />
+      <TabPanel value={ongletActuel} index={1}>
+        <AnalyseBudget />
       </TabPanel>
 
-      <TabPanel value={currentTab} index={2}>
-        <FinancialProjections />
+      <TabPanel value={ongletActuel} index={2}>
+        <ProjectionsFinancieres />
       </TabPanel>
 
-      <TabPanel value={currentTab} index={3}>
+      <TabPanel value={ongletActuel} index={3}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <TransactionsList />
+            <ListeTransactions />
           </Grid>
         </Grid>
       </TabPanel>
@@ -110,4 +110,4 @@ const FinancePage: React.FC = () => {
   );
 };
 
-export default FinancePage;
+export default PageFinance;

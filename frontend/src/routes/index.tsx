@@ -1,22 +1,22 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import ProjectRoutes from './projects';
-import DashboardPage from '../components/dashboard/DashboardPage';
-import WeatherDashboard from '../components/production/WeatherDashboard';
+import RoutesProjet from './projects';
+import TableauBord from '../components/dashboard/DashboardPage';
+import TableauMeteo from '../components/production/WeatherDashboard';
 
-const AppRoutes: React.FC = () => {
+const RoutesApp: React.FC = () => {
   return (
     <Routes>
-      {/* Page d'accueil - Dashboard */}
-      <Route path="/" element={<DashboardPage />} />
+      {/* Page d'accueil - Tableau de bord */}
+      <Route path="/" element={<TableauBord />} />
 
       {/* Routes de production */}
       <Route path="/production">
-        <Route path="weather" element={<WeatherDashboard />} />
+        <Route path="meteo" element={<TableauMeteo />} />
       </Route>
 
       {/* Routes des projets et tâches */}
-      <Route path="/projects/*" element={<ProjectRoutes />} />
+      <Route path="/projets/*" element={<RoutesProjet />} />
 
       {/* Redirection par défaut */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -24,4 +24,4 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-export default AppRoutes;
+export default RoutesApp;

@@ -10,14 +10,14 @@ import {
   Box
 } from '@mui/material';
 import { useQuery } from 'react-query';
-import { getBudgetOverview } from '../../services/finance';
+import { getVueBudget } from '../../services/finance';
 
-const BudgetOverview: React.FC = () => {
-  const { data: budgets, isLoading } = useQuery('budget-overview', getBudgetOverview);
+const VueBudget: React.FC = () => {
+  const { data: budgets } = useQuery('vue-budget', getVueBudget);
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return 'error';
-    if (percentage >= 75) return 'warning';
+  const getCouleurProgression = (pourcentage: number) => {
+    if (pourcentage >= 90) return 'error';
+    if (pourcentage >= 75) return 'warning';
     return 'success';
   };
 
@@ -30,11 +30,11 @@ const BudgetOverview: React.FC = () => {
 
         <List>
           {budgets?.map((budget) => {
-            const percentage = (budget.spent / budget.allocated) * 100;
+            const pourcentage = (budget.depense / budget.alloue) * 100;
             return (
-              <ListItem key={budget.category}>
+              <ListItem key={budget.categorie}>
                 <ListItemText
-                  primary={budget.category}
+                  primary={budget.categorie}
                   secondary={
                     <Box sx={{ mt: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -42,22 +42,22 @@ const BudgetOverview: React.FC = () => {
                           {new Intl.NumberFormat('fr-FR', {
                             style: 'currency',
                             currency: 'XAF'
-                          }).format(budget.spent)}
+                          }).format(budget.depense)}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           {new Intl.NumberFormat('fr-FR', {
                             style: 'currency',
                             currency: 'XAF'
-                          }).format(budget.allocated)}
+                          }).format(budget.alloue)}
                         </Typography>
                       </Box>
                       <LinearProgress
                         variant="determinate"
-                        value={Math.min(percentage, 100)}
-                        color={getProgressColor(percentage)}
+                        value={Math.min(pourcentage, 100)}
+                        color={getCouleurProgression(pourcentage)}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {percentage.toFixed(1)}% utilisé
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        {pourcentage.toFixed(1)}% utilisé
                       </Typography>
                     </Box>
                   }
@@ -71,4 +71,4 @@ const BudgetOverview: React.FC = () => {
   );
 };
 
-export default BudgetOverview;
+export default VueBudget;

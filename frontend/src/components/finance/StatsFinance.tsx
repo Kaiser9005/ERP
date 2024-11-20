@@ -3,10 +3,10 @@ import { Grid } from '@mui/material';
 import StatCard from '../common/StatCard';
 import { AccountBalance, TrendingUp, AccountBalanceWallet, Receipt } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getFinanceStats } from '../../services/finance';
+import { getStatsFinance, FinanceStats } from '../../services/finance';
 
-const FinanceStats: React.FC = () => {
-  const { data: stats, isLoading } = useQuery('finance-stats', getFinanceStats);
+const StatsFinance: React.FC = () => {
+  const { data: stats, isLoading } = useQuery<FinanceStats>('finance-stats', getStatsFinance);
 
   return (
     <Grid container spacing={3}>
@@ -15,7 +15,10 @@ const FinanceStats: React.FC = () => {
           title="Chiffre d'Affaires"
           value={stats?.revenue || 0}
           unit="FCFA"
-          variation={stats?.revenueVariation}
+          variation={{
+            value: stats?.revenueVariation?.value || 0,
+            type: stats?.revenueVariation?.type || 'increase'
+          }}
           icon={<AccountBalance />}
           color="primary"
         />
@@ -26,7 +29,10 @@ const FinanceStats: React.FC = () => {
           title="Bénéfice Net"
           value={stats?.profit || 0}
           unit="FCFA"
-          variation={stats?.profitVariation}
+          variation={{
+            value: stats?.profitVariation?.value || 0,
+            type: stats?.profitVariation?.type || 'increase'
+          }}
           icon={<TrendingUp />}
           color="success"
         />
@@ -37,7 +43,10 @@ const FinanceStats: React.FC = () => {
           title="Trésorerie"
           value={stats?.cashflow || 0}
           unit="FCFA"
-          variation={stats?.cashflowVariation}
+          variation={{
+            value: stats?.cashflowVariation?.value || 0,
+            type: stats?.cashflowVariation?.type || 'increase'
+          }}
           icon={<AccountBalanceWallet />}
           color="info"
         />
@@ -48,7 +57,10 @@ const FinanceStats: React.FC = () => {
           title="Dépenses"
           value={stats?.expenses || 0}
           unit="FCFA"
-          variation={stats?.expensesVariation}
+          variation={{
+            value: stats?.expensesVariation?.value || 0,
+            type: stats?.expensesVariation?.type || 'increase'
+          }}
           icon={<Receipt />}
           color="warning"
         />
@@ -57,4 +69,4 @@ const FinanceStats: React.FC = () => {
   );
 };
 
-export default FinanceStats;
+export default StatsFinance;
