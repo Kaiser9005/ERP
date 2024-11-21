@@ -3,10 +3,18 @@ import { Grid } from '@mui/material';
 import StatCard from '../dashboard/StatCard';
 import { Inventory, TrendingUp, Warning, LocalShipping } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getInventoryStats } from '../../services/inventory';
+import { getInventoryStats, Variation } from '../../services/inventory';
 
 const InventoryStats: React.FC = () => {
   const { data: stats } = useQuery('inventory-stats', getInventoryStats);
+
+  const formatVariation = (variation: Variation | undefined) => {
+    if (!variation) return undefined;
+    return {
+      value: Math.abs(variation.value),
+      type: variation.type
+    };
+  };
 
   return (
     <Grid container spacing={3}>
@@ -15,7 +23,7 @@ const InventoryStats: React.FC = () => {
           title="Valeur Totale"
           value={stats?.totalValue || 0}
           unit="FCFA"
-          variation={stats?.valueVariation}
+          variation={formatVariation(stats?.valueVariation)}
           icon={<Inventory />}
           color="primary"
         />
@@ -26,7 +34,7 @@ const InventoryStats: React.FC = () => {
           title="Rotation Stock"
           value={stats?.turnoverRate || 0}
           unit="jours"
-          variation={stats?.turnoverVariation}
+          variation={formatVariation(stats?.turnoverVariation)}
           icon={<TrendingUp />}
           color="success"
         />
@@ -36,7 +44,7 @@ const InventoryStats: React.FC = () => {
         <StatCard
           title="Alertes Stock"
           value={stats?.alerts || 0}
-          variation={stats?.alertsVariation}
+          variation={formatVariation(stats?.alertsVariation)}
           icon={<Warning />}
           color="warning"
         />
@@ -46,7 +54,7 @@ const InventoryStats: React.FC = () => {
         <StatCard
           title="Mouvements"
           value={stats?.movements || 0}
-          variation={stats?.movementsVariation}
+          variation={formatVariation(stats?.movementsVariation)}
           icon={<LocalShipping />}
           color="info"
         />

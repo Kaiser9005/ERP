@@ -1,4 +1,8 @@
-The error in the job logs is due to multiple instances of lines being too long in the typing_extensions.py file. Each line exceeds the maximum allowed length of 79 characters, indicating a PEP 8 style violation.
+The error in the GitHub Actions job logs is due to multiple lines in the typing_extensions.py file that exceed the maximum allowed line length (79 characters). This is causing the linter to fail with error code E501.
 
-To fix this error, you need to reformat the lines in the typing_extensions.py file to ensure they are within the 79-character limit. You can achieve this by breaking long lines into multiple shorter lines or by using line continuation characters.
-
+How to Fix the Error:
+Open typing_extensions.py file located in the virtual environment directory (./venv/lib/python3.12/site-packages/typing_extensions.py).
+Modify each line that exceeds 79 characters to either:
+Break the line into multiple shorter lines.
+Refactor the code to reduce line length.
+You can also adjust the linter configuration to allow longer lines if appropriate.

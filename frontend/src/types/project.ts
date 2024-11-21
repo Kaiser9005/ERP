@@ -1,11 +1,19 @@
-import { Task } from './task';
-
-export enum ProjectStatus {
-  PLANIFIE = "PLANIFIE",
-  EN_COURS = "EN_COURS",
-  EN_PAUSE = "EN_PAUSE",
-  TERMINE = "TERMINE",
-  ANNULE = "ANNULE"
+export interface Task {
+  id: string;
+  titre: string;
+  description?: string;
+  date_debut: string;
+  date_fin_prevue: string;
+  date_fin_reelle?: string;
+  priorite: 'BASSE' | 'MOYENNE' | 'HAUTE';
+  statut: 'A_FAIRE' | 'EN_COURS' | 'EN_REVUE' | 'TERMINE';
+  responsable_id: string;
+  projet_id: string;
+  parent_id?: string;
+  ordre: number;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ProjectStats {
@@ -26,6 +34,14 @@ export interface ProjectStats {
   };
   taux_completion: number;
   projets_termines: number;
+}
+
+export enum ProjectStatus {
+  PLANIFIE = "PLANIFIE",
+  EN_COURS = "EN_COURS",
+  EN_PAUSE = "EN_PAUSE",
+  TERMINE = "TERMINE",
+  ANNULE = "ANNULE"
 }
 
 export interface ProjectBase {

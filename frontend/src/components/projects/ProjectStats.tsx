@@ -16,7 +16,7 @@ import {
   TrendingUp
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { projectService } from '../../services/projects';
+import { getProjectStats } from '../../services/projects';
 import type { ProjectStats as ProjectStatsType } from '../../types/project';
 
 interface StatCardProps {
@@ -113,7 +113,7 @@ const StatCard: React.FC<StatCardProps> = ({
 const ProjectStats: React.FC = () => {
   const { data: stats, isLoading } = useQuery<ProjectStatsType>(
     'project-stats',
-    projectService.getProjectStats
+    getProjectStats
   );
 
   if (isLoading) {

@@ -1,83 +1,114 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  Box,
   Card,
   CardContent,
-  Typography,
-  TextField,
-  Button,
   Grid,
-  Alert,
-  CircularProgress
+  TextField,
+  Typography,
+  Box,
+  Button,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getParametres, updateParametre } from '../../services/parametrage';
 import { Parametre } from '../../types/parametrage';
+import { api } from '../../services/api';
 
 const ParametresGeneraux: React.FC = () => {
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
 
-  const { data: parametres, isLoading } = useQuery(
+  const { data: parametres, isLoading } = useQuery<Parametre[]>(
     'parametres-generaux',
-    () => getParametres('GENERAL')
+    async () => {
+      const response = await api.get('/api/v1/parametrage/general');
+      return response.data;
+    }
   );
 
-  const updateMutation = useMutation(updateParametre, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('parametres-generaux');
-      setError(null);
+  const updateParametre = useMutation(
+    async (params: { id: string; valeur: any }) => {
+      await api.put(`/api/v1/parametrage/${params.id}`, {
+        valeur: params.valeur
+      });
     },
-    onError: (error: Error) => {
-      setError(error.message);
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('parametres-generaux');
+      }
     }
-  });
+  );
 
-  const handleParametreChange = (parametre: Parametre, newValue: any) => {
-    updateMutation.mutate({
+  const handleChange = (parametre: Parametre) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = event.target.type === 'checkbox' 
+      ? event.target.checked 
+      : event.target.value;
+
+    updateParametre.mutate({
       id: parametre.id,
-      valeur: { ...parametre.valeur, value: newValue }
+      valeur: value
     });
   };
 
   if (isLoading) {
-    return <CircularProgress />;
+    return <Typography>Chargement...</Typography>;
   }
 
   return (
-    <Box>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Grid container spacing={3}>
-        {parametres?.map((parametre) => (
-          <Grid item xs={12} md={6} key={parametre.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+    <Grid container spacing={3}>
+      {parametres?.map((parametre) => (
+        <Grid item xs={12} md={6} key={parametre.id}>
+          <Card>
+            <CardContent>
+              <Box mb={2}>
+                <Typography variant="subtitle1" gutterBottom>
                   {parametre.libelle}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {parametre.description}
                 </Typography>
-                
+              </Box>
+
+              {typeof parametre.valeur === 'boolean' ? (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={parametre.valeur}
+                      onChange={handleChange(parametre)}
+                      disabled={!parametre.modifiable}
+                    />
+                  }
+                  label={parametre.valeur ? 'Activé' : 'Désactivé'}
+                />
+              ) : (
                 <TextField
                   fullWidth
-                  label="Valeur"
-                  value={parametre.valeur.value}
-                  onChange={(e) => handleParametreChange(parametre, e.target.value)}
+                  value={parametre.valeur}
+                  onChange={handleChange(parametre)}
                   disabled={!parametre.modifiable}
-                  margin="normal"
+                  size="small"
+                  variant="outlined"
+                  type={typeof parametre.valeur === 'number' ? 'number' : 'text'}
                 />
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+
+      <Grid item xs={12}>
+        <Box display="flex" justifyContent="flex-end" mt={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => queryClient.invalidateQueries('parametres-generaux')}
+          >
+            Actualiser
+          </Button>
+        </Box>
       </Grid>
-    </Box>
+    </Grid>
   );
 };
 

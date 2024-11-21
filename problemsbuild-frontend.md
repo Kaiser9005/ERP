@@ -1,22 +1,73 @@
-6s
+0s
+Current runner version: '2.321.0'
+Operating System
+Runner Image
+Runner Image Provisioner
+GITHUB_TOKEN Permissions
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e18286ca9a3d1956744)
+Download action repository 'actions/setup-node@v3' (SHA:1a4442cacd436585916779262731d5b162bc6ec7)
+Complete job name: build-frontend
+3s
+Run actions/checkout@v3
+Syncing repository: Kaiser9005/ERP
+Getting Git version info
+Temporarily overriding HOME='/home/runner/work/_temp/39741761-0ce0-45ef-80a3-ddaf2fd3489a' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/ERP/ERP
+Deleting the contents of '/home/runner/work/ERP/ERP'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+Checking out the ref
+/usr/bin/git log -1 --format='%H'
+'aa8f27b6567b92bcce9991cda5bac5be83212dee'
+2s
+Run actions/setup-node@v3
+Attempting to download 16...
+Acquiring 16.20.2 - x64 from https://github.com/actions/node-versions/releases/download/16.20.2-5819740093/node-16.20.2-linux-x64.tar.gz
+Extracting ...
+/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword -C /home/runner/work/_temp/3fb8b6fb-4e37-4996-a764-c2c944cfc417 -f /home/runner/work/_temp/c94d64a9-3688-4bd6-b37e-df1cec82adf3
+Adding to the cache ...
+Environment details
+14s
+Run npm install
+npm WARN EBADENGINE Unsupported engine {
+npm WARN EBADENGINE   package: 'react-hook-form@7.53.1',
+npm WARN EBADENGINE   required: { node: '>=18.0.0' },
+npm WARN EBADENGINE   current: { node: 'v16.20.2', npm: '8.19.4' }
+npm WARN EBADENGINE }
+npm WARN deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm WARN deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm WARN deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+npm WARN deprecated domexception@4.0.0: Use your platform's native DOMException instead
+npm WARN deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+npm WARN deprecated @types/react-leaflet@3.0.0: This is a stub types definition. react-leaflet provides its own type definitions, so you do not need this installed.
+npm WARN deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm WARN deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm WARN deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 517 packages, and audited 518 packages in 14s
+
+119 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+0s
+Run echo "VITE_WEATHER_API_KEY=" >> .env
+7s
 Run npm run build
 
 > fofal-erp@0.1.0 build
 > tsc && vite build
 
 Error: src/App.tsx(5,1): error TS6133: 'ThemeProvider' is declared but its value is never read.
-Error: src/components/dashboard/DashboardPage.tsx(13,24): error TS6133: 'isLoading' is declared but its value is never read.
-Error: src/components/dashboard/DashboardPage.tsx(28,13): error TS2322: Type '{ value: number; type: "increase" | "decrease"; } | undefined' is not assignable to type '{ valeur: number; type: "hausse" | "baisse"; } | undefined'.
-  Property 'valeur' is missing in type '{ value: number; type: "increase" | "decrease"; }' but required in type '{ valeur: number; type: "hausse" | "baisse"; }'.
-Error: src/components/dashboard/DashboardPage.tsx(39,13): error TS2322: Type '{ value: number; type: "increase" | "decrease"; } | undefined' is not assignable to type '{ valeur: number; type: "hausse" | "baisse"; } | undefined'.
-  Property 'valeur' is missing in type '{ value: number; type: "increase" | "decrease"; }' but required in type '{ valeur: number; type: "hausse" | "baisse"; }'.
-Error: src/components/dashboard/DashboardPage.tsx(50,13): error TS2322: Type '{ value: number; type: "increase" | "decrease"; } | undefined' is not assignable to type '{ valeur: number; type: "hausse" | "baisse"; } | undefined'.
-  Property 'valeur' is missing in type '{ value: number; type: "increase" | "decrease"; }' but required in type '{ valeur: number; type: "hausse" | "baisse"; }'.
-Error: src/components/dashboard/DashboardPage.tsx(60,13): error TS2322: Type '{ value: number; type: "increase" | "decrease"; } | undefined' is not assignable to type '{ valeur: number; type: "hausse" | "baisse"; } | undefined'.
-  Property 'valeur' is missing in type '{ value: number; type: "increase" | "decrease"; }' but required in type '{ valeur: number; type: "hausse" | "baisse"; }'.
-Error: src/components/hr/HRPage.tsx(5,27): error TS2307: Cannot find module './EmployeesList' or its corresponding type declarations.
-Error: src/components/hr/HRPage.tsx(6,27): error TS2307: Cannot find module './LeaveRequests' or its corresponding type declarations.
-Error: src/components/hr/HRPage.tsx(7,32): error TS2307: Cannot find module './AttendanceOverview' or its corresponding type declarations.
+Error: src/components/hr/AttendanceOverview.tsx(18,28): error TS6133: 'EmployeeStats' is declared but its value is never read.
 Error: src/components/inventaire/DetailsProduit.tsx(18,49): error TS2307: Cannot find module '../../services/inventory' or its corresponding type declarations.
 Error: src/components/inventaire/DetailsProduit.tsx(23,33): error TS2307: Cannot find module './StockMovementDialog' or its corresponding type declarations.
 Error: src/components/inventaire/DetailsProduit.tsx(40,9): error TS6133: 'getStockLevel' is declared but its value is never read.
@@ -37,8 +88,6 @@ Error: src/components/production/ParcelleForm.tsx(84,11): error TS2769: No overl
 Error: src/components/production/ParcelleMap.tsx(6,21): error TS2307: Cannot find module '/home/user/ERP/src/services/api' or its corresponding type declarations.
 Error: src/components/production/ProductionDashboard.tsx(61,13): error TS6133: 'detailedData' is declared but its value is never read.
 Error: src/components/production/ProductionDashboard.tsx(68,28): error TS6133: 'event' is declared but its value is never read.
-Error: src/components/production/ProductionPage.tsx(4,29): error TS2307: Cannot find module './ProductionStats' or its corresponding type declarations.
-Error: src/components/production/ProductionPage.tsx(5,27): error TS2307: Cannot find module './ParcellesList' or its corresponding type declarations.
 Error: src/components/projects/ProjectDetails.tsx(9,3): error TS6133: 'Button' is declared but its value is never read.
 Error: src/components/projects/ProjectDetails.tsx(10,3): error TS6133: 'Link' is declared but its value is never read.
 Error: src/components/projects/ProjectDetails.tsx(19,22): error TS2307: Cannot find module './TaskList' or its corresponding type declarations.
@@ -59,16 +108,37 @@ Error: src/components/projects/ProjectForm.tsx(90,11): error TS2769: No overload
     Type 'unknown' is not assignable to type 'ReactNode'.
   Overload 2 of 2, '(props: DefaultComponentProps<CardContentTypeMap<{}, "div">>): Element | null', gave the following error.
     Type 'unknown' is not assignable to type 'ReactNode'.
-Error: src/components/projects/ProjectsPage.tsx(4,26): error TS2307: Cannot find module './ProjectStats' or its corresponding type declarations.
+Error: src/components/projects/ProjectStats.tsx(19,10): error TS2305: Module '"../../services/projects"' has no exported member 'projectService'.
+Error: src/components/projects/ProjectStats.tsx(136,26): error TS2339: Property 'projets_actifs' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(137,26): error TS2339: Property 'total_projets' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(141,28): error TS2339: Property 'variation_projets_actifs' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(142,33): error TS2339: Property 'variation_projets_actifs' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(150,26): error TS2339: Property 'taches_completees' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(151,26): error TS2339: Property 'total_taches' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(160,26): error TS2339: Property 'taches_retard' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(164,28): error TS2339: Property 'variation_taches_retard' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(165,33): error TS2339: Property 'variation_taches_retard' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(173,26): error TS2339: Property 'heures_travaillees' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(177,28): error TS2339: Property 'variation_heures' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(178,33): error TS2339: Property 'variation_heures' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(197,47): error TS2339: Property 'repartition' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(202,49): error TS2339: Property 'repartition' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(207,47): error TS2339: Property 'repartition' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(212,48): error TS2339: Property 'repartition' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(229,28): error TS2339: Property 'taux_completion' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(233,34): error TS2339: Property 'taux_completion' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(238,28): error TS2339: Property 'projets_termines' does not exist on type '{}'.
+Error: src/components/projects/ProjectStats.tsx(238,74): error TS2339: Property 'total_projets' does not exist on type '{}'.
 Error: src/components/projects/ProjectsPage.tsx(5,26): error TS2307: Cannot find module './ProjectsList' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(6,29): error TS2307: Cannot find module './ProjectTimeline' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(7,27): error TS2307: Cannot find module './TasksOverview' or its corresponding type declarations.
-Error: src/routes/hr.tsx(4,29): error TS2307: Cannot find module '../components/hr/EmployeeDetails' or its corresponding type declarations.
-Error: src/routes/hr.tsx(5,30): error TS2307: Cannot find module '../components/hr/LeaveRequestForm' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(2,31): error TS2307: Cannot find module '../components/parametrage/ParametrageLayout' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(3,32): error TS2307: Cannot find module '../components/parametrage/ParametresGeneraux' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(4,34): error TS2307: Cannot find module '../components/parametrage/ConfigurationModules' or its corresponding type declarations.
-Error: src/routes/production.tsx(4,29): error TS2307: Cannot find module '../components/production/ParcelleDetails' or its corresponding type declarations.
 Error: src/services/api.ts(4,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
 Error: src/services/dashboard.ts(1,1): error TS6133: 'api' is declared but its value is never read.
+Error: src/types/project.ts(1,22): error TS2307: Cannot find module './task' or its corresponding type declarations.
 Error: Process completed with exit code 2.
+0s
+0s
+0s

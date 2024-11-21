@@ -15,8 +15,9 @@ import {
   Warning,
   TrendingUp
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
-import { projectService } from '../../services/projects';
+import { useQuery, QueryFunction } from 'react-query';
+import { getProjectStats } from '../../services/projects';
+import type { ProjectStats as ProjectStatsType } from '../../types/project';
 
 interface StatCardProps {
   title: string;
@@ -63,7 +64,7 @@ const StatCard: React.FC<StatCardProps> = ({
         </Box>
 
         <Typography variant="h4" gutterBottom>
-          {value}
+          {value.toLocaleString()}
           {total && (
             <Typography
               component="span"
@@ -71,7 +72,7 @@ const StatCard: React.FC<StatCardProps> = ({
               color="text.secondary"
               sx={{ ml: 1 }}
             >
-              / {total}
+              / {total.toLocaleString()}
             </Typography>
           )}
         </Typography>
@@ -110,9 +111,18 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 const ProjectStats: React.FC = () => {
-  const { data: stats, isLoading } = useQuery(
-    'project-stats',
-    projectService.getProjectStats
+  const queryFn: QueryFunction<ProjectStatsType> = async () => {
+    const response = await getProjectStats();
+    return response as unknown as ProjectStatsType;
+  };
+
+  const { data: stats, isLoading } = useQuery<ProjectStatsType>(
+    ['project-stats'],
+    queryFn,
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000 // 10 minutes
+    }
   );
 
   if (isLoading) {

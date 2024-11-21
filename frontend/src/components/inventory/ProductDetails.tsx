@@ -44,6 +44,13 @@ const ProductDetails: React.FC = () => {
     return 'success';
   };
 
+  const formatResponsable = (movement: any) => {
+    if (!movement.responsable) {
+      return movement.responsable_id;
+    }
+    return `${movement.responsable.nom} ${movement.responsable.prenom}`;
+  };
+
   return (
     <>
       <PageHeader
@@ -152,7 +159,7 @@ const ProductDetails: React.FC = () => {
                       </TableCell>
                       <TableCell>{movement.reference_document}</TableCell>
                       <TableCell>
-                        {movement.responsable.nom} {movement.responsable.prenom}
+                        {formatResponsable(movement)}
                       </TableCell>
                     </TableRow>
                   ))}
