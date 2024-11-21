@@ -108,27 +108,6 @@ Error: src/components/projects/ProjectForm.tsx(90,11): error TS2769: No overload
     Type 'unknown' is not assignable to type 'ReactNode'.
   Overload 2 of 2, '(props: DefaultComponentProps<CardContentTypeMap<{}, "div">>): Element | null', gave the following error.
     Type 'unknown' is not assignable to type 'ReactNode'.
-Error: src/components/projects/ProjectStats.tsx(19,10): error TS2305: Module '"../../services/projects"' has no exported member 'projectService'.
-Error: src/components/projects/ProjectStats.tsx(136,26): error TS2339: Property 'projets_actifs' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(137,26): error TS2339: Property 'total_projets' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(141,28): error TS2339: Property 'variation_projets_actifs' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(142,33): error TS2339: Property 'variation_projets_actifs' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(150,26): error TS2339: Property 'taches_completees' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(151,26): error TS2339: Property 'total_taches' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(160,26): error TS2339: Property 'taches_retard' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(164,28): error TS2339: Property 'variation_taches_retard' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(165,33): error TS2339: Property 'variation_taches_retard' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(173,26): error TS2339: Property 'heures_travaillees' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(177,28): error TS2339: Property 'variation_heures' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(178,33): error TS2339: Property 'variation_heures' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(197,47): error TS2339: Property 'repartition' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(202,49): error TS2339: Property 'repartition' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(207,47): error TS2339: Property 'repartition' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(212,48): error TS2339: Property 'repartition' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(229,28): error TS2339: Property 'taux_completion' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(233,34): error TS2339: Property 'taux_completion' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(238,28): error TS2339: Property 'projets_termines' does not exist on type '{}'.
-Error: src/components/projects/ProjectStats.tsx(238,74): error TS2339: Property 'total_projets' does not exist on type '{}'.
 Error: src/components/projects/ProjectsPage.tsx(5,26): error TS2307: Cannot find module './ProjectsList' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(6,29): error TS2307: Cannot find module './ProjectTimeline' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(7,27): error TS2307: Cannot find module './TasksOverview' or its corresponding type declarations.
@@ -137,8 +116,4 @@ Error: src/routes/parametrage.tsx(3,32): error TS2307: Cannot find module '../co
 Error: src/routes/parametrage.tsx(4,34): error TS2307: Cannot find module '../components/parametrage/ConfigurationModules' or its corresponding type declarations.
 Error: src/services/api.ts(4,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
 Error: src/services/dashboard.ts(1,1): error TS6133: 'api' is declared but its value is never read.
-Error: src/types/project.ts(1,22): error TS2307: Cannot find module './task' or its corresponding type declarations.
 Error: Process completed with exit code 2.
-0s
-0s
-0s

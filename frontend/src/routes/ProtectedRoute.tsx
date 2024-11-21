@@ -21,7 +21,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Vérifier les rôles si spécifiés
   if (requiredRoles.length > 0 && user) {
     const hasRequiredRole = requiredRoles.some(role => 
-      user.roles?.includes(role)
+      user.role?.includes(role)
     );
 
     if (!hasRequiredRole) {

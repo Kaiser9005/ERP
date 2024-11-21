@@ -6,7 +6,7 @@ alembic==1.10.3
 psycopg2-binary==2.9.6
 
 # Type Hints and Validation
-pydantic==2.0.0
+pydantic==1.10.7
 typing-extensions==4.7.1
 
 # Authentication
