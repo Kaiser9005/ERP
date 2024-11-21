@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Edit, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getTransactions, Transaction } from '../../services/finance';
+import { getTransactions, Transaction, TypeTransaction } from '../../services/finance';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -31,7 +31,7 @@ const ListeTransactions: React.FC = () => {
     (transaction.reference?.toLowerCase() || '').includes(recherche.toLowerCase())
   );
 
-  const getCouleurTransaction = (type: Transaction['type']) => {
+  const getCouleurTransaction = (type: TypeTransaction) => {
     switch (type) {
       case 'ENTREE':
         return 'success';

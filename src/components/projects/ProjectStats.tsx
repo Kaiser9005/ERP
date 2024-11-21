@@ -17,7 +17,6 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import { projectService } from '../../services/projects';
-import type { ProjectStats as ProjectStatsType } from '../../types/project';
 
 interface StatCardProps {
   title: string;
@@ -64,7 +63,7 @@ const StatCard: React.FC<StatCardProps> = ({
         </Box>
 
         <Typography variant="h4" gutterBottom>
-          {value.toLocaleString()}
+          {value}
           {total && (
             <Typography
               component="span"
@@ -72,7 +71,7 @@ const StatCard: React.FC<StatCardProps> = ({
               color="text.secondary"
               sx={{ ml: 1 }}
             >
-              / {total.toLocaleString()}
+              / {total}
             </Typography>
           )}
         </Typography>
@@ -111,7 +110,7 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 const ProjectStats: React.FC = () => {
-  const { data: stats, isLoading } = useQuery<ProjectStatsType>(
+  const { data: stats, isLoading } = useQuery(
     'project-stats',
     projectService.getProjectStats
   );

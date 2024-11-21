@@ -1,9 +1,9 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   requiredRoles?: string[];
 }
 
@@ -30,5 +30,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  return <>{children}</>;
+  return children ? <>{children}</> : <Outlet />;
 };
+
+export default ProtectedRoute;

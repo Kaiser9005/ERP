@@ -1,27 +1,24 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import RoutesProjet from './projects';
-import TableauBord from '../components/dashboard/DashboardPage';
-import TableauMeteo from '../components/production/WeatherDashboard';
+import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
+import DashboardPage from '../components/dashboard/DashboardPage';
+import TableauMeteo from '../components/production/TableauMeteo';
+import PageFinance from '../components/finance/PageFinance';
+import PageInventaire from '../components/inventaire/PageInventaire';
+import ProjectRoutes from './projects';
 
-const RoutesApp: React.FC = () => {
+const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Page d'accueil - Tableau de bord */}
-      <Route path="/" element={<TableauBord />} />
-
-      {/* Routes de production */}
-      <Route path="/production">
+      <Route path="/" element={<ProtectedRoute />}>
+        <Route index element={<DashboardPage />} />
         <Route path="meteo" element={<TableauMeteo />} />
+        <Route path="finance/*" element={<PageFinance />} />
+        <Route path="inventaire/*" element={<PageInventaire />} />
+        <Route path="projects/*" element={<ProjectRoutes />} />
       </Route>
-
-      {/* Routes des projets et tâches */}
-      <Route path="/projets/*" element={<RoutesProjet />} />
-
-      {/* Redirection par défaut */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
 
-export default RoutesApp;
+export default AppRoutes;

@@ -9,8 +9,27 @@ import ProductionChart from './ProductionChart';
 import RecentActivities from './RecentActivities';
 import WeatherWidget from './WeatherWidget';
 
+type ApiVariation = {
+  value: number;
+  type: 'increase' | 'decrease';
+};
+
+type UiVariation = {
+  valeur: number;
+  type: 'hausse' | 'baisse';
+};
+
+// Fonction utilitaire pour convertir le format des variations
+const convertirVariation = (variation?: ApiVariation): UiVariation | undefined => {
+  if (!variation) return undefined;
+  return {
+    valeur: variation.value,
+    type: variation.type === 'increase' ? 'hausse' as const : 'baisse' as const
+  };
+};
+
 const DashboardPage: React.FC = () => {
-  const { data: stats, isLoading } = useQuery('dashboard-stats', getDashboardStats);
+  const { data: stats } = useQuery('dashboard-stats', getDashboardStats);
 
   return (
     <Box>
@@ -25,7 +44,7 @@ const DashboardPage: React.FC = () => {
             title="Production"
             value={stats?.production.total || 0}
             unit="tonnes"
-            variation={stats?.production.variation}
+            variation={convertirVariation(stats?.production.variation)}
             icon={<Agriculture />}
             color="primary"
           />
@@ -36,7 +55,7 @@ const DashboardPage: React.FC = () => {
             title="Stock"
             value={stats?.inventory.value || 0}
             unit="FCFA"
-            variation={stats?.inventory.variation}
+            variation={convertirVariation(stats?.inventory.variation)}
             icon={<Inventory />}
             color="success"
           />
@@ -47,7 +66,7 @@ const DashboardPage: React.FC = () => {
             title="Chiffre d'Affaires"
             value={stats?.finance.revenue || 0}
             unit="FCFA"
-            variation={stats?.finance.variation}
+            variation={convertirVariation(stats?.finance.variation)}
             icon={<AccountBalance />}
             color="info"
           />
@@ -57,7 +76,7 @@ const DashboardPage: React.FC = () => {
           <StatCard
             title="Employés Actifs"
             value={stats?.hr.activeEmployees || 0}
-            variation={stats?.hr.variation}
+            variation={convertirVariation(stats?.hr.variation)}
             icon={<People />}
             color="warning"
           />

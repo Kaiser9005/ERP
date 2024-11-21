@@ -28,17 +28,17 @@ interface FormData extends Omit<Transaction, 'id' | 'date'> {
 const schema = yup.object({
   reference: yup.string().required('La référence est requise'),
   date: yup.date().required('La date est requise'),
-  type_transaction: yup.string().oneOf(['RECETTE', 'DEPENSE'], 'Type invalide').required('Le type est requis'),
+  type: yup.string().oneOf(['ENTREE', 'SORTIE'], 'Type invalide').required('Le type est requis'),
   montant: yup.number()
     .required('Le montant est requis')
     .positive('Le montant doit être positif'),
   description: yup.string(),
-  compte_source_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'DEPENSE',
+  compte_source_id: yup.string().when('type', {
+    is: (val: string) => val === 'SORTIE',
     then: (schema) => schema.required('Le compte source est requis')
   }),
-  compte_destination_id: yup.string().when('type_transaction', {
-    is: (val: string) => val === 'RECETTE',
+  compte_destination_id: yup.string().when('type', {
+    is: (val: string) => val === 'ENTREE',
     then: (schema) => schema.required('Le compte destination est requis')
   })
 }).required();
@@ -68,7 +68,7 @@ const FormulaireTransaction: React.FC = () => {
     defaultValues: transaction || {
       reference: '',
       date: new Date(),
-      type_transaction: undefined,
+      type: undefined,
       montant: 0,
       description: '',
       compte_source_id: '',
@@ -77,7 +77,7 @@ const FormulaireTransaction: React.FC = () => {
     }
   });
 
-  const typeTransaction = watch('type_transaction');
+  const typeTransaction = watch('type');
 
   const mutation = useMutation(
     (data: FormData) => {
@@ -160,7 +160,7 @@ const FormulaireTransaction: React.FC = () => {
 
               <Grid item xs={12} md={6}>
                 <Controller
-                  name="type_transaction"
+                  name="type"
                   control={control}
                   render={({ field }) => (
                     <TextField
@@ -168,11 +168,11 @@ const FormulaireTransaction: React.FC = () => {
                       select
                       label="Type de Transaction"
                       fullWidth
-                      error={!!errors.type_transaction}
-                      helperText={errors.type_transaction?.message}
+                      error={!!errors.type}
+                      helperText={errors.type?.message}
                     >
-                      <MenuItem value="RECETTE">Recette</MenuItem>
-                      <MenuItem value="DEPENSE">Dépense</MenuItem>
+                      <MenuItem value="ENTREE">Entrée</MenuItem>
+                      <MenuItem value="SORTIE">Sortie</MenuItem>
                     </TextField>
                   )}
                 />
@@ -195,7 +195,7 @@ const FormulaireTransaction: React.FC = () => {
                 />
               </Grid>
 
-              {typeTransaction === 'DEPENSE' && (
+              {typeTransaction === 'SORTIE' && (
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="compte_source_id"
@@ -220,7 +220,7 @@ const FormulaireTransaction: React.FC = () => {
                 </Grid>
               )}
 
-              {typeTransaction === 'RECETTE' && (
+              {typeTransaction === 'ENTREE' && (
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="compte_destination_id"

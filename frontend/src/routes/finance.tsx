@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import FinancePage from '../components/finance/FinancePage';
+import PageFinance from '../components/finance/PageFinance';
 import FormulaireTransaction from '../components/finance/FormulaireTransaction';
 import { ProtectedRoute } from '../routes/ProtectedRoute';
 
@@ -11,7 +11,7 @@ const FinanceRoutes: React.FC = () => {
         path="/"
         element={
           <ProtectedRoute>
-            <FinancePage />
+            <PageFinance />
           </ProtectedRoute>
         }
       />
