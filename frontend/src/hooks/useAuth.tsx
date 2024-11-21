@@ -1,57 +1,62 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { api } from '../services/api';
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import axios from 'axios';
+import { User, AuthContextType, LoginCredentials } from '../types/auth';
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  user: any | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+  children: ReactNode;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
-
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/token', {
-        username,
+      const response = await axios.post<{ user: User; token: string }>('/api/v1/auth/login', {
+        email,
         password
       });
 
-      const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
+      const { user: userData, token } = response.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
+      setUser(userData);
 
-      // Récupérer les informations de l'utilisateur
-      const userResponse = await api.get('/auth/users/me');
-      setUser(userResponse.data);
+      // Configure axios pour inclure le token dans les futures requêtes
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } catch (error) {
-      throw new Error('Identifiants invalides');
+      console.error('Erreur de connexion:', error);
+      throw error;
     }
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
   }, []);
 
-  return (
-    <AuthContext.Provider value={{
-      isAuthenticated: !!user,
-      user,
-      login,
-      logout
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    login,
+    logout
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error('useAuth doit être utilisé à l\'intérieur d\'un AuthProvider');
   }
   return context;
 };
+
+export default useAuth;

@@ -1,122 +1,129 @@
 import React, { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  Typography,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
+  Paper,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Box,
-  TextField,
-  InputAdornment,
-  IconButton,
+  Typography,
   LinearProgress
 } from '@mui/material';
-import { Edit, Search, Add } from '@mui/icons-material';
-import { useQuery } from 'react-query';
-import { getStocks, Stock } from '../../services/inventaire';
-import DialogueMouvementStock from './DialogueMouvementStock';
+import { useQuery } from '@tanstack/react-query';
+import { getStocks } from '../../services/inventaire';
+import type { Stock } from '../../types/inventaire';
 
 const ListeStock: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const { data: stocks = [] } = useQuery<Stock[]>('stocks', getStocks);
+  const [categorieFilter, setCategorieFilter] = useState<string>('TOUS');
+  const [seuilFilter, setSeuilFilter] = useState<string>('TOUS');
 
-  const filteredStocks = stocks.filter(stock =>
-    stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.code.toLowerCase().includes(searchTerm.toLowerCase())
+  const { data: stocks, isLoading, error } = useQuery(
+    ['stocks', categorieFilter, seuilFilter],
+    () => getStocks({
+      categorie: categorieFilter === 'TOUS' ? undefined : categorieFilter,
+      seuil_alerte: seuilFilter === 'TOUS' ? undefined : seuilFilter === 'SOUS_SEUIL'
+    })
   );
 
-  const getStockLevel = (current: number, threshold: number) => {
-    const ratio = current / threshold;
-    if (ratio <= 0.25) return 'error';
-    if (ratio <= 0.5) return 'warning';
-    return 'success';
-  };
+  if (isLoading) {
+    return <LinearProgress />;
+  }
+
+  if (error) {
+    return (
+      <Typography color="error">
+        Erreur lors du chargement des stocks
+      </Typography>
+    );
+  }
+
+  const filteredStocks = stocks || [];
 
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6">État des Stocks</Typography>
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
+    <>
+      <Box mb={3} display="flex" gap={2}>
+        <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Catégorie</InputLabel>
+          <Select
+            value={categorieFilter}
+            onChange={(e) => setCategorieFilter(e.target.value as string)}
+            label="Catégorie"
+          >
+            <MenuItem value="TOUS">Toutes les catégories</MenuItem>
+            <MenuItem value="INTRANT">Intrants</MenuItem>
+            <MenuItem value="MATERIEL">Matériel</MenuItem>
+            <MenuItem value="PRODUIT">Produits</MenuItem>
+          </Select>
+        </FormControl>
 
+        <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Niveau de Stock</InputLabel>
+          <Select
+            value={seuilFilter}
+            onChange={(e) => setSeuilFilter(e.target.value as string)}
+            label="Niveau de Stock"
+          >
+            <MenuItem value="TOUS">Tous les niveaux</MenuItem>
+            <MenuItem value="SOUS_SEUIL">Sous le seuil d'alerte</MenuItem>
+            <MenuItem value="AU_DESSUS">Au-dessus du seuil</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Code</TableCell>
-              <TableCell>Produit</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Catégorie</TableCell>
               <TableCell align="right">Quantité</TableCell>
-              <TableCell align="right">Valeur</TableCell>
-              <TableCell align="right">Niveau</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell align="right">Seuil d'Alerte</TableCell>
+              <TableCell align="right">Valeur Unitaire</TableCell>
+              <TableCell>Statut</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredStocks.map((stock) => (
-              <TableRow key={stock.id}>
-                <TableCell>{stock.code}</TableCell>
-                <TableCell>{stock.name}</TableCell>
-                <TableCell align="right">
-                  {stock.quantity} {stock.unit}
-                </TableCell>
-                <TableCell align="right">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'XAF'
-                  }).format(stock.value)}
-                </TableCell>
-                <TableCell align="right">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(stock.quantity / stock.threshold) * 100}
-                      color={getStockLevel(stock.quantity, stock.threshold)}
-                      sx={{ flexGrow: 1 }}
+            {filteredStocks.map((stock) => {
+              const sousSeuilAlerte = stock.quantite <= stock.produit.seuil_alerte;
+              return (
+                <TableRow key={stock.id}>
+                  <TableCell>{stock.produit.code}</TableCell>
+                  <TableCell>{stock.produit.nom}</TableCell>
+                  <TableCell>{stock.produit.categorie}</TableCell>
+                  <TableCell align="right">
+                    {stock.quantite} {stock.produit.unite_mesure}
+                  </TableCell>
+                  <TableCell align="right">
+                    {stock.produit.seuil_alerte} {stock.produit.unite_mesure}
+                  </TableCell>
+                  <TableCell align="right">
+                    {new Intl.NumberFormat('fr-FR', {
+                      style: 'currency',
+                      currency: 'XAF'
+                    }).format(stock.valeur_unitaire)}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={sousSeuilAlerte ? 'Sous Seuil' : 'Normal'}
+                      color={sousSeuilAlerte ? 'error' : 'success'}
+                      size="small"
                     />
-                    <Typography variant="body2">
-                      {Math.round((stock.quantity / stock.threshold) * 100)}%
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    onClick={() => setSelectedProduct(stock.id)}
-                  >
-                    <Add />
-                  </IconButton>
-                  <IconButton size="small">
-                    <Edit />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
-
-        <DialogueMouvementStock
-          open={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          productId={selectedProduct}
-        />
-      </CardContent>
-    </Card>
+      </TableContainer>
+    </>
   );
 };
 
