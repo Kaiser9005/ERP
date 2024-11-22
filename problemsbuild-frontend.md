@@ -60,7 +60,7 @@ added 517 packages, and audited 518 packages in 14s
 found 0 vulnerabilities
 0s
 Run echo "VITE_WEATHER_API_KEY=" >> .env
-7s
+
 Run npm run build
 
 > fofal-erp@0.1.0 build

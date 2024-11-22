@@ -1,11 +1,22 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import '@testing-library/jest-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import ProductForm from '../ProductForm';
-import { createProduct, updateProduct, getProduct } from '../../../services/inventory';
+import FormulaireProduit from '../FormulaireProduit';
+import { createProduit, updateProduit, getProduit } from '../../../services/inventaire';
+import { vi } from 'vitest';
+import type { Produit } from '../../../types/inventaire';
 
-jest.mock('../../../services/inventory');
+declare global {
+  namespace Vi {
+    interface JestMatchers<T> {
+      toBeInTheDocument(): boolean;
+    }
+  }
+}
+
+vi.mock('../../../services/inventaire');
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,26 +26,27 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (component: React.ReactElement) => {
+const renderWithProviders = (initialPath: string = '/') => {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
-          <Route path="/" element={component} />
-          <Route path="/inventory" element={<div>Inventory Page</div>} />
+          <Route path="/" element={<FormulaireProduit />} />
+          <Route path="/produit/:id" element={<FormulaireProduit />} />
+          <Route path="/inventaire" element={<div>Page Inventaire</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
   );
 };
 
-describe('ProductForm', () => {
+describe('FormulaireProduit', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('affiche le formulaire de création', () => {
-    renderWithProviders(<ProductForm />);
+    renderWithProviders();
     
     expect(screen.getByText('Nouveau Produit')).toBeInTheDocument();
     expect(screen.getByLabelText('Code')).toBeInTheDocument();
@@ -43,7 +55,7 @@ describe('ProductForm', () => {
   });
 
   it('valide les champs requis', async () => {
-    renderWithProviders(<ProductForm />);
+    renderWithProviders();
     
     fireEvent.click(screen.getByText('Créer'));
     
@@ -54,9 +66,19 @@ describe('ProductForm', () => {
   });
 
   it('soumet le formulaire avec des données valides', async () => {
-    (createProduct as jest.Mock).mockResolvedValue({ id: '1' });
+    const mockProduit: Partial<Produit> = {
+      code: 'PRD001',
+      nom: 'Engrais NPK',
+      categorie: 'INTRANT',
+      unite_mesure: 'KG',
+      seuil_alerte: 100,
+      prix_unitaire: 1500,
+      specifications: {}
+    };
+
+    (createProduit as any).mockResolvedValue({ id: '1', ...mockProduit });
     
-    renderWithProviders(<ProductForm />);
+    renderWithProviders();
     
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'PRD001' } });
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Engrais NPK' } });
@@ -68,44 +90,70 @@ describe('ProductForm', () => {
     fireEvent.click(screen.getByText('Créer'));
     
     await waitFor(() => {
-      expect(createProduct).toHaveBeenCalledWith({
-        code: 'PRD001',
-        nom: 'Engrais NPK',
-        categorie: 'INTRANT',
-        unite_mesure: 'KG',
-        seuil_alerte: '100',
-        prix_unitaire: '1500'
-      });
+      expect(createProduit).toHaveBeenCalledWith(mockProduit);
     });
   });
 
   it('charge les données pour la modification', async () => {
-    const mockProduct = {
+    const mockProduit: Produit = {
       id: '1',
       code: 'PRD001',
       nom: 'Engrais NPK',
       categorie: 'INTRANT',
       unite_mesure: 'KG',
       seuil_alerte: 100,
-      prix_unitaire: 1500
+      prix_unitaire: 1500,
+      specifications: {}
     };
 
-    (getProduct as jest.Mock).mockResolvedValue(mockProduct);
+    (getProduit as any).mockResolvedValue(mockProduit);
     
-    renderWithProviders(<ProductForm />);
+    renderWithProviders('/produit/1');
     
     expect(await screen.findByDisplayValue('PRD001')).toBeInTheDocument();
     expect(await screen.findByDisplayValue('Engrais NPK')).toBeInTheDocument();
   });
 
   it('gère les erreurs de soumission', async () => {
-    (createProduct as jest.Mock).mockRejectedValue(new Error('Erreur de création'));
+    (createProduit as any).mockRejectedValue(new Error('Erreur test'));
     
-    renderWithProviders(<ProductForm />);
+    renderWithProviders();
     
     fireEvent.change(screen.getByLabelText('Code'), { target: { value: 'PRD001' } });
     fireEvent.click(screen.getByText('Créer'));
     
     expect(await screen.findByText('Une erreur est survenue')).toBeInTheDocument();
+  });
+
+  it('permet la modification d\'un produit existant', async () => {
+    const mockProduit: Produit = {
+      id: '1',
+      code: 'PRD001',
+      nom: 'Engrais NPK',
+      categorie: 'INTRANT',
+      unite_mesure: 'KG',
+      seuil_alerte: 100,
+      prix_unitaire: 1500,
+      specifications: {}
+    };
+
+    (getProduit as any).mockResolvedValue(mockProduit);
+    (updateProduit as any).mockResolvedValue({ ...mockProduit, nom: 'Engrais NPK Plus' });
+    
+    renderWithProviders('/produit/1');
+    
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Engrais NPK')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'Engrais NPK Plus' } });
+    fireEvent.click(screen.getByText('Modifier'));
+    
+    await waitFor(() => {
+      expect(updateProduit).toHaveBeenCalledWith('1', {
+        ...mockProduit,
+        nom: 'Engrais NPK Plus'
+      });
+    });
   });
 });

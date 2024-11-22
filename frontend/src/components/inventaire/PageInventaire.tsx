@@ -1,36 +1,44 @@
 import React from 'react';
-import { Box, Typography, Grid } from '@mui/material';
+import { Grid } from '@mui/material';
+import PageHeader from '../layout/PageHeader';
 import StatsInventaire from './StatsInventaire';
 import ListeStock from './ListeStock';
 import HistoriqueMouvements from './HistoriqueMouvements';
+import { Add } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const PageInventaire: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Gestion de l'Inventaire
-      </Typography>
+    <>
+      <PageHeader
+        title="Inventaire"
+        subtitle="Gestion des stocks et mouvements"
+        action={{
+          label: "Nouveau Produit",
+          onClick: () => navigate('/inventaire/produits/nouveau'),
+          icon: <Add />
+        }}
+      />
 
       <Grid container spacing={3}>
+        {/* Statistiques d'inventaire */}
         <Grid item xs={12}>
           <StatsInventaire />
         </Grid>
 
-        <Grid item xs={12}>
-          <Typography variant="h5" gutterBottom>
-            État des Stocks
-          </Typography>
+        {/* Liste des stocks */}
+        <Grid item xs={12} lg={8}>
           <ListeStock />
         </Grid>
 
-        <Grid item xs={12}>
-          <Typography variant="h5" gutterBottom>
-            Historique des Mouvements
-          </Typography>
+        {/* Historique des mouvements */}
+        <Grid item xs={12} lg={4}>
           <HistoriqueMouvements />
         </Grid>
       </Grid>
-    </Box>
+    </>
   );
 };
 

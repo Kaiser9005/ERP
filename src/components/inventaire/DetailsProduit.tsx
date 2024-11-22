@@ -15,43 +15,47 @@ import {
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { getProduct, getProductMovements } from '../../services/inventory';
+import { getProduit, getProductMovements } from '../../services/inventaire';
 import PageHeader from '../layout/PageHeader';
 import { Edit } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import StockMovementDialog from './StockMovementDialog';
+import DialogueMouvementStock from './DialogueMouvementStock';
+import { CategoryProduit, TypeMouvement } from '../../types/inventaire';
 
-const ProductDetails: React.FC = () => {
-  const { id } = useParams();
+const DetailsProduit: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
-  const { data: product } = useQuery(
+  const { data: product, isLoading: isLoadingProduct } = useQuery(
     ['product', id],
-    () => getProduct(id!)
+    () => id ? getProduit(id) : Promise.reject('No ID provided'),
+    {
+      enabled: !!id
+    }
   );
 
-  const { data: movements } = useQuery(
+  const { data: movements, isLoading: isLoadingMovements } = useQuery(
     ['product-movements', id],
-    () => getProductMovements(id!)
+    () => id ? getProductMovements(id) : Promise.reject('No ID provided'),
+    {
+      enabled: !!id
+    }
   );
 
-  const getStockLevel = (current: number, threshold: number) => {
-    const ratio = current / threshold;
-    if (ratio <= 0.25) return 'error';
-    if (ratio <= 0.5) return 'warning';
-    return 'success';
-  };
+  if (isLoadingProduct || isLoadingMovements || !product) {
+    return null; // TODO: Add loading spinner
+  }
 
   return (
     <>
       <PageHeader
-        title={`Produit ${product?.code}`}
+        title={`Produit ${product.code}`}
         subtitle="Détails et mouvements"
         action={{
           label: "Modifier",
-          onClick: () => navigate(`/inventory/products/${id}/edit`),
+          onClick: () => navigate(`/inventaire/produits/${id}/edit`),
           icon: <Edit />
         }}
       />
@@ -70,7 +74,7 @@ const ProductDetails: React.FC = () => {
                     Catégorie
                   </Typography>
                   <Chip
-                    label={product?.categorie}
+                    label={CategoryProduit[product.categorie]}
                     color="primary"
                   />
                 </Box>
@@ -80,7 +84,7 @@ const ProductDetails: React.FC = () => {
                     Unité de Mesure
                   </Typography>
                   <Typography variant="body1">
-                    {product?.unite_mesure}
+                    {product.unite_mesure}
                   </Typography>
                 </Box>
 
@@ -92,7 +96,7 @@ const ProductDetails: React.FC = () => {
                     {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'XAF'
-                    }).format(product?.prix_unitaire || 0)}
+                    }).format(product.prix_unitaire)}
                   </Typography>
                 </Box>
 
@@ -101,7 +105,7 @@ const ProductDetails: React.FC = () => {
                     Seuil d'Alerte
                   </Typography>
                   <Typography variant="body1">
-                    {product?.seuil_alerte} {product?.unite_mesure}
+                    {product.seuil_alerte} {product.unite_mesure}
                   </Typography>
                 </Box>
               </Box>
@@ -135,7 +139,7 @@ const ProductDetails: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {movements?.map((movement) => (
+                  {movements?.map(movement => (
                     <TableRow key={movement.id}>
                       <TableCell>
                         {format(new Date(movement.date_mouvement), 'Pp', { locale: fr })}
@@ -144,11 +148,11 @@ const ProductDetails: React.FC = () => {
                         <Chip
                           size="small"
                           label={movement.type_mouvement}
-                          color={movement.type_mouvement === 'ENTREE' ? 'success' : 'error'}
+                          color={movement.type_mouvement === TypeMouvement.ENTREE ? 'success' : 'error'}
                         />
                       </TableCell>
                       <TableCell align="right">
-                        {movement.quantite} {product?.unite_mesure}
+                        {movement.quantite} {product.unite_mesure}
                       </TableCell>
                       <TableCell>{movement.reference_document}</TableCell>
                       <TableCell>
@@ -163,7 +167,7 @@ const ProductDetails: React.FC = () => {
         </Grid>
       </Grid>
 
-      <StockMovementDialog
+      <DialogueMouvementStock
         open={movementDialogOpen}
         onClose={() => setMovementDialogOpen(false)}
         productId={id || null}
@@ -172,4 +176,4 @@ const ProductDetails: React.FC = () => {
   );
 };
 
-export default ProductDetails;
+export default DetailsProduit;

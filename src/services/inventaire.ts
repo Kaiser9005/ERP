@@ -1,61 +1,10 @@
 import { api } from './api';
-
-export interface Produit {
-  id: string;
-  code: string;
-  nom: string;
-  description?: string;
-  categorie: string;
-  unite_mesure: string;
-  prix_unitaire: number;
-  quantite_stock: number;
-  seuil_alerte: number;
-  emplacement?: string;
-  specifications?: Record<string, any>;
-  date_derniere_maj?: string;
-}
-
-export interface MouvementStock {
-  id: string;
-  produit_id: string;
-  type_mouvement: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
-  quantite: number;
-  date_mouvement: string;
-  entrepot_source_id?: string;
-  entrepot_destination_id?: string;
-  responsable_id: string;
-  reference_document?: string;
-  notes?: string;
-  cout_unitaire?: number;
-}
-
-export interface StatsInventaire {
-  total_produits: number;
-  stock_faible: number;
-  valeur_totale: number;
-  mouvements: {
-    entrees: number;
-    sorties: number;
-  };
-  valeur_stock: {
-    valeur: number;
-    type: 'hausse' | 'baisse';
-  };
-  rotation_stock: {
-    valeur: number;
-    type: 'hausse' | 'baisse';
-  };
-}
-
-export interface Stock {
-  id: string;
-  code: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  value: number;
-  threshold: number;
-}
+import {
+  Produit,
+  MouvementStock,
+  Stock,
+  StatsInventaire
+} from '../types/inventaire';
 
 export const getProduits = async (): Promise<Produit[]> => {
   const { data } = await api.get<Produit[]>('/api/inventaire/produits');
@@ -79,6 +28,11 @@ export const modifierProduit = async (id: string, produitData: Partial<Produit>)
 
 export const getMouvements = async (): Promise<MouvementStock[]> => {
   const { data } = await api.get<MouvementStock[]>('/api/inventaire/mouvements');
+  return data;
+};
+
+export const getProductMovements = async (productId: string): Promise<MouvementStock[]> => {
+  const { data } = await api.get<MouvementStock[]>(`/api/inventaire/produits/${productId}/mouvements`);
   return data;
 };
 

@@ -1,71 +1,70 @@
-import axios from 'axios';
-import { Product, StockMovement, StockLevel, Stock, StatsInventaire, MouvementStock } from '../types/inventaire';
-
-const API_URL = '/api/v1/inventaire';
+import { api } from './api';
+import { 
+  Produit, 
+  MouvementStock,
+  CreateMouvementStock,
+  Stock, 
+  StatsInventaire
+} from '../types/inventaire';
 
 // Produits
-export const getProduct = async (id: string): Promise<Product> => {
-  const response = await axios.get(`${API_URL}/produits/${id}`);
+export const getProduits = async (): Promise<Produit[]> => {
+  const response = await api.get('/api/v1/inventory/produits');
   return response.data;
 };
 
-export const getProducts = async (): Promise<Product[]> => {
-  const response = await axios.get(`${API_URL}/produits`);
+export const getProduit = async (id: string): Promise<Produit> => {
+  const response = await api.get(`/api/v1/inventory/produits/${id}`);
   return response.data;
 };
 
-export const createProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
-  const response = await axios.post(`${API_URL}/produits`, product);
+export const createProduit = async (produit: Omit<Produit, 'id'>): Promise<Produit> => {
+  const response = await api.post('/api/v1/inventory/produits', produit);
   return response.data;
 };
 
-export const updateProduct = async (id: string, product: Partial<Product>): Promise<Product> => {
-  const response = await axios.put(`${API_URL}/produits/${id}`, product);
+export const updateProduit = async (id: string, produit: Partial<Produit>): Promise<Produit> => {
+  const response = await api.put(`/api/v1/inventory/produits/${id}`, produit);
   return response.data;
 };
 
-export const deleteProduct = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/produits/${id}`);
+export const deleteProduit = async (id: string): Promise<void> => {
+  await api.delete(`/api/v1/inventory/produits/${id}`);
 };
 
 // Mouvements de stock
-export const getProductMovements = async (productId: string): Promise<StockMovement[]> => {
-  const response = await axios.get(`${API_URL}/produits/${productId}/mouvements`);
-  return response.data;
-};
-
 export const getMouvements = async (params?: {
   debut?: string;
   fin?: string;
-  type?: 'ENTREE' | 'SORTIE';
+  type?: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
   produit_id?: string;
 }): Promise<MouvementStock[]> => {
-  const response = await axios.get(`${API_URL}/mouvements`, { params });
+  const response = await api.get('/api/v1/inventory/mouvements', { params });
   return response.data;
 };
 
-export const createStockMovement = async (movement: Omit<StockMovement, 'id' | 'date_mouvement' | 'responsable'>): Promise<StockMovement> => {
-  const response = await axios.post(`${API_URL}/mouvements`, movement);
+export const getMouvementsProduit = async (produitId: string): Promise<MouvementStock[]> => {
+  const response = await api.get(`/api/v1/inventory/mouvements/produit/${produitId}`);
   return response.data;
 };
 
-// Niveaux de stock
-export const getStockLevel = async (productId: string): Promise<StockLevel> => {
-  const response = await axios.get(`${API_URL}/produits/${productId}/stock`);
+export const createMouvement = async (mouvement: CreateMouvementStock): Promise<MouvementStock> => {
+  const response = await api.post('/api/v1/inventory/mouvements', mouvement);
   return response.data;
 };
 
-export const getStockLevels = async (): Promise<Record<string, StockLevel>> => {
-  const response = await axios.get(`${API_URL}/stock`);
-  return response.data;
-};
-
-// Stock complet
+// Stock
 export const getStocks = async (params?: {
-  categorie?: string;
+  entrepot_id?: string;
+  produit_id?: string;
   seuil_alerte?: boolean;
 }): Promise<Stock[]> => {
-  const response = await axios.get(`${API_URL}/stocks`, { params });
+  const response = await api.get('/api/v1/inventory/stocks', { params });
+  return response.data;
+};
+
+export const getStockProduit = async (produitId: string): Promise<Stock[]> => {
+  const response = await api.get(`/api/v1/inventory/stocks/produit/${produitId}`);
   return response.data;
 };
 
@@ -75,6 +74,23 @@ export const getStatsInventaire = async (params?: {
   fin?: string;
   categorie?: string;
 }): Promise<StatsInventaire> => {
-  const response = await axios.get(`${API_URL}/stats`, { params });
+  const response = await api.get('/api/v1/inventory/stats', { params });
   return response.data;
+};
+
+// Alertes
+export const getAlertesSeuil = async (): Promise<Produit[]> => {
+  const response = await api.get('/api/v1/inventory/alertes/seuil');
+  return response.data;
+};
+
+// Utilitaires
+export const getValeurStock = async (produitId: string): Promise<number> => {
+  const response = await api.get(`/api/v1/inventory/stocks/valeur/${produitId}`);
+  return response.data.valeur;
+};
+
+export const validerMouvement = async (mouvement: CreateMouvementStock): Promise<boolean> => {
+  const response = await api.post('/api/v1/inventory/mouvements/valider', mouvement);
+  return response.data.valide;
 };

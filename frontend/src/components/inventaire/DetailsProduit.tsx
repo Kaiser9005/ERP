@@ -14,51 +14,51 @@ import {
   TableRow
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import { getProduct, getProductMovements } from '../../services/inventory';
+import { useQuery } from '@tanstack/react-query';
+import { getProduit, getMouvementsProduit } from '../../services/inventaire';
 import PageHeader from '../layout/PageHeader';
 import { Edit } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import StockMovementDialog from './StockMovementDialog';
+import DialogueMouvementStock from './DialogueMouvementStock';
 
-const ProductDetails: React.FC = () => {
+const DetailsProduit: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [movementDialogOpen, setMovementDialogOpen] = useState(false);
+  const [dialogueMouvementOuvert, setDialogueMouvementOuvert] = useState(false);
 
-  const { data: product } = useQuery(
-    ['product', id],
-    () => getProduct(id!)
+  const { data: produit } = useQuery(
+    ['produit', id],
+    () => getProduit(id!)
   );
 
-  const { data: movements } = useQuery(
-    ['product-movements', id],
-    () => getProductMovements(id!)
+  const { data: mouvements } = useQuery(
+    ['mouvements-produit', id],
+    () => getMouvementsProduit(id!)
   );
 
-  const getStockLevel = (current: number, threshold: number) => {
-    const ratio = current / threshold;
+  const getNiveauStock = (actuel: number, seuil: number) => {
+    const ratio = actuel / seuil;
     if (ratio <= 0.25) return 'error';
     if (ratio <= 0.5) return 'warning';
     return 'success';
   };
 
-  const formatResponsable = (movement: any) => {
-    if (!movement.responsable) {
-      return movement.responsable_id;
+  const formatResponsable = (mouvement: any) => {
+    if (!mouvement.responsable) {
+      return mouvement.responsable_id;
     }
-    return `${movement.responsable.nom} ${movement.responsable.prenom}`;
+    return `${mouvement.responsable.nom} ${mouvement.responsable.prenom}`;
   };
 
   return (
     <>
       <PageHeader
-        title={`Produit ${product?.code}`}
+        title={`Produit ${produit?.code}`}
         subtitle="Détails et mouvements"
         action={{
           label: "Modifier",
-          onClick: () => navigate(`/inventory/products/${id}/edit`),
+          onClick: () => navigate(`/inventaire/produits/${id}/modifier`),
           icon: <Edit />
         }}
       />
@@ -77,7 +77,7 @@ const ProductDetails: React.FC = () => {
                     Catégorie
                   </Typography>
                   <Chip
-                    label={product?.categorie}
+                    label={produit?.categorie}
                     color="primary"
                   />
                 </Box>
@@ -87,7 +87,7 @@ const ProductDetails: React.FC = () => {
                     Unité de Mesure
                   </Typography>
                   <Typography variant="body1">
-                    {product?.unite_mesure}
+                    {produit?.unite_mesure}
                   </Typography>
                 </Box>
 
@@ -99,7 +99,7 @@ const ProductDetails: React.FC = () => {
                     {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'XAF'
-                    }).format(product?.prix_unitaire || 0)}
+                    }).format(produit?.prix_unitaire || 0)}
                   </Typography>
                 </Box>
 
@@ -108,7 +108,7 @@ const ProductDetails: React.FC = () => {
                     Seuil d'Alerte
                   </Typography>
                   <Typography variant="body1">
-                    {product?.seuil_alerte} {product?.unite_mesure}
+                    {produit?.seuil_alerte} {produit?.unite_mesure}
                   </Typography>
                 </Box>
               </Box>
@@ -116,7 +116,7 @@ const ProductDetails: React.FC = () => {
               <Button
                 variant="contained"
                 fullWidth
-                onClick={() => setMovementDialogOpen(true)}
+                onClick={() => setDialogueMouvementOuvert(true)}
               >
                 Nouveau Mouvement
               </Button>
@@ -142,24 +142,24 @@ const ProductDetails: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {movements?.map((movement) => (
-                    <TableRow key={movement.id}>
+                  {mouvements?.map((mouvement) => (
+                    <TableRow key={mouvement.id}>
                       <TableCell>
-                        {format(new Date(movement.date_mouvement), 'Pp', { locale: fr })}
+                        {format(new Date(mouvement.date_mouvement), 'Pp', { locale: fr })}
                       </TableCell>
                       <TableCell>
                         <Chip
                           size="small"
-                          label={movement.type_mouvement}
-                          color={movement.type_mouvement === 'ENTREE' ? 'success' : 'error'}
+                          label={mouvement.type_mouvement}
+                          color={mouvement.type_mouvement === 'ENTREE' ? 'success' : 'error'}
                         />
                       </TableCell>
                       <TableCell align="right">
-                        {movement.quantite} {product?.unite_mesure}
+                        {mouvement.quantite} {produit?.unite_mesure}
                       </TableCell>
-                      <TableCell>{movement.reference_document}</TableCell>
+                      <TableCell>{mouvement.reference_document}</TableCell>
                       <TableCell>
-                        {formatResponsable(movement)}
+                        {formatResponsable(mouvement)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -170,13 +170,13 @@ const ProductDetails: React.FC = () => {
         </Grid>
       </Grid>
 
-      <StockMovementDialog
-        open={movementDialogOpen}
-        onClose={() => setMovementDialogOpen(false)}
+      <DialogueMouvementStock
+        open={dialogueMouvementOuvert}
+        onClose={() => setDialogueMouvementOuvert(false)}
         productId={id || null}
       />
     </>
   );
 };
 
-export default ProductDetails;
+export default DetailsProduit;

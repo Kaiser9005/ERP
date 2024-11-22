@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createStockMovement } from '../../services/inventaire';
-import { StockMovement } from '../../types/inventaire';
+import { createMouvement } from '../../services/inventaire';
+import { CreateMouvementStock } from '../../types/inventaire';
 
 interface DialogueMouvementStockProps {
   open: boolean;
@@ -23,33 +23,33 @@ interface DialogueMouvementStockProps {
   productId: string | null;
 }
 
-type FormData = Omit<StockMovement, 'id' | 'date_mouvement' | 'responsable'>;
-
 export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
   open,
   onClose,
   productId
 }) => {
   const queryClient = useQueryClient();
-  const { control, handleSubmit, reset } = useForm<FormData>();
+  const { control, handleSubmit, reset } = useForm<CreateMouvementStock>();
 
   const mutation = useMutation({
-    mutationFn: createStockMovement,
+    mutationFn: createMouvement,
     onSuccess: () => {
-      queryClient.invalidateQueries(['product-movements', productId]);
-      queryClient.invalidateQueries(['product', productId]);
+      queryClient.invalidateQueries(['mouvements', productId]);
+      queryClient.invalidateQueries(['produit', productId]);
       onClose();
       reset();
     }
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: Partial<CreateMouvementStock>) => {
     if (!productId) return;
     
     mutation.mutate({
       ...data,
-      produit_id: productId
-    });
+      produit_id: productId,
+      quantite: data.quantite || 0,
+      type_mouvement: data.type_mouvement || 'ENTREE'
+    } as CreateMouvementStock);
   };
 
   return (
@@ -69,6 +69,7 @@ export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
                     <Select {...field} label="Type de Mouvement">
                       <MenuItem value="ENTREE">Entrée</MenuItem>
                       <MenuItem value="SORTIE">Sortie</MenuItem>
+                      <MenuItem value="TRANSFERT">Transfert</MenuItem>
                     </Select>
                   )}
                 />

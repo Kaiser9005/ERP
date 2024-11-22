@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from db.database import get_db
 from models.auth import Utilisateur
-from models.inventory import Produit, MouvementStock, Stock, Entrepot
-from schemas.inventory import (
+from models.inventory import Produit, MouvementStock, Stock
+from models.parametrage import Entrepot
+from schemas.inventaire import (
     ProduitCreate, ProduitResponse,
     MouvementStockCreate, MouvementStockResponse,
     StockResponse, EntrepotCreate, EntrepotResponse

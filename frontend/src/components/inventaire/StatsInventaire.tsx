@@ -11,11 +11,20 @@ import {
   Inventory as InventoryIcon,
   MonetizationOn as MoneyIcon,
   Warning as WarningIcon,
-  Sync as SyncIcon
+  Sync as SyncIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import { getStatsInventaire } from '../../services/inventaire';
-import type { StatsInventaire as StatsInventaireType } from '../../types/inventaire';
+import type { StatsInventaire as StatsInventaireType, Variation } from '../../types/inventaire';
 import StatCard from '../common/StatCard';
+
+const formatVariation = (variation: Variation | undefined) => {
+  if (!variation) return undefined;
+  return {
+    value: Math.abs(variation.value),
+    type: variation.type
+  };
+};
 
 const StatsInventaire: React.FC = () => {
   const { data: stats, isLoading, error } = useQuery<StatsInventaireType>(
@@ -39,18 +48,22 @@ const StatsInventaire: React.FC = () => {
     <Grid container spacing={3}>
       <Grid item xs={12} md={6} lg={3}>
         <StatCard
-          title="Total Produits"
-          value={stats.total_produits}
-          unit="produits"
-          icon={<InventoryIcon />}
+          title="Valeur Totale"
+          value={stats.valeur_totale}
+          unit="XAF"
+          variation={formatVariation(stats.valueVariation)}
+          icon={<MoneyIcon />}
+          color="primary"
         />
       </Grid>
       <Grid item xs={12} md={6} lg={3}>
         <StatCard
-          title="Valeur Totale"
-          value={stats.valeur_totale}
-          unit="XAF"
-          icon={<MoneyIcon />}
+          title="Rotation Stock"
+          value={stats.turnoverRate || 0}
+          unit="jours"
+          variation={formatVariation(stats.turnoverVariation)}
+          icon={<TrendingUpIcon />}
+          color="success"
         />
       </Grid>
       <Grid item xs={12} md={6} lg={3}>
@@ -58,6 +71,7 @@ const StatsInventaire: React.FC = () => {
           title="Produits Sous Seuil"
           value={stats.produits_sous_seuil}
           unit="produits"
+          variation={formatVariation(stats.alertsVariation)}
           icon={<WarningIcon />}
           color="warning"
         />
@@ -67,7 +81,9 @@ const StatsInventaire: React.FC = () => {
           title="Mouvements Récents"
           value={stats.mouvements_recents}
           unit="mouvements"
+          variation={formatVariation(stats.movementsVariation)}
           icon={<SyncIcon />}
+          color="info"
         />
       </Grid>
 

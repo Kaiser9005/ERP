@@ -1,16 +1,18 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 from datetime import datetime, timedelta
-from typing import Generator
+from typing import Generator, Dict, Any
 
 from main import app
 from db.database import Base, get_db
-from models.auth import Utilisateur, Role, TypeRole
-from models.production import Parcelle, Recolte, CultureType, ParcelleStatus
-from models.inventory import Produit, Stock, CategoryProduit, UniteMesure
+from models import (
+    Utilisateur, Role, TypeRole,
+    Parcelle, Recolte, CultureType, ParcelleStatus,
+    Produit, Stock, CategoryProduit, UniteMesure
+)
 
 # Base de données en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -23,7 +25,7 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(scope="function")
-def db() -> Generator:
+def db() -> Generator[Session, None, None]:
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
@@ -33,7 +35,7 @@ def db() -> Generator:
         Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
-def client(db: TestingSessionLocal) -> Generator:
+def client(db: Session) -> Generator[TestClient, None, None]:
     def override_get_db():
         try:
             yield db
@@ -45,7 +47,7 @@ def client(db: TestingSessionLocal) -> Generator:
     del app.dependency_overrides[get_db]
 
 @pytest.fixture(scope="function")
-def test_user(db: TestingSessionLocal) -> Utilisateur:
+def test_user(db: Session) -> Utilisateur:
     role = Role(
         nom="Admin Test",
         type=TypeRole.ADMIN,
@@ -68,7 +70,7 @@ def test_user(db: TestingSessionLocal) -> Utilisateur:
     return user
 
 @pytest.fixture(scope="function")
-def test_data(db: TestingSessionLocal, test_user: Utilisateur) -> dict:
+def test_data(db: Session, test_user: Utilisateur) -> Dict[str, Any]:
     # Création d'une parcelle
     parcelle = Parcelle(
         code="P001",

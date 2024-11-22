@@ -17,34 +17,38 @@ import {
   LinearProgress
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { getStocks } from '../../services/inventaire';
+import { getStocks, getProduits } from '../../services/inventaire';
 import type { Stock } from '../../types/inventaire';
 
 const ListeStock: React.FC = () => {
   const [categorieFilter, setCategorieFilter] = useState<string>('TOUS');
   const [seuilFilter, setSeuilFilter] = useState<string>('TOUS');
 
+  const { data: produits } = useQuery(['produits'], getProduits);
+
   const { data: stocks, isLoading, error } = useQuery(
-    ['stocks', categorieFilter, seuilFilter],
+    ['stocks', seuilFilter],
     () => getStocks({
-      categorie: categorieFilter === 'TOUS' ? undefined : categorieFilter,
-      seuil_alerte: seuilFilter === 'TOUS' ? undefined : seuilFilter === 'SOUS_SEUIL'
+      seuil_alerte: seuilFilter === 'SOUS_SEUIL'
     })
   );
 
   if (isLoading) {
-    return <LinearProgress />;
+    return <LinearProgress data-testid="chargement-stocks" />;
   }
 
   if (error) {
     return (
-      <Typography color="error">
+      <Typography color="error" data-testid="erreur-stocks">
         Erreur lors du chargement des stocks
       </Typography>
     );
   }
 
-  const filteredStocks = stocks || [];
+  const filteredStocks = (stocks || []).filter(stock => {
+    if (categorieFilter === 'TOUS') return true;
+    return stock.produit.categorie === categorieFilter;
+  });
 
   return (
     <>
@@ -55,6 +59,7 @@ const ListeStock: React.FC = () => {
             value={categorieFilter}
             onChange={(e) => setCategorieFilter(e.target.value as string)}
             label="Catégorie"
+            data-testid="filtre-categorie"
           >
             <MenuItem value="TOUS">Toutes les catégories</MenuItem>
             <MenuItem value="INTRANT">Intrants</MenuItem>
@@ -69,6 +74,7 @@ const ListeStock: React.FC = () => {
             value={seuilFilter}
             onChange={(e) => setSeuilFilter(e.target.value as string)}
             label="Niveau de Stock"
+            data-testid="filtre-niveau"
           >
             <MenuItem value="TOUS">Tous les niveaux</MenuItem>
             <MenuItem value="SOUS_SEUIL">Sous le seuil d'alerte</MenuItem>
@@ -77,7 +83,7 @@ const ListeStock: React.FC = () => {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} data-testid="table-stocks">
         <Table>
           <TableHead>
             <TableRow>
@@ -94,7 +100,7 @@ const ListeStock: React.FC = () => {
             {filteredStocks.map((stock) => {
               const sousSeuilAlerte = stock.quantite <= stock.produit.seuil_alerte;
               return (
-                <TableRow key={stock.id}>
+                <TableRow key={stock.id} data-testid={`stock-${stock.id}`}>
                   <TableCell>{stock.produit.code}</TableCell>
                   <TableCell>{stock.produit.nom}</TableCell>
                   <TableCell>{stock.produit.categorie}</TableCell>
@@ -115,6 +121,7 @@ const ListeStock: React.FC = () => {
                       label={sousSeuilAlerte ? 'Sous Seuil' : 'Normal'}
                       color={sousSeuilAlerte ? 'error' : 'success'}
                       size="small"
+                      data-testid={`statut-${stock.id}`}
                     />
                   </TableCell>
                 </TableRow>
