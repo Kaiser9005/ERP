@@ -5,6 +5,7 @@ import enum
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 class CultureType(str, enum.Enum):
     """Types de cultures disponibles"""
@@ -27,6 +28,7 @@ class Parcelle(Base):
     """Modèle représentant une parcelle agricole"""
     __tablename__ = "parcelles"
 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code = Column(String(50), unique=True, index=True, nullable=False)
     culture_type = Column(Enum(CultureType), nullable=False)
     surface_hectares = Column(Numeric(10, 2), nullable=False)
@@ -34,7 +36,7 @@ class Parcelle(Base):
     statut = Column(Enum(ParcelleStatus), default=ParcelleStatus.EN_PREPARATION)
     coordonnees_gps = Column(JSON)  # {latitude: float, longitude: float}
     responsable_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"))
-    metadata = Column(JSON)  # Données supplémentaires
+    donnees_supplementaires = Column(JSON)  # Données supplémentaires
 
     # Relations
     responsable = relationship("Employe", back_populates="parcelles_gerees")
@@ -45,14 +47,14 @@ class CycleCulture(Base):
     """Modèle représentant un cycle de culture"""
     __tablename__ = "cycles_culture"
 
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     parcelle_id = Column(UUID(as_uuid=True), ForeignKey("parcelles.id"), nullable=False)
     date_debut = Column(Date, nullable=False)
     date_fin = Column(Date)
     rendement_prevu = Column(Numeric(10, 2))  # en kg/hectare
     rendement_reel = Column(Numeric(10, 2))
     notes = Column(Text)
-    metadata = Column(JSON)  # Données supplémentaires
+    donnees_supplementaires = Column(JSON)  # Données supplémentaires
 
     # Relations
     parcelle = relationship("Parcelle", back_populates="cycles_culture")
@@ -61,7 +63,7 @@ class Recolte(Base):
     """Modèle représentant une récolte"""
     __tablename__ = "recoltes"
 
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     parcelle_id = Column(UUID(as_uuid=True), ForeignKey("parcelles.id"), nullable=False)
     cycle_culture_id = Column(UUID(as_uuid=True), ForeignKey("cycles_culture.id"))
     date_recolte = Column(DateTime, nullable=False)
@@ -70,7 +72,7 @@ class Recolte(Base):
     conditions_meteo = Column(JSON)  # {temperature: float, humidite: float, precipitation: float}
     equipe_recolte = Column(JSON)  # Liste des IDs des employés
     notes = Column(Text)
-    metadata = Column(JSON)  # Données supplémentaires
+    donnees_supplementaires = Column(JSON)  # Données supplémentaires
 
     # Relations
     parcelle = relationship("Parcelle", back_populates="recoltes")
@@ -80,7 +82,7 @@ class ProductionEvent(Base):
     """Modèle représentant un événement de production"""
     __tablename__ = "production_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     parcelle_id = Column(UUID(as_uuid=True), ForeignKey("parcelles.id"), nullable=False)
     type = Column(String(50), nullable=False)  # PLANTATION, RECOLTE, MAINTENANCE, etc.
     date_debut = Column(DateTime, nullable=False)
@@ -88,7 +90,7 @@ class ProductionEvent(Base):
     description = Column(Text)
     statut = Column(String(50))
     responsable_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"))
-    metadata = Column(JSON)
+    donnees_supplementaires = Column(JSON)
 
     # Relations
     parcelle = relationship("Parcelle")

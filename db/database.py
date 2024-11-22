@@ -3,8 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from core.config import DATABASE_CONFIG
 
-# Construction de l'URL de connexion
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_CONFIG['user']}:{DATABASE_CONFIG['password']}@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}"
+# Utilisation directe de l'URL de connexion depuis la configuration
+SQLALCHEMY_DATABASE_URL = DATABASE_CONFIG["SQLALCHEMY_DATABASE_URI"]
 
 # Création du moteur SQLAlchemy
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

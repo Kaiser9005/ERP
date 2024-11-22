@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
 import os
@@ -61,3 +61,23 @@ def get_settings() -> Settings:
     return Settings()
 
 settings = get_settings()
+
+# Export des configurations pour l'application
+APP_CONFIG = {
+    "title": settings.PROJECT_NAME,
+    "description": "API pour la gestion de l'exploitation agricole FOFAL",
+    "version": "1.0.0"
+}
+
+SECURITY_CONFIG = {
+    "SECRET_KEY": settings.SECRET_KEY,
+    "ACCESS_TOKEN_EXPIRE_MINUTES": settings.ACCESS_TOKEN_EXPIRE_MINUTES
+}
+
+DATABASE_CONFIG = {
+    "SQLALCHEMY_DATABASE_URI": settings.SQLALCHEMY_DATABASE_URI,
+    "POSTGRES_SERVER": settings.POSTGRES_SERVER,
+    "POSTGRES_USER": settings.POSTGRES_USER,
+    "POSTGRES_PASSWORD": settings.POSTGRES_PASSWORD,
+    "POSTGRES_DB": settings.POSTGRES_DB
+}

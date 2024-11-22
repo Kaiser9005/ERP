@@ -25,7 +25,7 @@ class Document(BaseModel):
     chemin_fichier = Column(String(500), nullable=False)
     taille = Column(Integer)  # Taille en octets
     type_mime = Column(String(100))
-    metadata = Column(JSON)  # Métadonnées additionnelles
+    donnees_supplementaires = Column(JSON)  # Métadonnées additionnelles
     module = Column(String(50))  # Module associé (finance, rh, etc.)
     reference_id = Column(UUID(as_uuid=True))  # ID de l'objet associé
     uploaded_by_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"))

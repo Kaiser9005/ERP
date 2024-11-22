@@ -1,8 +1,16 @@
 [tool.pytest]
-pythonpath = ["."]
+pythonpath = [
+    ".",
+    "api",
+    "core",
+    "db",
+    "models",
+    "schemas",
+    "services"
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=app --cov-report=term-missing"
+addopts = "-v --cov=. --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["."]
@@ -10,7 +18,8 @@ omit = [
     "tests/*",
     "venv/*",
     "*/migrations/*",
-    "*/alembic/*"
+    "*/alembic/*",
+    "*/site-packages/*"
 ]
 
 [tool.coverage.report]
@@ -31,10 +40,46 @@ build-backend = "setuptools.build_meta"
 line-length = 88
 target-version = ['py39']
 include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+      | \.git
+      | \.hg
+      | \.mypy_cache
+      | \.tox
+      | \.venv
+      | venv
+      | _build
+      | buck-out
+      | build
+      | dist
+      | \.venv
+      | venv/lib/python3.12/site-packages/typing_extensions.py
+    )/
+)
+'''
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+skip = ["venv/lib/python3.12/site-packages/typing_extensions.py"]
 
-[tool.setuptools]
-packages = ["models"]
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203"
+exclude = [
+    "venv/*",
+    "*/migrations/*",
+    "*/alembic/*",
+    "venv/lib/python3.12/site-packages/typing_extensions.py"
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = [
+    "venv/lib/python3.12/site-packages/typing_extensions.py"
+]
