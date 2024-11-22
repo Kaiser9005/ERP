@@ -13,14 +13,28 @@ import {
   MenuItem,
   Typography,
   Box,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import { CompteBalance, TypeCompte } from '../../../types/comptabilite';
+import { useQuery } from '@tanstack/react-query';
+import type { CompteBalance, TypeCompte } from '../../../types/comptabilite';
 import { getBalance } from '../../../services/comptabilite';
-import { formatCurrency, formatDate } from '../../../utils/format';
+import { formatCurrency } from '../../../utils/format';
+import { queryKeys } from '../../../config/queryClient';
 
-const TYPES_COMPTE = ['TOUS', 'ACTIF', 'PASSIF', 'CHARGE', 'PRODUIT'] as const;
+interface QueryError {
+  message: string;
+}
+
+const typeComptes: { value: TypeCompte; label: string }[] = [
+  { value: 'ACTIF', label: 'Actif' },
+  { value: 'PASSIF', label: 'Passif' },
+  { value: 'CHARGE', label: 'Charges' },
+  { value: 'PRODUIT', label: 'Produits' }
+];
 
 const Balance: React.FC = () => {
+  const [selectedType, setSelectedType] = useState<TypeCompte | ''>('');
   const [dateDebut, setDateDebut] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
@@ -29,25 +43,19 @@ const Balance: React.FC = () => {
   const [dateFin, setDateFin] = useState(
     new Date().toISOString().split('T')[0]
   );
-  const [typeCompte, setTypeCompte] = useState<typeof TYPES_COMPTE[number]>('TOUS');
-  const [comptes, setComptes] = useState<CompteBalance[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const handleSearch = async () => {
-    setLoading(true);
-    try {
-      const data = await getBalance({
-        dateDebut,
-        dateFin,
-        typeCompte: typeCompte === 'TOUS' ? undefined : typeCompte as TypeCompte
-      });
-      setComptes(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement de la balance:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: comptes = [], isLoading, error } = useQuery<CompteBalance[], QueryError>({
+    queryKey: queryKeys.comptabilite.balance({
+      date_debut: dateDebut,
+      date_fin: dateFin,
+      type_compte: selectedType || undefined
+    }),
+    queryFn: () => getBalance({
+      date_debut: new Date(dateDebut),
+      date_fin: new Date(dateFin),
+      type_compte: selectedType || undefined
+    })
+  });
 
   const calculateTotals = () => {
     return comptes.reduce(
@@ -60,20 +68,29 @@ const Balance: React.FC = () => {
     );
   };
 
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 3 }}>
+        {error.message || 'Erreur lors du chargement de la balance'}
+      </Alert>
+    );
+  }
+
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper component="div" sx={{ p: 2 }}>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <TextField
             label="Type de compte"
             select
             fullWidth
-            value={typeCompte}
-            onChange={(e) => setTypeCompte(e.target.value as typeof TYPES_COMPTE[number])}
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value as TypeCompte | '')}
           >
-            {TYPES_COMPTE.map((type) => (
-              <MenuItem key={type} value={type}>
-                {type}
+            <MenuItem value="">Tous</MenuItem>
+            {typeComptes.map((type) => (
+              <MenuItem key={type.value} value={type.value}>
+                {type.label}
               </MenuItem>
             ))}
           </TextField>
@@ -85,6 +102,7 @@ const Balance: React.FC = () => {
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
             fullWidth
+            InputLabelProps={{ shrink: true }}
           />
         </Grid>
         <Grid item xs={12} md={3}>
@@ -94,41 +112,31 @@ const Balance: React.FC = () => {
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
             fullWidth
+            InputLabelProps={{ shrink: true }}
           />
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            disabled={loading}
-            fullWidth
-            sx={{ height: '100%' }}
-          >
-            Générer la Balance
-          </Button>
         </Grid>
       </Grid>
 
-      {comptes.length > 0 && (
+      {isLoading ? (
+        <Box component="div" sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : comptes.length > 0 ? (
         <>
-          <Typography variant="h6" gutterBottom>
-            Balance Générale
-          </Typography>
-          <Typography variant="subtitle2" gutterBottom>
-            Période du {formatDate(dateDebut)} au {formatDate(dateFin)}
+          <Typography variant="h6" component="div" gutterBottom>
+            Balance des comptes
           </Typography>
 
-          <TableContainer sx={{ mt: 2 }}>
+          <TableContainer component="div">
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>N° Compte</TableCell>
+                  <TableCell>Numéro</TableCell>
                   <TableCell>Libellé</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell align="right">Total Débit</TableCell>
-                  <TableCell align="right">Total Crédit</TableCell>
-                  <TableCell align="right">Solde Débiteur</TableCell>
-                  <TableCell align="right">Solde Créditeur</TableCell>
+                  <TableCell align="right">Débit</TableCell>
+                  <TableCell align="right">Crédit</TableCell>
+                  <TableCell align="right">Solde</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -139,36 +147,26 @@ const Balance: React.FC = () => {
                     <TableCell>{compte.compte.type}</TableCell>
                     <TableCell align="right">{formatCurrency(compte.debit)}</TableCell>
                     <TableCell align="right">{formatCurrency(compte.credit)}</TableCell>
-                    <TableCell align="right">
-                      {compte.solde > 0 ? formatCurrency(compte.solde) : '-'}
-                    </TableCell>
-                    <TableCell align="right">
-                      {compte.solde < 0 ? formatCurrency(-compte.solde) : '-'}
-                    </TableCell>
+                    <TableCell align="right">{formatCurrency(compte.solde)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow>
                   <TableCell colSpan={3}>
-                    <Typography variant="subtitle1">Total</Typography>
+                    <Typography variant="subtitle1" component="div">Total</Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
+                    <Typography variant="subtitle1" component="div">
                       {formatCurrency(calculateTotals().debit)}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
+                    <Typography variant="subtitle1" component="div">
                       {formatCurrency(calculateTotals().credit)}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
-                      {calculateTotals().solde > 0 ? formatCurrency(calculateTotals().solde) : '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="subtitle1">
-                      {calculateTotals().solde < 0 ? formatCurrency(-calculateTotals().solde) : '-'}
+                    <Typography variant="subtitle1" component="div">
+                      {formatCurrency(calculateTotals().solde)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -176,11 +174,9 @@ const Balance: React.FC = () => {
             </Table>
           </TableContainer>
         </>
-      )}
-
-      {comptes.length === 0 && !loading && (
-        <Box sx={{ p: 2, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">
+      ) : (
+        <Box component="div" sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body1" component="div" color="text.secondary">
             Aucune donnée disponible pour la période sélectionnée
           </Typography>
         </Box>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Grid,
@@ -13,13 +13,20 @@ import {
   MenuItem,
   Typography,
   Box,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import { CompteComptable, LigneGrandLivre } from '../../../types/comptabilite';
+import { useQuery } from '@tanstack/react-query';
+import type { CompteComptable, LigneGrandLivre } from '../../../types/comptabilite';
 import { getComptes, getGrandLivre } from '../../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../../utils/format';
+import { queryKeys } from '../../../config/queryClient';
+
+interface QueryError {
+  message: string;
+}
 
 const GrandLivre: React.FC = () => {
-  const [comptes, setComptes] = useState<CompteComptable[]>([]);
   const [selectedCompte, setSelectedCompte] = useState<string>('');
   const [dateDebut, setDateDebut] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -29,38 +36,29 @@ const GrandLivre: React.FC = () => {
   const [dateFin, setDateFin] = useState(
     new Date().toISOString().split('T')[0]
   );
-  const [lignes, setLignes] = useState<LigneGrandLivre[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadComptes();
-  }, []);
+  const { data: comptes = [], isLoading: loadingComptes, error: comptesError } = useQuery<CompteComptable[], QueryError>({
+    queryKey: queryKeys.comptabilite.comptes(),
+    queryFn: () => getComptes()
+  });
 
-  const loadComptes = async () => {
-    try {
-      const data = await getComptes();
-      setComptes(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des comptes:', error);
-    }
-  };
+  const { data: lignes = [], isLoading: loadingLignes, error: lignesError, refetch: refetchLignes } = useQuery<LigneGrandLivre[], QueryError>({
+    queryKey: queryKeys.comptabilite.grandLivre({
+      compte_id: selectedCompte,
+      date_debut: dateDebut,
+      date_fin: dateFin
+    }),
+    queryFn: () => getGrandLivre({
+      compte_id: selectedCompte,
+      date_debut: new Date(dateDebut),
+      date_fin: new Date(dateFin)
+    }),
+    enabled: !!selectedCompte
+  });
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!selectedCompte) return;
-
-    setLoading(true);
-    try {
-      const data = await getGrandLivre({
-        compteId: selectedCompte,
-        dateDebut,
-        dateFin
-      });
-      setLignes(data);
-    } catch (error) {
-      console.error('Erreur lors du chargement du grand livre:', error);
-    } finally {
-      setLoading(false);
-    }
+    refetchLignes();
   };
 
   const calculateTotals = () => {
@@ -78,8 +76,16 @@ const GrandLivre: React.FC = () => {
     return compte ? `${compte.numero} - ${compte.libelle}` : '';
   };
 
+  if (comptesError) {
+    return (
+      <Alert severity="error" sx={{ mb: 3 }}>
+        {comptesError.message || 'Erreur lors du chargement des comptes'}
+      </Alert>
+    );
+  }
+
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper component="div" sx={{ p: 2 }}>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <TextField
@@ -88,6 +94,7 @@ const GrandLivre: React.FC = () => {
             fullWidth
             value={selectedCompte}
             onChange={(e) => setSelectedCompte(e.target.value)}
+            disabled={loadingComptes}
           >
             {comptes.map((compte) => (
               <MenuItem key={compte.id} value={compte.id}>
@@ -103,6 +110,7 @@ const GrandLivre: React.FC = () => {
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
             fullWidth
+            InputLabelProps={{ shrink: true }}
           />
         </Grid>
         <Grid item xs={12} md={3}>
@@ -112,13 +120,14 @@ const GrandLivre: React.FC = () => {
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
             fullWidth
+            InputLabelProps={{ shrink: true }}
           />
         </Grid>
         <Grid item xs={12} md={2}>
           <Button
             variant="contained"
             onClick={handleSearch}
-            disabled={!selectedCompte || loading}
+            disabled={!selectedCompte || loadingLignes}
             fullWidth
             sx={{ height: '100%' }}
           >
@@ -127,16 +136,28 @@ const GrandLivre: React.FC = () => {
         </Grid>
       </Grid>
 
+      {lignesError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {lignesError.message || 'Erreur lors du chargement du grand livre'}
+        </Alert>
+      )}
+
+      {loadingLignes && (
+        <Box component="div" sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {selectedCompte && lignes.length > 0 && (
         <>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" component="div" gutterBottom>
             Grand Livre : {getCompteInfo()}
           </Typography>
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography variant="subtitle2" component="div" gutterBottom>
             Période du {formatDate(dateDebut)} au {formatDate(dateFin)}
           </Typography>
 
-          <TableContainer sx={{ mt: 2 }}>
+          <TableContainer component="div" sx={{ mt: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -161,20 +182,20 @@ const GrandLivre: React.FC = () => {
                 ))}
                 <TableRow>
                   <TableCell colSpan={3}>
-                    <Typography variant="subtitle1">Total</Typography>
+                    <Typography variant="subtitle1" component="div">Total</Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
+                    <Typography variant="subtitle1" component="div">
                       {formatCurrency(calculateTotals().debit)}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
+                    <Typography variant="subtitle1" component="div">
                       {formatCurrency(calculateTotals().credit)}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="subtitle1">
+                    <Typography variant="subtitle1" component="div">
                       {formatCurrency(lignes[lignes.length - 1]?.solde || 0)}
                     </Typography>
                   </TableCell>
@@ -185,9 +206,9 @@ const GrandLivre: React.FC = () => {
         </>
       )}
 
-      {selectedCompte && lignes.length === 0 && !loading && (
-        <Box sx={{ p: 2, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">
+      {selectedCompte && lignes.length === 0 && !loadingLignes && (
+        <Box component="div" sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="body1" component="div" color="text.secondary">
             Aucune écriture pour la période sélectionnée
           </Typography>
         </Box>

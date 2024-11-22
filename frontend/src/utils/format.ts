@@ -1,10 +1,7 @@
-/**
- * Formate un nombre en devise XAF
- * @param amount - Montant à formater
- * @returns Chaîne formatée (ex: "1 000 000 XAF")
- */
+const LOCALE = 'fr-FR';
+
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
+  return new Intl.NumberFormat(LOCALE, {
     style: 'currency',
     currency: 'XAF',
     minimumFractionDigits: 0,
@@ -12,98 +9,94 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-/**
- * Formate un pourcentage
- * @param value - Valeur à formater
- * @param decimals - Nombre de décimales (défaut: 1)
- * @returns Chaîne formatée (ex: "10,5%")
- */
-export const formatPercentage = (value: number, decimals: number = 1): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'percent',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  }).format(value / 100);
-};
-
-/**
- * Formate une date au format local
- * @param date - Date à formater
- * @returns Chaîne formatée (ex: "01/01/2024")
- */
 export const formatDate = (date: string | Date): string => {
-  return new Intl.DateTimeFormat('fr-FR', {
+  if (!date) return '';
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat(LOCALE, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
-  }).format(typeof date === 'string' ? new Date(date) : date);
+  }).format(d);
 };
 
-/**
- * Formate un montant en texte
- * @param amount - Montant à convertir
- * @returns Montant en lettres (ex: "Un million cinq cent mille francs CFA")
- */
-export const amountToText = (amount: number): string => {
-  const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
-  const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
-  const tens = ['', 'dix', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix'];
+export const formatDateTime = (date: string | Date): string => {
+  if (!date) return '';
   
-  const convertLessThanThousand = (n: number): string => {
-    if (n === 0) return '';
-    
-    let result = '';
-    
-    // Centaines
-    if (n >= 100) {
-      result += (n >= 200 ? units[Math.floor(n / 100)] + ' ' : '') + 'cent ';
-      n %= 100;
-    }
-    
-    // Dizaines et unités
-    if (n >= 10 && n < 20) {
-      result += teens[n - 10];
-    } else {
-      const ten = Math.floor(n / 10);
-      const unit = n % 10;
-      
-      if (ten > 0) {
-        result += tens[ten];
-        if (unit > 0) {
-          result += '-' + units[unit];
-        }
-      } else if (unit > 0) {
-        result += units[unit];
-      }
-    }
-    
-    return result.trim();
-  };
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat(LOCALE, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(d);
+};
+
+export const formatNumber = (value: number, options?: Intl.NumberFormatOptions): string => {
+  return new Intl.NumberFormat(LOCALE, options).format(value);
+};
+
+export const formatPercentage = (value: number): string => {
+  return new Intl.NumberFormat(LOCALE, {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value / 100);
+};
+
+export const formatDecimal = (value: number, decimals: number = 2): string => {
+  return new Intl.NumberFormat(LOCALE, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value);
+};
+
+export const parseDate = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
   
-  if (amount === 0) return 'zéro franc CFA';
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
   
-  const billions = Math.floor(amount / 1000000000);
-  const millions = Math.floor((amount % 1000000000) / 1000000);
-  const thousands = Math.floor((amount % 1000000) / 1000);
-  const remainder = amount % 1000;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const year = parseInt(parts[2], 10);
   
-  let result = '';
+  const date = new Date(year, month, day);
+  return date.toString() === 'Invalid Date' ? null : date;
+};
+
+export const formatDateForAPI = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+export const formatPeriode = (debut: string | Date, fin: string | Date): string => {
+  return `${formatDate(debut)} - ${formatDate(fin)}`;
+};
+
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
   
-  if (billions > 0) {
-    result += (billions > 1 ? convertLessThanThousand(billions) + ' milliards ' : 'un milliard ');
-  }
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  if (millions > 0) {
-    result += (millions > 1 ? convertLessThanThousand(millions) + ' millions ' : 'un million ');
-  }
-  
-  if (thousands > 0) {
-    result += (thousands > 1 ? convertLessThanThousand(thousands) + ' mille ' : 'mille ');
-  }
-  
-  if (remainder > 0) {
-    result += convertLessThanThousand(remainder);
-  }
-  
-  return result.trim() + ' francs CFA';
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
+export const slugify = (text: string): string => {
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+};
+
+export const truncate = (text: string, length: number = 50): string => {
+  if (!text || text.length <= length) return text;
+  return `${text.substring(0, length)}...`;
 };

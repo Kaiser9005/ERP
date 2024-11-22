@@ -1,13 +1,14 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import FormulaireTransaction from '../FormulaireTransaction';
 import { creerTransaction, modifierTransaction, getTransaction, getComptes } from '../../../services/finance';
+import type { Transaction, Compte } from '../../../types/finance';
 
 // Mock des services
 jest.mock('../../../services/finance', () => ({
@@ -25,14 +26,25 @@ jest.mock('react-router-dom', () => ({
 }));
 
 describe('FormulaireTransaction', () => {
-  const queryClient = new QueryClient();
-  const mockComptes = [
-    { id: '1', libelle: 'Compte Principal', type: 'COURANT', solde: 1000000, devise: 'XAF' },
-    { id: '2', libelle: 'Caisse', type: 'CAISSE', solde: 500000, devise: 'XAF' }
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false
+      }
+    }
+  });
+
+  const mockComptes: Compte[] = [
+    { id: '1', numero: 'CPTE-001', libelle: 'Compte Principal', type_compte: 'BANQUE', devise: 'XAF', solde: 1000000, actif: true },
+    { id: '2', numero: 'CPTE-002', libelle: 'Caisse', type_compte: 'CAISSE', devise: 'XAF', solde: 500000, actif: true }
   ];
 
   beforeEach(() => {
     (getComptes as jest.Mock).mockResolvedValue(mockComptes);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   const renderComponent = () => {
@@ -79,7 +91,7 @@ describe('FormulaireTransaction', () => {
     
     // Test pour une entrée
     fireEvent.mouseDown(typeSelect);
-    fireEvent.click(screen.getByText('Entrée'));
+    fireEvent.click(screen.getByText('RECETTE'));
     
     await waitFor(() => {
       expect(screen.getByLabelText(/Compte Destination/i)).toBeInTheDocument();
@@ -88,7 +100,7 @@ describe('FormulaireTransaction', () => {
 
     // Test pour une sortie
     fireEvent.mouseDown(typeSelect);
-    fireEvent.click(screen.getByText('Sortie'));
+    fireEvent.click(screen.getByText('DEPENSE'));
 
     await waitFor(() => {
       expect(screen.queryByLabelText(/Compte Destination/i)).not.toBeInTheDocument();
@@ -97,16 +109,20 @@ describe('FormulaireTransaction', () => {
   });
 
   it('soumet le formulaire avec les données correctes', async () => {
-    (creerTransaction as jest.Mock).mockResolvedValueOnce({
+    const mockTransaction: Transaction = {
       id: '1',
       reference: 'TEST-001',
-      date: '2024-01-20T10:00:00Z',
-      type: 'ENTREE',
+      date_transaction: '2024-01-20T10:00:00Z',
+      type_transaction: 'RECETTE',
       categorie: 'VENTE',
       montant: 150000,
+      devise: 'XAF',
       description: 'Test transaction',
-      compte_destination_id: '1'
-    });
+      compte_destination_id: '1',
+      statut: 'EN_ATTENTE'
+    };
+
+    (creerTransaction as jest.Mock).mockResolvedValueOnce(mockTransaction);
 
     renderComponent();
 
@@ -116,10 +132,10 @@ describe('FormulaireTransaction', () => {
     });
 
     fireEvent.mouseDown(screen.getByLabelText(/Type de Transaction/i));
-    fireEvent.click(screen.getByText('Entrée'));
+    fireEvent.click(screen.getByText('RECETTE'));
 
     fireEvent.mouseDown(screen.getByLabelText(/Catégorie/i));
-    fireEvent.click(screen.getByText('Vente'));
+    fireEvent.click(screen.getByText('VENTE'));
 
     fireEvent.change(screen.getByLabelText(/Montant/i), {
       target: { value: '150000' }
@@ -139,7 +155,14 @@ describe('FormulaireTransaction', () => {
     fireEvent.click(screen.getByRole('button', { name: /Créer/i }));
 
     await waitFor(() => {
-      expect(creerTransaction).toHaveBeenCalled();
+      expect(creerTransaction).toHaveBeenCalledWith({
+        reference: 'TEST-001',
+        type_transaction: 'RECETTE',
+        categorie: 'VENTE',
+        montant: 150000,
+        description: 'Test transaction',
+        compte_destination_id: '1'
+      });
       expect(mockNavigate).toHaveBeenCalledWith('/finance');
     });
   });
@@ -156,10 +179,10 @@ describe('FormulaireTransaction', () => {
     });
 
     fireEvent.mouseDown(screen.getByLabelText(/Type de Transaction/i));
-    fireEvent.click(screen.getByText('Entrée'));
+    fireEvent.click(screen.getByText('RECETTE'));
 
     fireEvent.mouseDown(screen.getByLabelText(/Catégorie/i));
-    fireEvent.click(screen.getByText('Vente'));
+    fireEvent.click(screen.getByText('VENTE'));
 
     fireEvent.change(screen.getByLabelText(/Montant/i), {
       target: { value: '150000' }
