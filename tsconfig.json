@@ -45,8 +45,11 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "vite.config.ts"
+    "tests/**/*.tsx"
+  ],
+  "exclude": [
+    "vite.config.ts",
+    "vitest.config.ts"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
