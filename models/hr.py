@@ -7,6 +7,16 @@ from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
+class DepartementType(str, enum.Enum):
+    """Types de départements possibles"""
+    PRODUCTION = "PRODUCTION"
+    FINANCE = "FINANCE"
+    RH = "RH"
+    LOGISTIQUE = "LOGISTIQUE"
+    QUALITE = "QUALITE"
+    MAINTENANCE = "MAINTENANCE"
+    ADMINISTRATION = "ADMINISTRATION"
+
 class StatutEmploye(str, enum.Enum):
     """Statuts possibles d'un employé"""
     ACTIF = "ACTIF"
@@ -42,7 +52,7 @@ class Employe(Base):
     statut = Column(Enum(StatutEmploye), default=StatutEmploye.ACTIF)
     type_contrat = Column(Enum(TypeContrat))
     poste = Column(String(100))
-    departement = Column(String(100))
+    departement = Column(Enum(DepartementType))
     niveau_acces = Column(Enum(NiveauAcces), default=NiveauAcces.UTILISATEUR)
     email = Column(String(200))
     telephone = Column(String(20))
