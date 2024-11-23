@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+import { Card, CardContent, Typography, Grid, Box, CircularProgress } from '@mui/material';
 import { WbSunny, Opacity, Speed } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { productionService } from '../../services/production';
@@ -16,11 +16,28 @@ const WeatherWidget: React.FC = () => {
   });
 
   if (isLoading) {
-    return <Typography>Chargement...</Typography>;
+    return (
+      <Card>
+        <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+          <CircularProgress />
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!weatherData) {
-    return null;
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Conditions Météorologiques
+          </Typography>
+          <Typography color="textSecondary">
+            Données météo non disponibles
+          </Typography>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

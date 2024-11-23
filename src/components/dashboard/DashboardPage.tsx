@@ -2,7 +2,7 @@ import React from 'react';
 import { Grid, Typography, Box } from '@mui/material';
 import StatCard from '../common/StatCard';
 import { Agriculture, Inventory, AccountBalance, People } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getDashboardStats } from '../../services/dashboard';
 import CashFlowChart from '../finance/CashFlowChart';
 import ProductionChart from './ProductionChart';
@@ -29,7 +29,24 @@ const convertirVariation = (variation?: ApiVariation): UiVariation | undefined =
 };
 
 const DashboardPage: React.FC = () => {
-  const { data: stats } = useQuery('dashboard-stats', getDashboardStats);
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['dashboard', 'stats'],
+    queryFn: getDashboardStats,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+
+  if (error) {
+    return (
+      <Box>
+        <Typography variant="h4" gutterBottom>
+          Tableau de Bord
+        </Typography>
+        <Typography color="error">
+          Une erreur est survenue lors du chargement des données
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -47,6 +64,7 @@ const DashboardPage: React.FC = () => {
             variation={convertirVariation(stats?.production.variation)}
             icon={<Agriculture />}
             color="primary"
+            loading={isLoading}
           />
         </Grid>
 
@@ -58,6 +76,7 @@ const DashboardPage: React.FC = () => {
             variation={convertirVariation(stats?.inventory.variation)}
             icon={<Inventory />}
             color="success"
+            loading={isLoading}
           />
         </Grid>
 
@@ -69,6 +88,7 @@ const DashboardPage: React.FC = () => {
             variation={convertirVariation(stats?.finance.variation)}
             icon={<AccountBalance />}
             color="info"
+            loading={isLoading}
           />
         </Grid>
 
@@ -79,6 +99,7 @@ const DashboardPage: React.FC = () => {
             variation={convertirVariation(stats?.hr.variation)}
             icon={<People />}
             color="warning"
+            loading={isLoading}
           />
         </Grid>
 

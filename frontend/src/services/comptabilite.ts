@@ -15,7 +15,8 @@ import type {
   EcritureComptableFormData,
   TypeCompte,
   TypeJournal,
-  StatutEcriture
+  StatutEcriture,
+  BudgetAnalysis
 } from '../types/comptabilite';
 
 const API_BASE = '/api/v1/comptabilite';
@@ -26,8 +27,8 @@ export const getComptabiliteStats = async (): Promise<ComptabiliteStats> => {
   return response.data.data;
 };
 
-export const getBudgetAnalysis = async (periode: string) => {
-  const response = await api.get<ApiResponse<any>>(`${API_BASE}/budget/analysis`, {
+export const getBudgetAnalysis = async (periode: string): Promise<BudgetAnalysis> => {
+  const response = await api.get<ApiResponse<BudgetAnalysis>>(`${API_BASE}/budget/analysis`, {
     params: { periode }
   });
   return response.data.data;

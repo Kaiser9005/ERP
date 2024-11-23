@@ -1,31 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
+import React from 'react';
+import { Card, CardContent, Typography, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { productionService } from '../../services/production';
-import { ProductionEvent } from '../../types/production';
+import type { ProductionEvent } from '../../types/production';
 
 const RecentActivities: React.FC = () => {
-  const [activities, setActivities] = useState<ProductionEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        // On récupère les événements de production pour toutes les parcelles
-        const events = await productionService.getProductionEvents('all');
-        // On prend les 5 plus récents
-        setActivities(events.slice(0, 5));
-      } catch (error) {
-        console.error('Erreur lors du chargement des activités récentes:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, []);
+  const { data: activities, isLoading } = useQuery<ProductionEvent[]>({
+    queryKey: ['production', 'events', 'all'],
+    queryFn: () => productionService.getProductionEvents('all'),
+    select: (data) => data.slice(0, 5), // Prendre les 5 plus récents
+    staleTime: 1000 * 60 * 1, // 1 minute
+    refetchInterval: 1000 * 60 * 2 // 2 minutes
+  });
 
   if (isLoading) {
-    return <Typography>Chargement...</Typography>;
+    return (
+      <Card>
+        <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+          <CircularProgress />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!activities || activities.length === 0) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Activités Récentes
+          </Typography>
+          <Typography color="textSecondary">
+            Aucune activité récente
+          </Typography>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

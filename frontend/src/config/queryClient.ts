@@ -11,6 +11,10 @@ export const queryClient = new QueryClient({
 });
 
 export const queryKeys = {
+  dashboard: {
+    stats: () => ['dashboard', 'stats'],
+    activities: () => ['dashboard', 'activities']
+  },
   finance: {
     stats: () => ['finance', 'stats'],
     transactions: (filters?: any) => ['finance', 'transactions', filters],
@@ -31,14 +35,14 @@ export const queryKeys = {
     budgetAnalysis: (periode?: string) => ['comptabilite', 'budgetAnalysis', periode],
     cashflow: (periode?: string) => ['comptabilite', 'cashflow', periode]
   },
-  dashboard: {
-    stats: () => ['dashboard', 'stats']
-  },
   production: {
+    all: ['production'],
     stats: () => ['production', 'stats'],
     parcelles: () => ['production', 'parcelles'],
-    parcelle: (id: string) => ['production', 'parcelle', id],
-    recoltes: (filters?: any) => ['production', 'recoltes', filters],
+    parcelle: (id: string) => ['production', 'parcelles', id],
+    cycles: (parcelleId: string) => ['production', 'parcelles', parcelleId, 'cycles'],
+    recoltes: (parcelleId: string) => ['production', 'parcelles', parcelleId, 'recoltes'],
+    events: (parcelleId: string) => ['production', 'events', parcelleId],
     meteo: () => ['production', 'meteo'],
     rapports: (filters?: any) => ['production', 'rapports', filters]
   },
