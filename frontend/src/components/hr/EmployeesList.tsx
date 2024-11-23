@@ -1,129 +1,130 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  Card,
-  CardContent,
-  Typography,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  Chip,
-  Box,
-  TextField,
-  InputAdornment,
+  Paper,
   IconButton,
-  Avatar
+  Typography,
+  Box,
+  Chip,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import { Edit, Search, Visibility } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { Edit, Delete } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
 import { getEmployees } from '../../services/hr';
-import { useNavigate } from 'react-router-dom';
+import { queryKeys } from '../../config/queryClient';
+import { Employee } from '../../types/hr';
+
+const getStatutColor = (statut: Employee['statut']): 'success' | 'info' | 'warning' | 'error' | 'default' => {
+  switch (statut) {
+    case 'actif':
+      return 'success';
+    case 'conge':
+      return 'info';
+    case 'formation':
+      return 'warning';
+    case 'inactif':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const formatDate = (dateStr: string): string => {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 const EmployeesList: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
-  const { data: employees } = useQuery('employees', getEmployees);
+  const { data: employees, isLoading, error } = useQuery({
+    queryKey: queryKeys.hr.employees(),
+    queryFn: getEmployees
+  });
 
-  const filteredEmployees = employees?.filter(employee =>
-    `${employee.nom} ${employee.prenom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.matricule.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIF':
-        return 'success';
-      case 'INACTIF':
-        return 'error';
-      case 'CONGE':
-        return 'warning';
-      case 'SUSPENDU':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        Une erreur est survenue lors du chargement des employés
+      </Alert>
+    );
+  }
 
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6">Employés</Typography>
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Liste des Employés
+      </Typography>
+      
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Employé</TableCell>
               <TableCell>Matricule</TableCell>
-              <TableCell>Département</TableCell>
+              <TableCell>Nom</TableCell>
+              <TableCell>Prénom</TableCell>
               <TableCell>Poste</TableCell>
+              <TableCell>Département</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Date d'embauche</TableCell>
               <TableCell>Statut</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredEmployees?.map((employee) => (
+            {employees?.map((employee) => (
               <TableRow key={employee.id}>
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar>
-                      {employee.prenom[0]}{employee.nom[0]}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="subtitle2">
-                        {employee.prenom} {employee.nom}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {employee.email}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </TableCell>
                 <TableCell>{employee.matricule}</TableCell>
-                <TableCell>{employee.departement}</TableCell>
+                <TableCell>{employee.nom}</TableCell>
+                <TableCell>{employee.prenom}</TableCell>
                 <TableCell>{employee.poste}</TableCell>
+                <TableCell>{employee.departement}</TableCell>
+                <TableCell>{employee.email}</TableCell>
+                <TableCell>{formatDate(employee.dateEmbauche)}</TableCell>
                 <TableCell>
-                  <Chip
+                  <Chip 
+                    label={employee.statut} 
+                    color={getStatutColor(employee.statut)}
                     size="small"
-                    label={employee.statut}
-                    color={getStatusColor(employee.statut)}
                   />
                 </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    onClick={() => navigate(`/hr/employees/${employee.id}`)}
-                  >
-                    <Visibility />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => navigate(`/hr/employees/${employee.id}/edit`)}
+                <TableCell>
+                  <IconButton 
+                    size="small" 
+                    color="primary"
+                    aria-label="Modifier l'employé"
                   >
                     <Edit />
+                  </IconButton>
+                  <IconButton 
+                    size="small" 
+                    color="error"
+                    aria-label="Supprimer l'employé"
+                  >
+                    <Delete />
                   </IconButton>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+      </TableContainer>
+    </Box>
   );
 };
 

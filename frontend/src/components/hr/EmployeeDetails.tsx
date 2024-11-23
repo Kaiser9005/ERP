@@ -1,224 +1,196 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
-  Grid,
   Typography,
-  Chip,
   Box,
+  Grid,
+  Chip,
+  Divider,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow
+  Alert,
+  CircularProgress
 } from '@mui/material';
+import {
+  Email,
+  Phone,
+  Work,
+  Business,
+  Today,
+  Person,
+  AttachMoney
+} from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import { getEmployee, getEmployeeLeaves } from '../../services/hr';
-import PageHeader from '../layout/PageHeader';
-import { Edit } from '@mui/icons-material';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import LeaveRequestForm from './LeaveRequestForm';
+import { getEmployee } from '../../services/hr';
+import { queryKeys } from '../../config/queryClient';
+import { Employee, EmployeeStatus } from '../../types/hr';
+import InfoItem from './components/InfoItem';
+
+const getStatutColor = (statut: EmployeeStatus): 'success' | 'error' | 'warning' | 'info' | 'default' => {
+  switch (statut) {
+    case 'actif':
+      return 'success';
+    case 'conge':
+      return 'info';
+    case 'formation':
+      return 'warning';
+    case 'inactif':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const formatDate = (dateStr: string): string => {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 const EmployeeDetails: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [leaveFormOpen, setLeaveFormOpen] = useState(false);
 
-  const { data: employee } = useQuery(
-    ['employee', id],
-    () => getEmployee(id!)
-  );
+  const { data: employee, isLoading, error } = useQuery({
+    queryKey: queryKeys.hr.employee(id!),
+    queryFn: () => getEmployee(id!),
+    enabled: !!id
+  });
 
-  const { data: leaves } = useQuery(
-    ['employee-leaves', id],
-    () => getEmployeeLeaves(id!)
-  );
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIF':
-        return 'success';
-      case 'INACTIF':
-        return 'error';
-      case 'CONGE':
-        return 'warning';
-      case 'SUSPENDU':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        Une erreur est survenue lors du chargement des détails de l'employé
+      </Alert>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Employé non trouvé
+      </Alert>
+    );
+  }
 
   return (
-    <>
-      <PageHeader
-        title={`${employee?.prenom} ${employee?.nom}`}
-        subtitle={`Matricule: ${employee?.matricule}`}
-        action={{
-          label: "Modifier",
-          onClick: () => navigate(`/hr/employees/${id}/edit`),
-          icon: <Edit />
-        }}
-      />
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5">
+          Détails de l'Employé
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/hr/employees')}
+        >
+          Retour à la liste
+        </Button>
+      </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Informations Personnelles
-              </Typography>
-
-              <Box sx={{ '& > *': { mb: 2 } }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Date de Naissance
-                  </Typography>
-                  <Typography>
-                    {employee?.date_naissance &&
-                      format(new Date(employee.date_naissance), 'PP', { locale: fr })}
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Email
-                  </Typography>
-                  <Typography>{employee?.email}</Typography>
-                </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Téléphone
-                  </Typography>
-                  <Typography>{employee?.telephone}</Typography>
-                </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Adresse
-                  </Typography>
-                  <Typography>{employee?.adresse}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6">
-                  Informations Professionnelles
+      <Card>
+        <CardContent>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Box mb={3}>
+                <Typography variant="h6" gutterBottom>
+                  {employee.nom} {employee.prenom}
                 </Typography>
                 <Chip
-                  label={employee?.statut}
-                  color={getStatusColor(employee?.statut || '')}
+                  label={employee.statut}
+                  color={getStatutColor(employee.statut)}
+                  size="small"
                 />
               </Box>
 
-              <Grid container spacing={3}>
+              <InfoItem
+                icon={<Person />}
+                label="Matricule"
+                value={employee.matricule}
+              />
+              <InfoItem
+                icon={<Email />}
+                label="Email"
+                value={employee.email}
+              />
+              <InfoItem
+                icon={<Phone />}
+                label="Téléphone"
+                value={employee.telephone}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <InfoItem
+                icon={<Work />}
+                label="Poste"
+                value={employee.poste}
+              />
+              <InfoItem
+                icon={<Business />}
+                label="Département"
+                value={employee.departement}
+              />
+              <InfoItem
+                icon={<Today />}
+                label="Date d'embauche"
+                value={formatDate(employee.dateEmbauche)}
+              />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box>
+            <Typography variant="subtitle1" gutterBottom>
+              Informations complémentaires
+            </Typography>
+            <Grid container spacing={2}>
+              {employee.adresse && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Adresse
+                    </Typography>
+                    <Typography>
+                      {employee.adresse.rue}<br />
+                      {employee.adresse.codePostal} {employee.adresse.ville}<br />
+                      {employee.adresse.pays}
+                    </Typography>
+                  </Grid>
+                </>
+              )}
+              {employee.formation && (
                 <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Département
+                  <Typography variant="body2" color="text.secondary">
+                    Formation
                   </Typography>
-                  <Typography variant="body1">
-                    {employee?.departement}
+                  <Typography>
+                    Niveau: {employee.formation.niveau}<br />
+                    {employee.formation.certifications.length > 0 && (
+                      <>
+                        Certifications:<br />
+                        {employee.formation.certifications.join(', ')}
+                      </>
+                    )}
                   </Typography>
                 </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Poste
-                  </Typography>
-                  <Typography variant="body1">
-                    {employee?.poste}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Date d'Embauche
-                  </Typography>
-                  <Typography variant="body1">
-                    {employee?.date_embauche &&
-                      format(new Date(employee.date_embauche), 'PP', { locale: fr })}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Type de Contrat
-                  </Typography>
-                  <Typography variant="body1">
-                    {employee?.type_contrat}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6">
-                  Historique des Congés
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => setLeaveFormOpen(true)}
-                >
-                  Nouvelle Demande
-                </Button>
-              </Box>
-
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Début</TableCell>
-                    <TableCell>Fin</TableCell>
-                    <TableCell>Jours</TableCell>
-                    <TableCell>Statut</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leaves?.map((leave) => (
-                    <TableRow key={leave.id}>
-                      <TableCell>{leave.type_conge}</TableCell>
-                      <TableCell>
-                        {format(new Date(leave.date_debut), 'PP', { locale: fr })}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(leave.date_fin), 'PP', { locale: fr })}
-                      </TableCell>
-                      <TableCell>{leave.nb_jours}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={leave.statut}
-                          color={leave.statut === 'APPROUVE' ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <LeaveRequestForm
-        open={leaveFormOpen}
-        onClose={() => setLeaveFormOpen(false)}
-        employeeId={id}
-      />
-    </>
+              )}
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

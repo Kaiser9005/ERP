@@ -1,12 +1,24 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import StatCard from '../dashboard/StatCard';
+import StatCard from '../common/StatCard';
 import { People, EventAvailable, Sick, School } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getEmployeeStats } from '../../services/hr';
+import { queryKeys } from '../../config/queryClient';
+import { EmployeeStats as EmployeeStatsType } from '../../types/hr';
+
+type VariationType = 'hausse' | 'baisse';
+
+const formatVariation = (value: number): { valeur: number; type: VariationType } => ({
+  valeur: Math.abs(value),
+  type: value >= 0 ? 'hausse' : 'baisse'
+});
 
 const EmployeeStats: React.FC = () => {
-  const { data: stats } = useQuery('employee-stats', getEmployeeStats);
+  const { data: stats } = useQuery<EmployeeStatsType>({
+    queryKey: queryKeys.hr.stats(),
+    queryFn: getEmployeeStats
+  });
 
   return (
     <Grid container spacing={3}>
@@ -14,7 +26,7 @@ const EmployeeStats: React.FC = () => {
         <StatCard
           title="Effectif Total"
           value={stats?.totalEmployees || 0}
-          variation={stats?.employeesVariation}
+          variation={stats?.employeesVariation ? formatVariation(stats.employeesVariation) : undefined}
           icon={<People />}
           color="primary"
         />
@@ -24,7 +36,7 @@ const EmployeeStats: React.FC = () => {
         <StatCard
           title="Présents Aujourd'hui"
           value={stats?.presentToday || 0}
-          variation={stats?.presenceVariation}
+          variation={stats?.presenceVariation ? formatVariation(stats.presenceVariation) : undefined}
           icon={<EventAvailable />}
           color="success"
         />
@@ -34,7 +46,7 @@ const EmployeeStats: React.FC = () => {
         <StatCard
           title="En Congé"
           value={stats?.onLeave || 0}
-          variation={stats?.leaveVariation}
+          variation={stats?.leaveVariation ? formatVariation(stats.leaveVariation) : undefined}
           icon={<Sick />}
           color="warning"
         />
@@ -44,7 +56,7 @@ const EmployeeStats: React.FC = () => {
         <StatCard
           title="En Formation"
           value={stats?.inTraining || 0}
-          variation={stats?.trainingVariation}
+          variation={stats?.trainingVariation ? formatVariation(stats.trainingVariation) : undefined}
           icon={<School />}
           color="info"
         />

@@ -1,109 +1,127 @@
 import React from 'react';
 import {
-  Card,
-  CardContent,
   Typography,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Chip,
   Box,
-  IconButton
+  Grid,
+  Chip,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import { Edit, Today } from '@mui/icons-material';
-import { useQuery } from 'react-query';
-import { getAttendanceOverview } from '../../services/hr';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import AttendanceChart from './AttendanceChart';
+import {
+  PeopleAlt,
+  EventBusy,
+  School,
+  WorkOff
+} from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { getEmployeeStats } from '../../services/hr';
+import { queryKeys } from '../../config/queryClient';
+import { EmployeeStats } from '../../types/hr';
+import StatCard from './components/StatCard';
 
 const AttendanceOverview: React.FC = () => {
-  const { data: attendance } = useQuery('attendance-overview', getAttendanceOverview);
+  const { data: stats, isLoading, error } = useQuery<EmployeeStats>({
+    queryKey: queryKeys.hr.stats(),
+    queryFn: getEmployeeStats
+  });
 
-  const getStatusColor = (type: string) => {
-    switch (type) {
-      case 'PRESENT':
-        return 'success';
-      case 'ABSENT':
-        return 'error';
-      case 'RETARD':
-        return 'warning';
-      case 'CONGE':
-        return 'info';
-      default:
-        return 'default';
-    }
-  };
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        Une erreur est survenue lors du chargement des statistiques
+      </Alert>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Aucune donnée disponible
+      </Alert>
+    );
+  }
+
+  const absents = stats.totalEmployees - stats.presentToday - stats.onLeave - stats.inTraining;
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12} lg={8}>
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h6">Présences du Jour</Typography>
-              <IconButton>
-                <Today />
-              </IconButton>
-            </Box>
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Vue d'ensemble des Présences
+      </Typography>
 
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Employé</TableCell>
-                  <TableCell>Département</TableCell>
-                  <TableCell>Arrivée</TableCell>
-                  <TableCell>Départ</TableCell>
-                  <TableCell>Statut</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {attendance?.daily.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>
-                      {record.employe.prenom} {record.employe.nom}
-                    </TableCell>
-                    <TableCell>{record.employe.departement}</TableCell>
-                    <TableCell>
-                      {record.heure_arrivee ? 
-                        format(new Date(record.heure_arrivee), 'HH:mm', { locale: fr }) :
-                        '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {record.heure_depart ? 
-                        format(new Date(record.heure_depart), 'HH:mm', { locale: fr }) :
-                        '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={record.type_presence}
-                        color={getStatusColor(record.type_presence)}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Présents"
+            value={stats.presentToday}
+            total={stats.totalEmployees}
+            icon={<PeopleAlt sx={{ color: 'primary.main' }} />}
+            color="primary"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="En Congé"
+            value={stats.onLeave}
+            total={stats.totalEmployees}
+            icon={<EventBusy sx={{ color: 'info.main' }} />}
+            color="info"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="En Formation"
+            value={stats.inTraining}
+            total={stats.totalEmployees}
+            icon={<School sx={{ color: 'warning.main' }} />}
+            color="warning"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Absents"
+            value={absents}
+            total={stats.totalEmployees}
+            icon={<WorkOff sx={{ color: 'error.main' }} />}
+            color="error"
+          />
+        </Grid>
       </Grid>
 
-      <Grid item xs={12} lg={4}>
-        <AttendanceChart data={attendance?.stats} />
-      </Grid>
-    </Grid>
+      <Box mt={3}>
+        <Typography variant="subtitle1" gutterBottom>
+          Tendances
+        </Typography>
+        <Box display="flex" gap={2}>
+          <Chip
+            label={`Évolution effectif: ${Math.abs(stats.employeesVariation)}%`}
+            color={stats.employeesVariation >= 0 ? 'success' : 'error'}
+            size="small"
+          />
+          <Chip
+            label={`Taux de congés: ${Math.abs(stats.leaveVariation)}%`}
+            color={stats.leaveVariation <= 0 ? 'success' : 'warning'}
+            size="small"
+          />
+          <Chip
+            label={`Taux de formation: ${Math.abs(stats.trainingVariation)}%`}
+            color={stats.trainingVariation >= 0 ? 'info' : 'warning'}
+            size="small"
+          />
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
