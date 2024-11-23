@@ -1,30 +1,46 @@
-19s
-Run npm install
-npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
-npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
-npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
-npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
-npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
-npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
-
-added 569 packages, and audited 570 packages in 19s
-
-129 packages are looking for funding
-  run `npm fund` for details
-
-found 0 vulnerabilities
+0s
+Current runner version: '2.321.0'
+Operating System
+Runner Image
+Runner Image Provisioner
+GITHUB_TOKEN Permissions
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e18286ca9a3d1956744)
+Download action repository 'actions/setup-node@v3' (SHA:1a4442cacd436585916779262731d5b162bc6ec7)
+Complete job name: build-frontend
+0s
+Run actions/checkout@v3
+Syncing repository: Kaiser9005/ERP
+Getting Git version info
+Temporarily overriding HOME='/home/runner/work/_temp/81774ff1-8c04-400d-b462-23d07e6f5efa' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/ERP/ERP
+Deleting the contents of '/home/runner/work/ERP/ERP'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+Checking out the ref
+/usr/bin/git log -1 --format='%H'
+'6bdabaf841ba3ced2f052c0763c364d247d0ca13'
+0s
+Run actions/setup-node@v3
+Found in cache @ /opt/hostedtoolcache/node/18.20.5/x64
+Environment details
+18s
 0s
 Run echo "VITE_WEATHER_API_KEY=" >> .env
-7s
+6s
 Run npm run build
 
 > fofal-erp@0.1.0 build
 > tsc && vite build
 
 Error: src/App.tsx(5,1): error TS6133: 'ThemeProvider' is declared but its value is never read.
-Error: src/components/dashboard/DashboardPage.tsx(5,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/finance/BudgetOverview.tsx(13,10): error TS2305: Module '"../../services/finance"' has no exported member 'getBudgetOverview'.
 Error: src/components/finance/BudgetOverview.tsx(13,29): error TS2459: Module '"../../services/finance"' declares 'Budget' locally, but it is not exported.
 Error: src/components/finance/BudgetOverview.tsx(16,53): error TS2769: No overload matches this call.
@@ -89,9 +105,7 @@ Error: src/components/finance/TransactionsList.tsx(29,45): error TS2339: Propert
   Property 'filter' does not exist on type 'TQueryFnData'.
 Error: src/components/finance/TransactionsList.tsx(29,52): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
 Error: src/components/finance/TransactionsList.tsx(78,40): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
-Error: src/components/hr/AttendanceOverview.tsx(17,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/hr/AttendanceOverview.tsx(18,28): error TS6133: 'EmployeeStats' is declared but its value is never read.
-Error: src/components/hr/EmployeeDetails.tsx(21,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/hr/EmployeeForm.tsx(55,5): error TS2554: Expected 1-2 arguments, but got 3.
 Error: src/components/hr/EmployeeForm.tsx(80,5): error TS2559: Type '(data: EmployeeFormData) => Promise<Employee>' has no properties in common with type 'UseMutationOptions<unknown, Error, void, unknown>'.
 Error: src/components/hr/EmployeeForm.tsx(90,39): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters'.
@@ -120,33 +134,27 @@ Error: src/components/hr/EmployeeStats.tsx(65,24): error TS2339: Property 'inTra
 Error: src/components/hr/EmployeeStats.tsx(67,27): error TS2339: Property 'trainingRate' does not exist on type 'NonNullable<TQueryFnData>'.
 Error: src/components/hr/EmployeeStats.tsx(68,25): error TS2339: Property 'trainingRate' does not exist on type 'NonNullable<TQueryFnData>'.
 Error: src/components/hr/EmployeeStats.tsx(78,24): error TS2339: Property 'totalEmployees' does not exist on type 'NonNullable<TQueryFnData>'.
-Error: src/components/hr/EmployeesList.tsx(16,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/hr/EmployeesList.tsx(63,30): error TS7006: Parameter 'employee' implicitly has an 'any' type.
-Error: src/components/hr/LeaveRequestForm.tsx(13,45): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/hr/LeaveRequests.tsx(16,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/hr/LeaveRequests.tsx(59,29): error TS7006: Parameter 'request' implicitly has an 'any' type.
-Error: src/components/inventaire/DetailsProduit.tsx(17,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/inventaire/DetailsProduit.tsx(77,28): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'typeof CategoryProduit'.
-Error: src/components/inventaire/DetailsProduit.tsx(142,35): error TS7006: Parameter 'movement' implicitly has an 'any' type.
-Error: src/components/inventaire/DialogueMouvementStock.tsx(15,45): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/inventaire/FormulaireProduit.tsx(15,55): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/inventaire/FormulaireProduit.tsx(73,62): error TS2345: Argument of type 'ProduitFormData' is not assignable to parameter of type 'Partial<Produit>'.
   Types of property 'categorie' are incompatible.
     Type 'string' is not assignable to type 'CategoryProduit | undefined'.
 Error: src/components/inventaire/FormulaireProduit.tsx(73,83): error TS2345: Argument of type 'ProduitFormData' is not assignable to parameter of type 'Partial<Produit>'.
   Types of property 'categorie' are incompatible.
     Type 'string' is not assignable to type 'CategoryProduit | undefined'.
-Error: src/components/inventaire/HistoriqueMouvements.tsx(15,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/inventaire/HistoriqueMouvements.tsx(16,25): error TS2459: Module '"../../services/inventaire"' declares 'MouvementStock' locally, but it is not exported.
-Error: src/components/inventaire/HistoriqueMouvements.tsx(53,28): error TS7006: Parameter 'mouvement' implicitly has an 'any' type.
-Error: src/components/inventaire/ListeStock.tsx(18,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
+Error: src/components/inventaire/ListeStock.tsx(35,61): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(queryKey: QueryKey, options?: Omit<UseQueryOptions<Stock[], unknown, Stock[], QueryKey>, "queryKey"> | undefined): UseQueryResult<...>', gave the following error.
+    Type '() => Promise<Stock[]>' has no properties in common with type 'Omit<UseQueryOptions<Stock[], unknown, Stock[], QueryKey>, "queryKey">'.
+  Overload 2 of 3, '(queryKey: QueryKey, queryFn: QueryFunction<Stock[], QueryKey>, options?: Omit<UseQueryOptions<Stock[], unknown, Stock[], QueryKey>, "queryKey" | "queryFn"> | undefined): UseQueryResult<...>', gave the following error.
+    Argument of type '() => Promise<Stock[]>' is not assignable to parameter of type 'QueryFunction<Stock[], QueryKey>'.
+      Type 'Promise<Stock[]>' is not assignable to type 'Stock[] | Promise<Stock[]>'.
+        Type 'Promise<import("/home/runner/work/ERP/ERP/src/types/inventaire").Stock[]>' is not assignable to type 'Promise<Stock[]>'.
+          Type 'import("/home/runner/work/ERP/ERP/src/types/inventaire").Stock[]' is not assignable to type 'Stock[]'.
+            Type 'Stock' is missing the following properties from type 'Stock': code, name, quantity, unit, and 2 more.
+Error: src/components/inventaire/ListeStock.tsx(37,33): error TS2339: Property 'filter' does not exist on type 'never[] | TQueryFnData'.
+  Property 'filter' does not exist on type 'TQueryFnData'.
 Error: src/components/inventaire/ListeStock.tsx(37,40): error TS7006: Parameter 'stock' implicitly has an 'any' type.
 Error: src/components/inventaire/ListeStock.tsx(81,34): error TS7006: Parameter 'stock' implicitly has an 'any' type.
-Error: src/components/inventaire/StatsInventaire.tsx(5,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/inventaire/StatsInventaire.tsx(6,30): error TS2724: '"../../services/inventaire"' has no exported member named 'StatsInventaire'. Did you mean 'getStatsInventaire'?
-Error: src/components/production/ParcelleDetails.tsx(19,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
-Error: src/components/production/ParcelleDetails.tsx(159,38): error TS7006: Parameter 'event' implicitly has an 'any' type.
-Error: src/components/production/ParcelleDetails.tsx(193,46): error TS7006: Parameter 'recolte' implicitly has an 'any' type.
 Error: src/components/production/ParcelleForm.tsx(18,10): error TS2614: Module '"../../services/production"' has no exported member 'createParcelle'. Did you mean to use 'import createParcelle from "../../services/production"' instead?
 Error: src/components/production/ParcelleForm.tsx(18,26): error TS2614: Module '"../../services/production"' has no exported member 'updateParcelle'. Did you mean to use 'import updateParcelle from "../../services/production"' instead?
 Error: src/components/production/ParcelleForm.tsx(18,42): error TS2614: Module '"../../services/production"' has no exported member 'getParcelle'. Did you mean to use 'import getParcelle from "../../services/production"' instead?
@@ -175,10 +183,8 @@ Error: src/components/production/ParcelleForm.tsx(176,42): error TS2339: Propert
 Error: src/components/production/ParcelleForm.tsx(197,39): error TS2339: Property 'isLoading' does not exist on type 'UseMutationResult<unknown, Error, void, unknown>'.
   Property 'isLoading' does not exist on type 'Override<MutationObserverIdleResult<unknown, Error, void, unknown>, { mutate: UseMutateFunction<unknown, Error, void, unknown>; }> & { ...; }'.
 Error: src/components/production/ParcelleMap.tsx(6,21): error TS2307: Cannot find module '/home/user/ERP/src/services/api' or its corresponding type declarations.
-Error: src/components/production/ParcellesList.tsx(19,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/production/ProductionDashboard.tsx(61,13): error TS6133: 'detailedData' is declared but its value is never read.
 Error: src/components/production/ProductionDashboard.tsx(68,28): error TS6133: 'event' is declared but its value is never read.
-Error: src/components/production/ProductionStats.tsx(10,26): error TS2307: Cannot find module 'react-query' or its corresponding type declarations.
 Error: src/components/production/WeatherDashboard.tsx(40,61): error TS2345: Argument of type 'string' is not assignable to parameter of type '"current" | "forecast"'.
 Error: src/components/production/WeatherDashboard.tsx(41,24): error TS2345: Argument of type 'WeatherData' is not assignable to parameter of type 'SetStateAction<WeatherData | null>'.
   Type 'WeatherData' is missing the following properties from type 'WeatherData': humidite, ensoleillement, vent, previsions

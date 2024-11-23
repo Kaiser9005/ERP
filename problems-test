@@ -1,3 +1,4 @@
+1s
 Current runner version: '2.321.0'
 Operating System
 Runner Image
@@ -11,12 +12,17 @@ Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e1828
 Download action repository 'actions/setup-python@v4' (SHA:65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236)
 Download action repository 'codecov/codecov-action@v3' (SHA:ab904c41d6ece82784817410c45d8b8c02684457)
 Complete job name: test
-21s
+20s
+Checking docker version
+Clean up resources from previous jobs
+Create local container network
+Starting postgres service container
+Waiting for all services to be ready
 1s
 Run actions/checkout@v3
 Syncing repository: Kaiser9005/ERP
 Getting Git version info
-Temporarily overriding HOME='/home/runner/work/_temp/6beb6b0b-af42-49cf-a0e4-4b141083a38e' before making global git config changes
+Temporarily overriding HOME='/home/runner/work/_temp/4775e81a-728f-455f-b2be-d4b35e91591a' before making global git config changes
 Adding repository directory to the temporary git global config as a safe directory
 /usr/bin/git config --global --add safe.directory /home/runner/work/ERP/ERP
 Deleting the contents of '/home/runner/work/ERP/ERP'
@@ -27,12 +33,12 @@ Fetching the repository
 Determining the checkout info
 Checking out the ref
 /usr/bin/git log -1 --format='%H'
-'0e81f30bcdc03631f100d3b0bfe8db2b630b4a25'
+'6bdabaf841ba3ced2f052c0763c364d247d0ca13'
 0s
 Run actions/setup-python@v4
 Installed versions
-24s
-2s
+22s
+1s
 Run pytest --cov=. --cov-report=xml
 ImportError while loading conftest '/home/runner/work/ERP/ERP/tests/conftest.py'.
 tests/conftest.py:16: in <module>
