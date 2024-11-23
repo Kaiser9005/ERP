@@ -1,170 +1,184 @@
-export type TypeCompte = 'ACTIF' | 'PASSIF' | 'CHARGE' | 'PRODUIT';
+import { TypeTransaction } from './finance';
 
-export type TypeJournal = 'ACHAT' | 'VENTE' | 'BANQUE' | 'CAISSE' | 'OPERATIONS_DIVERSES';
-
-export type StatutEcriture = 'BROUILLON' | 'VALIDEE' | 'ANNULEE';
-
-export interface BudgetData {
-  categorie: string;
-  prevu: number;
-  realise: number;
-  ecart: number;
-  ecart_percentage: number;
+export enum TypeCompteComptable {
+  ACTIF = 'ACTIF',
+  PASSIF = 'PASSIF',
+  CHARGE = 'CHARGE',
+  PRODUIT = 'PRODUIT'
 }
 
-export interface BudgetAnalysis {
-  total_prevu: number;
-  total_realise: number;
-  categories: Record<string, BudgetData>;
-  weather_impact: {
-    score: number;
-    factors: string[];
-    projections: Record<string, string>;
-  };
-  recommendations: string[];
-}
-
-export interface CashFlowData {
-  date: string;
-  entrees: number;
-  sorties: number;
-  solde: number;
-  prevision: number;
-  impact_meteo: number;
+export enum StatutEcriture {
+  BROUILLON = 'BROUILLON',
+  VALIDEE = 'VALIDEE',
+  ANNULEE = 'ANNULEE'
 }
 
 export interface CompteComptable {
-    id: string;
-    numero: string;
-    libelle: string;
-    type_compte: TypeCompte;
-    compte_parent_id?: string;
-    solde_debit: number;
-    solde_credit: number;
-    actif: boolean;
-    description?: string;
-    metadata?: Record<string, any>;
+  id: string;
+  numero: string;
+  libelle: string;
+  type_compte: TypeCompteComptable;
+  solde: number;
+  actif: boolean;
+  description?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface EcritureComptable {
-    id: string;
-    date_ecriture: string;
-    numero_piece: string;
+  id: string;
+  date_ecriture: string;
+  journal_id: string;
+  lignes: Array<{
     compte_id: string;
     libelle: string;
     debit: number;
     credit: number;
-    statut: StatutEcriture;
-    journal_id: string;
-    transaction_id?: string;
-    periode: string;
-    validee_par_id?: string;
-    date_validation?: string;
-    metadata?: Record<string, any>;
+  }>;
+  statut: StatutEcriture;
+  piece_jointe_url?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface JournalComptable {
+  id: string;
+  code: string;
+  libelle: string;
+  type: string;
+  actif: boolean;
+  description?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Balance {
+  periode: {
+    debut: string;
+    fin: string;
+  };
+  comptes: Array<{
     id: string;
-    code: string;
+    numero: string;
     libelle: string;
-    type_journal: TypeJournal;
-    actif: boolean;
-    description?: string;
-    metadata?: Record<string, any>;
+    type_compte: TypeCompteComptable;
+    solde_initial: number;
+    total_debit: number;
+    total_credit: number;
+    solde_final: number;
+  }>;
+  totaux: {
+    debit: number;
+    credit: number;
+    solde: number;
+  };
+  metadata?: Record<string, any>;
 }
 
-export interface ExerciceComptable {
+export interface GrandLivre {
+  compte: {
     id: string;
-    annee: string;
-    date_debut: string;
-    date_fin: string;
-    cloture: boolean;
-    date_cloture?: string;
-    cloture_par_id?: string;
-    metadata?: Record<string, any>;
-}
-
-export interface LigneGrandLivre {
+    numero: string;
+    libelle: string;
+    type_compte: TypeCompteComptable;
+  };
+  periode: {
+    debut: string;
+    fin: string;
+  };
+  solde_initial: number;
+  ecritures: Array<{
     date: string;
+    journal: string;
     piece: string;
     libelle: string;
     debit: number;
     credit: number;
-    solde: number;
-}
-
-export interface CompteBalance {
-    compte: {
-        numero: string;
-        libelle: string;
-        type: TypeCompte;
-    };
+    solde_cumule: number;
+  }>;
+  totaux: {
     debit: number;
     credit: number;
     solde: number;
+  };
+  metadata?: Record<string, any>;
 }
 
-export interface BilanCompte {
+export interface BudgetAnalysis {
+  periode: {
+    debut: string;
+    fin: string;
+  };
+  categories: Array<{
+    code: string;
     libelle: string;
-    montant: number;
+    budget_prevu: number;
+    realise: number;
+    ecart: number;
+    pourcentage: number;
+  }>;
+  totaux: {
+    budget_prevu: number;
+    realise: number;
+    ecart: number;
+    pourcentage: number;
+  };
+  weather_impact: {
+    score: number;
+    factors: string[];
+    projections: Record<string, number>;
+    recommendations: string[];
+  };
+  metadata?: Record<string, any>;
 }
 
-export interface Bilan {
-    actif: Record<string, BilanCompte>;
-    passif: Record<string, BilanCompte>;
-    total_actif: number;
-    total_passif: number;
+export interface RapportComptable {
+  periode: {
+    debut: string;
+    fin: string;
+  };
+  bilan: {
+    actif: Record<string, number>;
+    passif: Record<string, number>;
+    total: number;
+  };
+  resultat: {
+    produits: Record<string, number>;
+    charges: Record<string, number>;
+    net: number;
+  };
+  tresorerie: {
+    entrees: Record<string, number>;
+    sorties: Record<string, number>;
+    solde: number;
+  };
+  ratios: {
+    liquidite: number;
+    solvabilite: number;
+    rentabilite: number;
+  };
+  metadata?: Record<string, any>;
 }
 
-export interface CompteResultat {
-    produits: Record<string, BilanCompte>;
-    charges: Record<string, BilanCompte>;
-    total_produits: number;
-    total_charges: number;
-    resultat_net: number;
-}
-
-// Types pour les formulaires
-export interface CompteComptableFormData {
-    numero: string;
+export interface CloturePeriode {
+  periode: {
+    debut: string;
+    fin: string;
+    type: 'MENSUELLE' | 'ANNUELLE';
+  };
+  statut: 'EN_COURS' | 'TERMINEE' | 'ERREUR';
+  etapes: Array<{
+    code: string;
     libelle: string;
-    type_compte: TypeCompte;
-    compte_parent_id?: string;
-    description?: string;
-}
-
-export interface EcritureComptableFormData {
-    date_ecriture: string;
-    numero_piece: string;
-    compte_id: string;
-    libelle: string;
-    debit: number;
-    credit: number;
-    journal_id: string;
-    transaction_id?: string;
-}
-
-// Types pour les filtres
-export interface ComptabiliteFilters {
-    dateDebut?: string;
-    dateFin?: string;
-    compteId?: string;
-    journalId?: string;
-    typeCompte?: TypeCompte;
-    typeJournal?: TypeJournal;
-    statut?: StatutEcriture;
-}
-
-// Types pour les statistiques
-export interface ComptabiliteStats {
-    totalActif: number;
-    totalPassif: number;
-    resultatPeriode: number;
-    nombreEcritures: number;
-    nombreComptes: {
-        actif: number;
-        passif: number;
-        charge: number;
-        produit: number;
-    };
+    statut: 'A_FAIRE' | 'EN_COURS' | 'TERMINEE' | 'ERREUR';
+    message?: string;
+  }>;
+  resultats: {
+    ecritures_validees: number;
+    comptes_soldes: number;
+    anomalies: Array<{
+      type: string;
+      message: string;
+      compte?: string;
+      ecriture?: string;
+    }>;
+  };
+  metadata?: Record<string, any>;
 }
