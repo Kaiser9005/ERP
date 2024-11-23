@@ -2,188 +2,214 @@ import React from 'react';
 import {
   Card,
   CardContent,
-  Grid,
   Typography,
+  Grid,
   Chip,
   Box,
-  Button,
+  CircularProgress,
+  Alert,
   Link
 } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getTransaction } from '../../services/finance';
-import PageHeader from '../layout/PageHeader';
-import { Edit, Download } from '@mui/icons-material';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { queryKeys } from '../../config/queryClient';
+import type { Transaction } from '../../types/finance';
 
-const TransactionDetails: React.FC = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { data: transaction } = useQuery(['transaction', id], () => getTransaction(id!));
+interface TransactionDetailsProps {
+  transactionId: string;
+}
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+const TransactionDetails: React.FC<TransactionDetailsProps> = ({ transactionId }) => {
+  const { data: transaction, isLoading, error } = useQuery<Transaction>({
+    queryKey: queryKeys.finance.transaction(transactionId),
+    queryFn: () => getTransaction(transactionId),
+    enabled: !!transactionId
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !transaction) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error">
+            Erreur lors du chargement des détails de la transaction
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const getStatusColor = (statut: string) => {
+    switch (statut) {
       case 'VALIDEE':
         return 'success';
       case 'EN_ATTENTE':
         return 'warning';
       case 'REJETEE':
         return 'error';
-      default:
+      case 'ANNULEE':
         return 'default';
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'RECETTE':
-        return 'success';
-      case 'DEPENSE':
-        return 'error';
-      case 'VIREMENT':
-        return 'info';
       default:
         return 'default';
     }
   };
 
   return (
-    <>
-      <PageHeader
-        title={`Transaction ${transaction?.reference}`}
-        subtitle="Détails de la transaction"
-        action={{
-          label: "Modifier",
-          onClick: () => navigate(`/finance/transactions/${id}/edit`),
-          icon: <Edit />
-        }}
-      />
-
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Date
-                  </Typography>
-                  <Typography variant="body1">
-                    {transaction?.date_transaction &&
-                      format(new Date(transaction.date_transaction), 'Pp', { locale: fr })}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Montant
-                  </Typography>
-                  <Typography variant="h5">
-                    {new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'XAF'
-                    }).format(transaction?.montant || 0)}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Type
-                  </Typography>
-                  <Chip
-                    label={transaction?.type_transaction}
-                    color={getTypeColor(transaction?.type_transaction || '')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Statut
-                  </Typography>
-                  <Chip
-                    label={transaction?.statut}
-                    color={getStatusColor(transaction?.statut || '')}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Description
-                  </Typography>
-                  <Typography variant="body1">
-                    {transaction?.description || '-'}
-                  </Typography>
-                </Grid>
-
-                {transaction?.piece_jointe && (
-                  <Grid item xs={12}>
-                    <Typography color="text.secondary" gutterBottom>
-                      Pièce Jointe
-                    </Typography>
-                    <Link
-                      href={transaction.piece_jointe}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
-                      <Download /> Télécharger
-                    </Link>
-                  </Grid>
-                )}
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Informations Complémentaires
+    <Card>
+      <CardContent>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="h5" gutterBottom>
+                Transaction {transaction.reference}
               </Typography>
+              <Chip
+                label={transaction.statut}
+                color={getStatusColor(transaction.statut)}
+                variant="outlined"
+              />
+            </Box>
+          </Grid>
 
-              {transaction?.compte_source && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Compte Source
-                  </Typography>
-                  <Typography variant="body1">
-                    {transaction.compte_source.libelle}
-                  </Typography>
-                </Box>
-              )}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Date
+            </Typography>
+            <Typography variant="body1">
+              {new Date(transaction.date_transaction).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
+            </Typography>
+          </Grid>
 
-              {transaction?.compte_destination && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography color="text.secondary" gutterBottom>
-                    Compte Destination
-                  </Typography>
-                  <Typography variant="body1">
-                    {transaction.compte_destination.libelle}
-                  </Typography>
-                </Box>
-              )}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Montant
+            </Typography>
+            <Typography variant="body1">
+              {transaction.montant.toLocaleString('fr-FR', {
+                style: 'currency',
+                currency: 'XAF'
+              })}
+            </Typography>
+          </Grid>
 
-              {transaction?.validee_par && (
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Validée par
-                  </Typography>
-                  <Typography variant="body1">
-                    {transaction.validee_par.nom} {transaction.validee_par.prenom}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {transaction.date_validation &&
-                      format(new Date(transaction.date_validation), 'Pp', { locale: fr })}
-                  </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Type
+            </Typography>
+            <Typography variant="body1">
+              {transaction.type_transaction}
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Statut
+            </Typography>
+            <Typography variant="body1">
+              {transaction.statut}
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Description
+            </Typography>
+            <Typography variant="body1">
+              {transaction.description || 'Aucune description'}
+            </Typography>
+          </Grid>
+
+          {transaction.piece_jointe && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Pièce jointe
+              </Typography>
+              <Link href={transaction.piece_jointe} target="_blank" rel="noopener">
+                Voir le document
+              </Link>
+            </Grid>
+          )}
+
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Compte source
+            </Typography>
+            {transaction.compte_source_id ? (
+              <>
+                <Typography variant="body1">
+                  {transaction.compte_source_id.numero}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {transaction.compte_source_id.libelle}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Non spécifié
+              </Typography>
+            )}
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Compte destination
+            </Typography>
+            {transaction.compte_destination_id ? (
+              <>
+                <Typography variant="body1">
+                  {transaction.compte_destination_id.numero}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {transaction.compte_destination_id.libelle}
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Non spécifié
+              </Typography>
+            )}
+          </Grid>
+
+          {transaction.validee_par_id && (
+            <>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Validée par
+                </Typography>
+                <Typography variant="body1">
+                  {transaction.validee_par_id.nom} {transaction.validee_par_id.prenom}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Date de validation
+                </Typography>
+                <Typography variant="body1">
+                  {transaction.date_validation && new Date(transaction.date_validation).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </Typography>
+              </Grid>
+            </>
+          )}
         </Grid>
-      </Grid>
-    </>
+      </CardContent>
+    </Card>
   );
 };
 
