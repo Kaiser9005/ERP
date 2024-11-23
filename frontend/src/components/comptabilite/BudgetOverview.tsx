@@ -19,11 +19,9 @@ import * as comptabiliteService from '../../services/comptabilite';
 import type { BudgetAnalysis } from '../../types/comptabilite';
 
 const BudgetOverview: React.FC = () => {
-  const { data: budgetData, isLoading } = useQuery<BudgetAnalysis>({
-    queryKey: ['comptabilite', 'budget', 'analysis'],
+  const { data: budgetData, isLoading } = useQuery({
+    queryKey: queryKeys.comptabilite.budgetAnalysis('current'),
     queryFn: () => comptabiliteService.getBudgetAnalysis('current'),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 15 // 15 minutes
   });
 
   if (isLoading) {
