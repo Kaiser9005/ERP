@@ -1,132 +1,127 @@
 import { api } from './api';
-import { Variation, FinanceStats, Transaction, TypeTransaction, StatutTransaction } from '../types/finance';
+import type {
+  Transaction,
+  TransactionFormData,
+  TransactionFilter,
+  TransactionListResponse,
+  CashFlowData,
+  FinanceStats,
+  Budget,
+  BudgetFormData,
+  BudgetFilter,
+  BudgetListResponse,
+  BudgetAnalysis
+} from '../types/finance';
+import type { ApiResponse, UUID } from '../types/common';
 
-export interface Compte {
-  id: string;
-  libelle: string;
-  type: string;
-  solde: number;
-  devise: string;
-}
-
-export interface Budget {
-  id: string;
-  periode: string;
-  montant_prevu: number;
-  montant_reel: number;
-  categorie: string;
-  statut: 'EN_COURS' | 'TERMINE';
-}
-
-export interface DonneesTresorerie {
-  labels: string[];
-  recettes: number[];
-  depenses: number[];
-}
-
-export interface VueBudgetaire {
-  categorie: string;
-  depense: number;
-  alloue: number;
-}
-
-export interface AnalyseBudgetaire {
-  total_prevu: number;
-  total_realise: number;
-  categories: {
-    [key: string]: {
-      prevu: number;
-      realise: number;
-      ecart: number;
-      ecart_pourcentage: number;
-    };
-  };
-  impact_meteo: {
-    score: number;
-    facteurs: string[];
-    projections: {
-      [key: string]: string;
-    };
-  };
-  recommandations: string[];
-}
-
-export interface Projection {
-  periode: string;
-  montant: number;
-  impact_meteo: number;
-}
-
-export interface ProjectionsFinancieres {
-  recettes: Projection[];
-  depenses: Projection[];
-  facteurs_meteo: string[];
-}
-
-export const getStatsFinance = async (): Promise<FinanceStats> => {
-  const response = await api.get('/finance/stats');
+// Transactions
+export const getTransactions = async (filter?: TransactionFilter): Promise<TransactionListResponse> => {
+  const params = new URLSearchParams();
+  if (filter) {
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString());
+      }
+    });
+  }
+  const response = await api.get<TransactionListResponse>(`/api/v1/finance/transactions?${params}`);
   return response.data;
 };
 
-export const getDonneesTresorerie = async (): Promise<DonneesTresorerie> => {
-  const response = await api.get('/finance/tresorerie');
+export const getTransaction = async (id: UUID): Promise<Transaction> => {
+  const response = await api.get<ApiResponse<Transaction>>(`/api/v1/finance/transactions/${id}`);
+  return response.data.data;
+};
+
+export const createTransaction = async (data: TransactionFormData): Promise<Transaction> => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+  const response = await api.post<ApiResponse<Transaction>>('/api/v1/finance/transactions', formData);
+  return response.data.data;
+};
+
+export const updateTransaction = async (id: UUID, data: Partial<TransactionFormData>): Promise<Transaction> => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+  const response = await api.patch<ApiResponse<Transaction>>(`/api/v1/finance/transactions/${id}`, formData);
+  return response.data.data;
+};
+
+export const deleteTransaction = async (id: UUID): Promise<void> => {
+  await api.delete(`/api/v1/finance/transactions/${id}`);
+};
+
+// Budgets
+export const getBudgets = async (filter?: BudgetFilter): Promise<BudgetListResponse> => {
+  const params = new URLSearchParams();
+  if (filter) {
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString());
+      }
+    });
+  }
+  const response = await api.get<BudgetListResponse>(`/api/v1/finance/budgets?${params}`);
   return response.data;
 };
 
-export const getVueBudget = async (): Promise<VueBudgetaire[]> => {
-  const response = await api.get('/finance/budget/vue');
-  return response.data;
+export const getBudget = async (id: UUID): Promise<Budget> => {
+  const response = await api.get<ApiResponse<Budget>>(`/api/v1/finance/budgets/${id}`);
+  return response.data.data;
 };
 
-export const getAnalyseBudget = async (periode: string): Promise<AnalyseBudgetaire> => {
-  const response = await api.get(`/finance/budget/analyse/${periode}`);
-  return response.data;
+export const createBudget = async (data: BudgetFormData): Promise<Budget> => {
+  const response = await api.post<ApiResponse<Budget>>('/api/v1/finance/budgets', data);
+  return response.data.data;
 };
 
-export const getProjectionsFinancieres = async (moisAvenir: number = 3): Promise<ProjectionsFinancieres> => {
-  const response = await api.get(`/finance/projections?mois_avenir=${moisAvenir}`);
-  return response.data;
+export const updateBudget = async (id: UUID, data: Partial<BudgetFormData>): Promise<Budget> => {
+  const response = await api.patch<ApiResponse<Budget>>(`/api/v1/finance/budgets/${id}`, data);
+  return response.data.data;
 };
 
-export const getTransactions = async (): Promise<Transaction[]> => {
-  const response = await api.get('/finance/transactions');
-  return response.data;
+export const deleteBudget = async (id: UUID): Promise<void> => {
+  await api.delete(`/api/v1/finance/budgets/${id}`);
 };
 
-export const getTransaction = async (id: string): Promise<Transaction> => {
-  const response = await api.get(`/finance/transactions/${id}`);
-  return response.data;
+// Analyses et statistiques
+export const getBudgetAnalysis = async (periode: string): Promise<BudgetAnalysis> => {
+  const response = await api.get<ApiResponse<BudgetAnalysis>>(`/api/v1/finance/budgets/analysis`, {
+    params: { periode }
+  });
+  return response.data.data;
 };
 
-export const creerTransaction = async (data: Omit<Transaction, 'id'>): Promise<Transaction> => {
-  const response = await api.post('/finance/transactions', data);
-  return response.data;
+export const getCashFlowData = async (periode?: string): Promise<CashFlowData> => {
+  const params = new URLSearchParams();
+  if (periode) {
+    params.append('periode', periode);
+  }
+  const response = await api.get<ApiResponse<CashFlowData>>(`/api/v1/finance/cashflow?${params}`);
+  return response.data.data;
 };
 
-export const modifierTransaction = async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
-  const response = await api.put(`/finance/transactions/${id}`, data);
-  return response.data;
+export const getFinanceStats = async (periode?: string): Promise<FinanceStats> => {
+  const params = new URLSearchParams();
+  if (periode) {
+    params.append('periode', periode);
+  }
+  const response = await api.get<ApiResponse<FinanceStats>>(`/api/v1/finance/stats?${params}`);
+  return response.data.data;
 };
-
-export const getBudgets = async (): Promise<Budget[]> => {
-  const response = await api.get('/finance/budgets');
-  return response.data;
-};
-
-export const getComptes = async (): Promise<Compte[]> => {
-  const response = await api.get('/finance/comptes');
-  return response.data;
-};
-
-export const creerBudget = async (data: Omit<Budget, 'id'>): Promise<Budget> => {
-  const response = await api.post('/finance/budgets', data);
-  return response.data;
-};
-
-export const modifierBudget = async (id: string, data: Partial<Budget>): Promise<Budget> => {
-  const response = await api.put(`/finance/budgets/${id}`, data);
-  return response.data;
-};
-
-// Re-export des types pour faciliter l'utilisation
-export type { Variation, FinanceStats, Transaction, TypeTransaction, StatutTransaction };
