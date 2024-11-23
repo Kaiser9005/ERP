@@ -14,18 +14,41 @@ export interface FinanceStats {
   cashflowVariation: Variation;
 }
 
-export type TypeTransaction = 'ENTREE' | 'SORTIE';
-export type StatutTransaction = 'EN_ATTENTE' | 'VALIDEE' | 'ANNULEE';
+export type TypeTransaction = 'RECETTE' | 'DEPENSE' | 'VIREMENT';
+export type StatutTransaction = 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE' | 'ANNULEE';
+export type TypeCompte = 'BANQUE' | 'CAISSE' | 'EPARGNE' | 'CREDIT';
+
+export interface Compte {
+  id: string;
+  numero: string;
+  libelle: string;
+  type_compte: TypeCompte;
+  devise: string;
+  solde: number;
+  actif: boolean;
+  metadata?: Record<string, any>;
+}
 
 export interface Transaction {
   id: string;
-  date: string;
-  reference?: string;
-  description: string;
+  reference: string;
+  date_transaction: string;
+  type_transaction: TypeTransaction;
+  categorie: string;
   montant: number;
-  type: TypeTransaction;
+  devise: string;
+  description?: string;
+  compte_source_id?: string;
+  compte_destination_id?: string;
+  piece_jointe?: string;
   statut: StatutTransaction;
-  categorie?: string;
+  validee_par_id?: {
+    id: string;
+    nom: string;
+    prenom: string;
+  };
+  date_validation?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface VueBudgetaire {
@@ -44,4 +67,26 @@ export interface ProjectionsFinancieres {
   recettes: Projection[];
   depenses: Projection[];
   facteurs_meteo: string[];
+}
+
+export interface TransactionFormData {
+  reference: string;
+  type_transaction: TypeTransaction;
+  categorie: string;
+  montant: number;
+  description?: string;
+  compte_source_id?: string;
+  compte_destination_id?: string;
+  piece_jointe?: File;
+}
+
+export interface TransactionFilter {
+  dateDebut?: string;
+  dateFin?: string;
+  type?: TypeTransaction;
+  categorie?: string;
+  statut?: StatutTransaction;
+  compte_id?: string;
+  page?: number;
+  limit?: number;
 }

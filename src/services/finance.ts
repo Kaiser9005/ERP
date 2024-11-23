@@ -1,96 +1,119 @@
 import { api } from './api';
+import type {
+  Transaction,
+  TransactionFormData,
+  TransactionFilter,
+  TransactionListResponse,
+  CashFlowData,
+  FinanceStats,
+  Budget,
+  BudgetFormData,
+  BudgetFilter,
+  BudgetListResponse
+} from '../types/finance';
+import type { ApiResponse, UUID } from '../types/common';
 
-export interface Variation {
-  value: number;
-  type: 'increase' | 'decrease';
-}
-
-export interface FinanceStats {
-  revenue: number;
-  revenueVariation: Variation;
-  profit: number;
-  profitVariation: Variation;
-  cashflow: number;
-  cashflowVariation: Variation;
-  expenses: number;
-  expensesVariation: Variation;
-}
-
-export interface Transaction {
-  id: string;
-  reference: string;
-  date_transaction: string;
-  type_transaction: string;
-  categorie: string;
-  montant: number;
-  description?: string;
-  statut: string;
-  piece_jointe?: string;
-  compte_source?: string;
-  compte_destination?: string;
-  validee_par?: string;
-  date_validation?: string;
-}
-
-export interface CashFlowData {
-  labels: string[];
-  recettes: number[];
-  depenses: number[];
-  solde?: number[];
-  previsions?: number[];
-  impact_meteo?: number[];
-}
-
-export interface Budget {
-  category: string;
-  allocated: number;
-  spent: number;
-}
-
-export interface Compte {
-  id: string;
-  numero: string;
-  libelle: string;
-  type: string;
-  solde: number;
-}
-
-export const getFinanceStats = async (): Promise<FinanceStats> => {
-  const response = await api.get<FinanceStats>('/finance/stats');
+// Transactions
+export const getTransactions = async (filter?: TransactionFilter): Promise<TransactionListResponse> => {
+  const params = new URLSearchParams();
+  if (filter) {
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString());
+      }
+    });
+  }
+  const response = await api.get<TransactionListResponse>(`/api/v1/finance/transactions?${params}`);
   return response.data;
 };
 
-export const getTransactions = async (): Promise<Transaction[]> => {
-  const response = await api.get<Transaction[]>('/finance/transactions');
+export const getTransaction = async (id: UUID): Promise<Transaction> => {
+  const response = await api.get<ApiResponse<Transaction>>(`/api/v1/finance/transactions/${id}`);
+  return response.data.data;
+};
+
+export const createTransaction = async (data: TransactionFormData): Promise<Transaction> => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+  const response = await api.post<ApiResponse<Transaction>>('/api/v1/finance/transactions', formData);
+  return response.data.data;
+};
+
+export const updateTransaction = async (id: UUID, data: Partial<TransactionFormData>): Promise<Transaction> => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, value.toString());
+      }
+    }
+  });
+  const response = await api.patch<ApiResponse<Transaction>>(`/api/v1/finance/transactions/${id}`, formData);
+  return response.data.data;
+};
+
+export const deleteTransaction = async (id: UUID): Promise<void> => {
+  await api.delete(`/api/v1/finance/transactions/${id}`);
+};
+
+// Budgets
+export const getBudgets = async (filter?: BudgetFilter): Promise<BudgetListResponse> => {
+  const params = new URLSearchParams();
+  if (filter) {
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString());
+      }
+    });
+  }
+  const response = await api.get<BudgetListResponse>(`/api/v1/finance/budgets?${params}`);
   return response.data;
 };
 
-export const getTransaction = async (id: string): Promise<Transaction> => {
-  const response = await api.get<Transaction>(`/finance/transactions/${id}`);
-  return response.data;
+export const getBudget = async (id: UUID): Promise<Budget> => {
+  const response = await api.get<ApiResponse<Budget>>(`/api/v1/finance/budgets/${id}`);
+  return response.data.data;
 };
 
-export const createTransaction = async (data: Partial<Transaction>): Promise<Transaction> => {
-  const response = await api.post<Transaction>('/finance/transactions', data);
-  return response.data;
+export const createBudget = async (data: BudgetFormData): Promise<Budget> => {
+  const response = await api.post<ApiResponse<Budget>>('/api/v1/finance/budgets', data);
+  return response.data.data;
 };
 
-export const updateTransaction = async (id: string, data: Partial<Transaction>): Promise<Transaction> => {
-  const response = await api.put<Transaction>(`/finance/transactions/${id}`, data);
-  return response.data;
+export const updateBudget = async (id: UUID, data: Partial<BudgetFormData>): Promise<Budget> => {
+  const response = await api.patch<ApiResponse<Budget>>(`/api/v1/finance/budgets/${id}`, data);
+  return response.data.data;
 };
 
-export const getCashFlowData = async (): Promise<CashFlowData> => {
-  const response = await api.get<CashFlowData>('/finance/cashflow');
-  return response.data;
+export const deleteBudget = async (id: UUID): Promise<void> => {
+  await api.delete(`/api/v1/finance/budgets/${id}`);
 };
 
-export const getBudgetOverview = async (): Promise<Budget[]> => {
-  const response = await api.get<Budget[]>('/finance/budget');
-  return response.data;
+// Statistiques et tableaux de bord
+export const getCashFlowData = async (periode?: string): Promise<CashFlowData> => {
+  const params = new URLSearchParams();
+  if (periode) {
+    params.append('periode', periode);
+  }
+  const response = await api.get<ApiResponse<CashFlowData>>(`/api/v1/finance/cashflow?${params}`);
+  return response.data.data;
 };
 
-export const getComptes = async (): Promise<Compte[]> => {
-  const response = await api.get<Compte[]>('/finance/comptes');
-  return response.data;
+export const getFinanceStats = async (periode?: string): Promise<FinanceStats> => {
+  const params = new URLSearchParams();
+  if (periode) {
+    params.append('periode', periode);
+  }
+  const response = await api.get<ApiResponse<FinanceStats>>(`/api/v1/finance/stats?${params}`);
+  return response.data.data;
 };

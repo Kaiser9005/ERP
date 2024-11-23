@@ -3,12 +3,17 @@ import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
 import { WbSunny, Opacity, Speed } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { productionService } from '../../services/production';
+import { queryKeys } from '../../config/queryClient';
+import type { WeatherData } from '../../types/production';
 
 const WeatherWidget: React.FC = () => {
-  const { data: weatherData, isLoading } = useQuery(
-    ['weather', 'current'],
-    () => productionService.getWeatherData('current')
-  );
+  const { data: weatherData, isLoading } = useQuery<WeatherData>({
+    queryKey: queryKeys.weather.current(),
+    queryFn: () => productionService.getWeatherData('current'),
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    refetchInterval: 1000 * 60 * 30, // Rafraîchir toutes les 30 minutes
+    retry: 3
+  });
 
   if (isLoading) {
     return <Typography>Chargement...</Typography>;
@@ -17,8 +22,6 @@ const WeatherWidget: React.FC = () => {
   if (!weatherData) {
     return null;
   }
-
-  const { conditions_meteo } = weatherData;
 
   return (
     <Card>
@@ -34,7 +37,7 @@ const WeatherWidget: React.FC = () => {
                 Température
               </Typography>
               <Typography variant="h6">
-                {conditions_meteo?.temperature}°C
+                {weatherData.temperature}°C
               </Typography>
             </Box>
           </Grid>
@@ -45,7 +48,7 @@ const WeatherWidget: React.FC = () => {
                 Humidité
               </Typography>
               <Typography variant="h6">
-                {conditions_meteo?.humidite}%
+                {weatherData.humidity}%
               </Typography>
             </Box>
           </Grid>
@@ -56,7 +59,7 @@ const WeatherWidget: React.FC = () => {
                 Précipitations
               </Typography>
               <Typography variant="h6">
-                {conditions_meteo?.precipitation}mm
+                {weatherData.precipitation}mm
               </Typography>
             </Box>
           </Grid>

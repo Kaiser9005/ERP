@@ -2,8 +2,8 @@ import { api } from './api';
 import { Project, ProjectStats, ProjectBase, ProjectList } from '../types/project';
 
 export const getProjectStats = async (): Promise<ProjectStats> => {
-  const { data } = await api.get<ProjectStats>('/api/v1/projects/stats');
-  return data;
+  const { data } = await api.get<unknown>('/api/v1/projects/stats');
+  return data as ProjectStats;
 };
 
 export const getProjects = async (

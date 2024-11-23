@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import '@testing-library/jest-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProjectStats from '../ProjectStats';
 import { getProjectStats } from '../../../services/projects';
 import type { ProjectStats as ProjectStatsType } from '../../../types/project';
@@ -56,11 +57,13 @@ describe('ProjectStats', () => {
     queryClient.clear();
   });
 
+  it('affiche un indicateur de chargement', () => {
+    renderWithClient(<ProjectStats />);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
   it('affiche les statistiques des projets', async () => {
     renderWithClient(<ProjectStats />);
-
-    // Vérifie le chargement initial
-    expect(screen.getByText('Chargement...')).toBeInTheDocument();
 
     // Vérifie les données chargées
     expect(await screen.findByText('10')).toBeInTheDocument();
@@ -77,6 +80,15 @@ describe('ProjectStats', () => {
     expect(await screen.findByText('Aucune donnée disponible')).toBeInTheDocument();
   });
 
+  it('affiche une erreur en cas d\'échec de la requête', async () => {
+    const errorMessage = 'Erreur de chargement';
+    (getProjectStats as jest.Mock).mockRejectedValue(new Error(errorMessage));
+    
+    renderWithClient(<ProjectStats />);
+    
+    expect(await screen.findByText(errorMessage)).toBeInTheDocument();
+  });
+
   it('affiche la répartition des projets', async () => {
     renderWithClient(<ProjectStats />);
 
@@ -91,5 +103,14 @@ describe('ProjectStats', () => {
 
     expect(await screen.findByText('75%')).toBeInTheDocument();
     expect(screen.getByText('5 projets terminés sur 15')).toBeInTheDocument();
+  });
+
+  it('affiche les tendances', async () => {
+    renderWithClient(<ProjectStats />);
+
+    // Vérifie les variations
+    expect(await screen.findByText('20% par rapport au mois dernier')).toBeInTheDocument();
+    expect(screen.getByText('-10% par rapport au mois dernier')).toBeInTheDocument();
+    expect(screen.getByText('15% par rapport au mois dernier')).toBeInTheDocument();
   });
 });

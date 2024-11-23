@@ -15,9 +15,9 @@ import {
   Warning,
   TrendingUp
 } from '@mui/icons-material';
-import { useQuery, QueryFunction } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getProjectStats } from '../../services/projects';
-import type { ProjectStats as ProjectStatsType } from '../../types/project';
+import type { ProjectStats } from '../../types/project';
 
 interface StatCardProps {
   title: string;
@@ -111,19 +111,13 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 const ProjectStats: React.FC = () => {
-  const queryFn: QueryFunction<ProjectStatsType> = async () => {
-    const response = await getProjectStats();
-    return response as unknown as ProjectStatsType;
-  };
-
-  const { data: stats, isLoading } = useQuery<ProjectStatsType>(
-    ['project-stats'],
-    queryFn,
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000 // 10 minutes
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['projects', 'stats'],
+    queryFn: async () => {
+      const response = await getProjectStats();
+      return response as unknown as ProjectStats;
     }
-  );
+  });
 
   if (isLoading) {
     return <Typography>Chargement...</Typography>;

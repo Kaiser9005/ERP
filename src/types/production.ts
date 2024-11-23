@@ -20,6 +20,33 @@ export interface Coordonnees {
   longitude: number;
 }
 
+export interface WeatherData {
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  wind_speed: number;
+  conditions: string;
+  uv_index: number;
+  cloud_cover: number;
+}
+
+export interface WeatherMetrics {
+  current_conditions: WeatherData;
+  risks: {
+    precipitation: {
+      level: "LOW" | "MEDIUM" | "HIGH";
+      message: string;
+    };
+    temperature: {
+      level: "LOW" | "MEDIUM" | "HIGH";
+      message: string;
+    };
+    level: "LOW" | "MEDIUM" | "HIGH";
+  };
+  recommendations: string[];
+}
+
 export interface Parcelle {
   id: string;
   code: string;

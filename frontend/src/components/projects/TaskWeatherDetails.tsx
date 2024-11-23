@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -8,56 +8,37 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  Chip,
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
-  Divider
+  ListItemText
 } from '@mui/material';
 import {
   WbSunny as SunIcon,
   Opacity as HumidityIcon,
   Air as WindIcon,
   WaterDrop as RainIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckIcon,
-  Info as InfoIcon
+  Warning as WarningIcon
 } from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { TaskWithWeather } from '../../types/task';
 
 const TaskWeatherDetails: React.FC = () => {
-  const { projectId, taskId } = useParams<{ projectId: string; taskId: string }>();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [taskData, setTaskData] = useState<TaskWithWeather | null>(null);
+  const { taskId } = useParams<{ taskId: string }>();
 
-  useEffect(() => {
-    const fetchTaskWeather = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/v1/tasks/${taskId}/weather`);
-        if (!response.ok) throw new Error('Erreur lors de la récupération des données');
-        
-        const data = await response.json();
-        setTaskData(data);
-        setError(null);
-      } catch (err) {
-        setError("Impossible de charger les données météo");
-        console.error('Error fetching task weather:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: taskData, isLoading, error } = useQuery<TaskWithWeather>({
+    queryKey: ['task-weather', taskId],
+    queryFn: () => 
+      fetch(`/api/v1/tasks/${taskId}/weather`)
+        .then(res => {
+          if (!res.ok) throw new Error('Erreur lors de la récupération des données');
+          return res.json();
+        }),
+    enabled: !!taskId
+  });
 
-    if (taskId) {
-      fetchTaskWeather();
-    }
-  }, [taskId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
@@ -66,7 +47,11 @@ const TaskWeatherDetails: React.FC = () => {
   }
 
   if (error || !taskData) {
-    return <Alert severity="error">{error || "Données non disponibles"}</Alert>;
+    return (
+      <Alert severity="error">
+        {error instanceof Error ? error.message : "Données non disponibles"}
+      </Alert>
+    );
   }
 
   const getWeatherStatusColor = () => {

@@ -27,7 +27,12 @@ export const queryKeys = {
     balance: (params: { date_debut: string; date_fin: string; type_compte?: string }) => 
       ['comptabilite', 'balance', params],
     journaux: (params: { date_debut: string; date_fin: string; journal?: string }) => 
-      ['comptabilite', 'journaux', params]
+      ['comptabilite', 'journaux', params],
+    budgetAnalysis: (periode?: string) => ['comptabilite', 'budgetAnalysis', periode],
+    cashflow: (periode?: string) => ['comptabilite', 'cashflow', periode]
+  },
+  dashboard: {
+    stats: () => ['dashboard', 'stats']
   },
   production: {
     stats: () => ['production', 'stats'],
@@ -36,6 +41,11 @@ export const queryKeys = {
     recoltes: (filters?: any) => ['production', 'recoltes', filters],
     meteo: () => ['production', 'meteo'],
     rapports: (filters?: any) => ['production', 'rapports', filters]
+  },
+  weather: {
+    current: () => ['weather', 'current'],
+    forecast: (days?: number) => ['weather', 'forecast', days],
+    metrics: () => ['weather', 'metrics']
   },
   projets: {
     stats: () => ['projets', 'stats'],

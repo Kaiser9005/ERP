@@ -1,10 +1,17 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, LinearProgress } from '@mui/material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getStatsProduction } from '../../services/production';
+import type { ProductionStats } from '../../types/production';
 
 const StatsProduction: React.FC = () => {
-  const { data: stats } = useQuery('stats-production', getStatsProduction);
+  const { data: stats } = useQuery<ProductionStats>({
+    queryKey: ['stats-production'],
+    queryFn: async () => {
+      const response = await getStatsProduction();
+      return response as unknown as ProductionStats;
+    }
+  });
 
   return (
     <Card>
@@ -23,21 +30,21 @@ const StatsProduction: React.FC = () => {
           {stats?.variation && (
             <Typography
               variant="body2"
-              color={stats.variation.type === 'hausse' ? 'success.main' : 'error.main'}
+              color={stats.variation.type === 'increase' ? 'success.main' : 'error.main'}
             >
-              {stats.variation.type === 'hausse' ? '+' : '-'}
-              {stats.variation.valeur}% par rapport au mois dernier
+              {stats.variation.type === 'increase' ? '+' : '-'}
+              {stats.variation.value}% par rapport au mois dernier
             </Typography>
           )}
         </Box>
 
         <Box>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Parcelles Actives: {stats?.parcelles_actives || 0}
+            Parcelles Actives: {stats?.parcellesActives || 0}
           </Typography>
           <LinearProgress
             variant="determinate"
-            value={(stats?.parcelles_actives || 0) / 70 * 100}
+            value={(stats?.parcellesActives || 0) / 70 * 100}
             color="success"
           />
         </Box>

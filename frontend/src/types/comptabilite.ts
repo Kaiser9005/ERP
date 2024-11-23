@@ -4,6 +4,35 @@ export type TypeJournal = 'ACHAT' | 'VENTE' | 'BANQUE' | 'CAISSE' | 'OPERATIONS_
 
 export type StatutEcriture = 'BROUILLON' | 'VALIDEE' | 'ANNULEE';
 
+export interface BudgetData {
+  categorie: string;
+  prevu: number;
+  realise: number;
+  ecart: number;
+  ecart_percentage: number;
+}
+
+export interface BudgetAnalysis {
+  total_prevu: number;
+  total_realise: number;
+  categories: Record<string, BudgetData>;
+  weather_impact: {
+    score: number;
+    factors: string[];
+    projections: Record<string, string>;
+  };
+  recommendations: string[];
+}
+
+export interface CashFlowData {
+  date: string;
+  entrees: number;
+  sorties: number;
+  solde: number;
+  prevision: number;
+  impact_meteo: number;
+}
+
 export interface CompteComptable {
     id: string;
     numero: string;

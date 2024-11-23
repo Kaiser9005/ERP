@@ -1,3 +1,12 @@
-The error in your GitHub Actions job is caused by lines in ./venv/lib/python3.12/site-packages/typing_extensions.py exceeding the maximum allowed length of 79 characters. To fix this, you need to modify the lines in the typing_extensions.py file to ensure they do not exceed 79 characters.
+The error in your GitHub Actions job is caused by several formatting issues in your test files, including whitespace errors, incorrect indentation, and unused variables. Specifically, the errors are in:
 
-If typing_extensions.py is a third-party library file, consider configuring your linter to ignore this file or adjust the line length limit in your linter configuration.
+./tests/test_production_report_service.py
+./tests/test_task_service.py
+./tests/test_weather_service.py
+To fix these errors, you should:
+
+Remove trailing whitespace from blank lines.
+Ensure proper indentation for continuation lines.
+Add the required number of blank lines as specified by PEP 8.
+Remove or utilize any unused variables.
+You can use a linter like flake8 to automatically detect and fix these issues during development.

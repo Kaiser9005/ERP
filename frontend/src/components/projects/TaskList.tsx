@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,8 @@ import {
   FormControl,
   InputLabel,
   Pagination,
-  LinearProgress
+  LinearProgress,
+  SelectChangeEvent
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -27,59 +28,50 @@ import {
   Add as AddIcon,
   WbSunny as WeatherIcon
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TaskStatus, TaskPriority, TaskCategory, Task } from '../../types/task';
 import * as taskService from '../../services/tasks';
 
-const TaskList: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+interface TaskListProps {
+  projectId: string;
+}
+
+const TaskList: React.FC<TaskListProps> = ({ projectId }) => {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
-  const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'ALL'>('ALL');
+  const queryClient = useQueryClient();
+  const [page, setPage] = React.useState(1);
+  const [statusFilter, setStatusFilter] = React.useState<TaskStatus | 'ALL'>('ALL');
+  const [categoryFilter, setCategoryFilter] = React.useState<TaskCategory | 'ALL'>('ALL');
 
-  const fetchTasks = async () => {
-    if (!projectId) return;
-    
-    try {
-      setLoading(true);
-      const data = await taskService.getTasks(
-        parseInt(projectId),
-        page,
-        statusFilter === 'ALL' ? undefined : statusFilter,
-        categoryFilter === 'ALL' ? undefined : categoryFilter
-      );
-      
-      setTasks(data.tasks);
-      setTotalPages(data.total_pages);
-      setError(null);
-    } catch (err) {
-      setError("Impossible de charger les tâches");
-      console.error('Error fetching tasks:', err);
-    } finally {
-      setLoading(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['tasks', projectId, page, statusFilter, categoryFilter],
+    queryFn: () => taskService.getTasks(
+      parseInt(projectId),
+      page,
+      statusFilter === 'ALL' ? undefined : statusFilter,
+      categoryFilter === 'ALL' ? undefined : categoryFilter
+    )
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: taskService.deleteTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchTasks();
-  }, [projectId, page, statusFilter, categoryFilter]);
-
-  const handleStatusChange = (event: any) => {
-    setStatusFilter(event.target.value);
+  const handleStatusChange = (event: SelectChangeEvent<TaskStatus | 'ALL'>) => {
+    setStatusFilter(event.target.value as TaskStatus | 'ALL');
     setPage(1);
   };
 
-  const handleCategoryChange = (event: any) => {
-    setCategoryFilter(event.target.value);
+  const handleCategoryChange = (event: SelectChangeEvent<TaskCategory | 'ALL'>) => {
+    setCategoryFilter(event.target.value as TaskCategory | 'ALL');
     setPage(1);
   };
 
-  const handlePageChange = (event: any, value: number) => {
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
 
@@ -89,14 +81,7 @@ const TaskList: React.FC = () => {
 
   const handleDelete = async (taskId: number) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
-
-    try {
-      await taskService.deleteTask(taskId);
-      fetchTasks();
-    } catch (err) {
-      setError("Impossible de supprimer la tâche");
-      console.error('Error deleting task:', err);
-    }
+    deleteMutation.mutate(taskId);
   };
 
   const handleCreate = () => {
@@ -107,7 +92,7 @@ const TaskList: React.FC = () => {
     navigate(`/projects/${projectId}/tasks/${taskId}/weather`);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
@@ -116,29 +101,43 @@ const TaskList: React.FC = () => {
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return (
+      <Alert severity="error">
+        {error instanceof Error ? error.message : "Impossible de charger les tâches"}
+      </Alert>
+    );
   }
 
-  const getStatusColor = (status: TaskStatus) => {
+  const getStatusColor = (status: TaskStatus): "default" | "primary" | "warning" | "success" | "error" => {
     switch (status) {
-      case 'A_FAIRE': return 'default';
-      case 'EN_COURS': return 'primary';
-      case 'EN_ATTENTE': return 'warning';
-      case 'TERMINEE': return 'success';
-      case 'ANNULEE': return 'error';
+      case TaskStatus.A_FAIRE: return 'default';
+      case TaskStatus.EN_COURS: return 'primary';
+      case TaskStatus.EN_ATTENTE: return 'warning';
+      case TaskStatus.TERMINEE: return 'success';
+      case TaskStatus.ANNULEE: return 'error';
       default: return 'default';
     }
   };
 
-  const getPriorityColor = (priority: TaskPriority) => {
+  const getPriorityColor = (priority: TaskPriority): string => {
     switch (priority) {
-      case 'BASSE': return '#4caf50';
-      case 'MOYENNE': return '#ff9800';
-      case 'HAUTE': return '#f44336';
-      case 'CRITIQUE': return '#d32f2f';
+      case TaskPriority.BASSE: return '#4caf50';
+      case TaskPriority.MOYENNE: return '#ff9800';
+      case TaskPriority.HAUTE: return '#f44336';
+      case TaskPriority.CRITIQUE: return '#d32f2f';
       default: return '#000000';
     }
   };
+
+  if (deleteMutation.error) {
+    return (
+      <Alert severity="error">
+        {deleteMutation.error instanceof Error 
+          ? deleteMutation.error.message 
+          : "Erreur lors de la suppression"}
+      </Alert>
+    );
+  }
 
   return (
     <Box>
@@ -163,11 +162,9 @@ const TaskList: React.FC = () => {
             label="Statut"
           >
             <MenuItem value="ALL">Tous</MenuItem>
-            <MenuItem value="A_FAIRE">À faire</MenuItem>
-            <MenuItem value="EN_COURS">En cours</MenuItem>
-            <MenuItem value="EN_ATTENTE">En attente</MenuItem>
-            <MenuItem value="TERMINEE">Terminée</MenuItem>
-            <MenuItem value="ANNULEE">Annulée</MenuItem>
+            {Object.values(TaskStatus).map(status => (
+              <MenuItem key={status} value={status}>{status}</MenuItem>
+            ))}
           </Select>
         </FormControl>
 
@@ -179,13 +176,9 @@ const TaskList: React.FC = () => {
             label="Catégorie"
           >
             <MenuItem value="ALL">Toutes</MenuItem>
-            <MenuItem value="PRODUCTION">Production</MenuItem>
-            <MenuItem value="MAINTENANCE">Maintenance</MenuItem>
-            <MenuItem value="RECOLTE">Récolte</MenuItem>
-            <MenuItem value="PLANTATION">Plantation</MenuItem>
-            <MenuItem value="IRRIGATION">Irrigation</MenuItem>
-            <MenuItem value="TRAITEMENT">Traitement</MenuItem>
-            <MenuItem value="AUTRE">Autre</MenuItem>
+            {Object.values(TaskCategory).map(category => (
+              <MenuItem key={category} value={category}>{category}</MenuItem>
+            ))}
           </Select>
         </FormControl>
       </Box>
@@ -205,7 +198,7 @@ const TaskList: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tasks.map((task) => (
+            {data?.tasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell>{task.title}</TableCell>
                 <TableCell>
@@ -247,6 +240,7 @@ const TaskList: React.FC = () => {
                     size="small"
                     onClick={() => handleEdit(task.id)}
                     title="Modifier"
+                    disabled={deleteMutation.isPending}
                   >
                     <EditIcon />
                   </IconButton>
@@ -254,6 +248,7 @@ const TaskList: React.FC = () => {
                     size="small"
                     onClick={() => handleDelete(task.id)}
                     title="Supprimer"
+                    disabled={deleteMutation.isPending}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -262,6 +257,7 @@ const TaskList: React.FC = () => {
                       size="small"
                       onClick={() => handleViewWeather(task.id)}
                       title="Conditions météo"
+                      disabled={deleteMutation.isPending}
                     >
                       <WeatherIcon />
                     </IconButton>
@@ -275,7 +271,7 @@ const TaskList: React.FC = () => {
 
       <Box mt={2} display="flex" justifyContent="center">
         <Pagination
-          count={totalPages}
+          count={data?.total_pages || 1}
           page={page}
           onChange={handlePageChange}
           color="primary"

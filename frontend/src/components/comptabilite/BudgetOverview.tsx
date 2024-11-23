@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -12,49 +12,21 @@ import {
   Chip,
 } from '@mui/material';
 import { Info, TrendingUp, TrendingDown } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '../../utils/format';
-
-interface BudgetData {
-  categorie: string;
-  prevu: number;
-  realise: number;
-  ecart: number;
-  ecart_percentage: number;
-}
-
-interface BudgetAnalysis {
-  total_prevu: number;
-  total_realise: number;
-  categories: Record<string, BudgetData>;
-  weather_impact: {
-    score: number;
-    factors: string[];
-    projections: Record<string, string>;
-  };
-  recommendations: string[];
-}
+import { queryKeys } from '../../config/queryClient';
+import * as comptabiliteService from '../../services/comptabilite';
+import type { BudgetAnalysis } from '../../types/comptabilite';
 
 const BudgetOverview: React.FC = () => {
-  const [budgetData, setBudgetData] = useState<BudgetAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: budgetData, isLoading } = useQuery<BudgetAnalysis>({
+    queryKey: ['comptabilite', 'budget', 'analysis'],
+    queryFn: () => comptabiliteService.getBudgetAnalysis('current'),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 15 // 15 minutes
+  });
 
-  useEffect(() => {
-    const fetchBudgetData = async () => {
-      try {
-        const response = await fetch('/api/v1/comptabilite/budget/analysis');
-        const data = await response.json();
-        setBudgetData(data);
-      } catch (error) {
-        console.error('Erreur lors du chargement des données budgétaires:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBudgetData();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <LinearProgress />;
   }
 

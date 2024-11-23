@@ -6,7 +6,9 @@ import {
   Box,
   Grid,
   LinearProgress,
-  Chip
+  Chip,
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
   Assignment,
@@ -15,7 +17,7 @@ import {
   Warning,
   TrendingUp
 } from '@mui/icons-material';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getProjectStats } from '../../services/projects';
 import type { ProjectStats as ProjectStatsType } from '../../types/project';
 
@@ -111,17 +113,33 @@ const StatCard: React.FC<StatCardProps> = ({
 };
 
 const ProjectStats: React.FC = () => {
-  const { data: stats, isLoading } = useQuery<ProjectStatsType>(
-    'project-stats',
-    getProjectStats
-  );
+  const { data: stats, isLoading, error } = useQuery<ProjectStatsType>({
+    queryKey: ['project-stats'],
+    queryFn: getProjectStats
+  });
 
   if (isLoading) {
-    return <Typography>Chargement...</Typography>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error">
+        {error instanceof Error ? error.message : "Une erreur est survenue lors du chargement des statistiques"}
+      </Alert>
+    );
   }
 
   if (!stats) {
-    return <Typography>Aucune donnée disponible</Typography>;
+    return (
+      <Alert severity="info">
+        Aucune donnée disponible
+      </Alert>
+    );
   }
 
   return (

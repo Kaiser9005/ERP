@@ -9,10 +9,12 @@ from models.task import Task, TaskResource, TaskComment, TaskDependency, TaskSta
 from models.resource import Resource, ResourceStatus
 from schemas.task import TaskCreate, TaskUpdate, TaskResourceCreate
 
+
 @pytest.fixture
 def mock_db():
     """Fixture pour simuler la base de données"""
     return Mock(spec=Session)
+
 
 @pytest.fixture
 def mock_weather_data():
@@ -34,10 +36,12 @@ def mock_weather_data():
         "recommendations": []
     }
 
+
 @pytest.fixture
 def task_service(mock_db):
     """Fixture pour le service de tâches"""
     return TaskService(mock_db)
+
 
 @pytest.mark.asyncio
 async def test_create_task(task_service, mock_db):
@@ -66,6 +70,7 @@ async def test_create_task(task_service, mock_db):
     assert mock_db.add.called
     assert mock_db.commit.called
     assert result is not None
+
 
 @pytest.mark.asyncio
 async def test_create_task_with_resources(task_service, mock_db):
@@ -98,6 +103,7 @@ async def test_create_task_with_resources(task_service, mock_db):
     assert resource.quantity_available == 50
     assert resource.quantity_reserved == 50
 
+
 @pytest.mark.asyncio
 async def test_create_task_insufficient_resources(task_service, mock_db):
     """Test de création d'une tâche avec ressources insuffisantes"""
@@ -126,6 +132,7 @@ async def test_create_task_insufficient_resources(task_service, mock_db):
     assert exc_info.value.status_code == 400
     assert "Quantité insuffisante" in str(exc_info.value.detail)
 
+
 @pytest.mark.asyncio
 async def test_get_task_with_weather(task_service, mock_db, mock_weather_data):
     """Test de récupération d'une tâche avec données météo"""
@@ -149,6 +156,7 @@ async def test_get_task_with_weather(task_service, mock_db, mock_weather_data):
         assert result.weather_suitable is True
         assert result.weather_conditions == mock_weather_data["current_conditions"]
         assert len(result.weather_warnings) == 0
+
 
 def test_update_task_completion(task_service, mock_db):
     """Test de mise à jour d'une tâche terminée"""
@@ -188,6 +196,7 @@ def test_update_task_completion(task_service, mock_db):
     assert resource.quantity_reserved == 0
     assert resource.status == ResourceStatus.DISPONIBLE
 
+
 def test_delete_task(task_service, mock_db):
     """Test de suppression d'une tâche"""
     # Préparation
@@ -215,6 +224,7 @@ def test_delete_task(task_service, mock_db):
     assert resource.quantity_available == 100
     assert resource.quantity_reserved == 0
     assert resource.status == ResourceStatus.DISPONIBLE
+
 
 @pytest.mark.asyncio
 async def test_get_weather_dependent_tasks(task_service, mock_db, mock_weather_data):
@@ -248,6 +258,7 @@ async def test_get_weather_dependent_tasks(task_service, mock_db, mock_weather_d
         assert all(hasattr(task, 'weather_suitable') for task in results)
         assert all(hasattr(task, 'weather_conditions') for task in results)
         assert all(hasattr(task, 'weather_warnings') for task in results)
+
 
 def test_check_circular_dependency(task_service, mock_db):
     """Test de détection des dépendances circulaires"""

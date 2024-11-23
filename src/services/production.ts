@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Parcelle, CycleCulture, Recolte, ProductionEvent } from '../types/production';
+import { Parcelle, CycleCulture, Recolte, ProductionEvent, WeatherData } from '../types/production';
 
 const API_URL = '/api/v1/production';
 
@@ -60,8 +60,8 @@ export const productionService = {
   },
 
   // Météo
-  getWeatherData: async (parcelleId: string) => {
-    const response = await axios.get(`${API_URL}/parcelles/${parcelleId}/weather`);
+  getWeatherData: async (type: 'current' | 'forecast'): Promise<WeatherData> => {
+    const response = await axios.get(`${API_URL}/weather/${type}`);
     return response.data;
   }
 };

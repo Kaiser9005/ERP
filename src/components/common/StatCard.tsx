@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Avatar } from '@mui/material';
+import { Card, CardContent, Typography, Box, Avatar, CircularProgress } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 
 interface StatCardProps {
@@ -12,6 +12,7 @@ interface StatCardProps {
   };
   icon: React.ReactNode;
   color: 'primary' | 'success' | 'warning' | 'info';
+  loading?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -20,7 +21,8 @@ const StatCard: React.FC<StatCardProps> = ({
   unit,
   variation,
   icon,
-  color
+  color,
+  loading = false
 }) => {
   const formaterValeur = (val: number): string => {
     if (val >= 1000000) {
@@ -50,35 +52,43 @@ const StatCard: React.FC<StatCardProps> = ({
           </Typography>
         </Box>
 
-        <Typography variant="h4" component="div" gutterBottom>
-          {formaterValeur(value)}
-          {unit && (
-            <Typography
-              component="span"
-              variant="subtitle1"
-              color="text.secondary"
-              sx={{ ml: 1 }}
-            >
-              {unit}
-            </Typography>
-          )}
-        </Typography>
-
-        {variation && (
-          <Box display="flex" alignItems="center">
-            {variation.type === 'hausse' ? (
-              <TrendingUp color="success" />
-            ) : (
-              <TrendingDown color="error" />
-            )}
-            <Typography
-              variant="body2"
-              color={variation.type === 'hausse' ? 'success.main' : 'error.main'}
-              sx={{ ml: 1 }}
-            >
-              {variation.valeur}%
-            </Typography>
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={2}>
+            <CircularProgress size={24} />
           </Box>
+        ) : (
+          <>
+            <Typography variant="h4" component="div" gutterBottom>
+              {formaterValeur(value)}
+              {unit && (
+                <Typography
+                  component="span"
+                  variant="subtitle1"
+                  color="text.secondary"
+                  sx={{ ml: 1 }}
+                >
+                  {unit}
+                </Typography>
+              )}
+            </Typography>
+
+            {variation && (
+              <Box display="flex" alignItems="center">
+                {variation.type === 'hausse' ? (
+                  <TrendingUp color="success" />
+                ) : (
+                  <TrendingDown color="error" />
+                )}
+                <Typography
+                  variant="body2"
+                  color={variation.type === 'hausse' ? 'success.main' : 'error.main'}
+                  sx={{ ml: 1 }}
+                >
+                  {Math.abs(variation.valeur)}%
+                </Typography>
+              </Box>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

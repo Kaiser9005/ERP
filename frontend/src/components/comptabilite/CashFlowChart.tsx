@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import {
   MenuItem,
   SelectChangeEvent,
   Typography,
+  LinearProgress,
 } from '@mui/material';
 import { Info } from '@mui/icons-material';
 import {
@@ -25,16 +26,10 @@ import {
   Legend,
   Area,
 } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '../../utils/format';
-
-interface CashFlowData {
-  date: string;
-  entrees: number;
-  sorties: number;
-  solde: number;
-  prevision: number;
-  impact_meteo: number;
-}
+import * as comptabiliteService from '../../services/comptabilite';
+import type { CashFlowData } from '../../types/comptabilite';
 
 const PERIODE_OPTIONS = [
   { value: '30', label: '30 jours' },
@@ -86,29 +81,28 @@ const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
 
 const CashFlowChart: React.FC = () => {
   const [periode, setPeriode] = useState('30');
-  const [data, setData] = useState<CashFlowData[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/v1/comptabilite/cashflow?days=${periode}`);
-        const jsonData = await response.json();
-        setData(jsonData);
-      } catch (error) {
-        console.error('Erreur lors du chargement des données de trésorerie:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [periode]);
+  const { data, isLoading } = useQuery<CashFlowData[]>({
+    queryKey: ['comptabilite', 'cashflow', periode],
+    queryFn: () => comptabiliteService.getCashFlow(Number(periode)),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   const handlePeriodeChange = (event: SelectChangeEvent) => {
     setPeriode(event.target.value);
   };
+
+  if (isLoading) {
+    return <LinearProgress />;
+  }
+
+  if (!data) {
+    return (
+      <Typography color="textSecondary">
+        Aucune donnée de trésorerie disponible
+      </Typography>
+    );
+  }
 
   return (
     <Card>

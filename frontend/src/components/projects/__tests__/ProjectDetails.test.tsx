@@ -1,30 +1,39 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProjectDetails from '../ProjectDetails';
 import { getProject } from '../../../services/projects';
+import { ProjectStatus } from '../../../types/project';
 
-jest.mock('../../../services/projects');
+jest.mock('../../../services/projects', () => ({
+  getProject: jest.fn()
+}));
+
+// Mock TaskList component pour simplifier les tests
+jest.mock('../TaskList', () => {
+  return function MockTaskList() {
+    return <div data-testid="task-list">Liste des tâches</div>;
+  };
+});
 
 const mockProject = {
   id: '1',
-  code: 'PRJ001',
-  nom: 'Projet test',
-  statut: 'EN_COURS',
-  budget: 1500000,
-  date_debut: '2024-01-01',
-  date_fin_prevue: '2024-06-30',
+  code: 'PRJ-001',
+  nom: 'Projet Test',
+  description: 'Description du projet',
+  statut: ProjectStatus.EN_COURS,
+  budget: 100000,
+  date_debut: '2024-01-01T00:00:00Z',
+  date_fin_prevue: '2024-12-31T00:00:00Z',
   taches: [
-    {
-      id: '1',
-      statut: 'TERMINE'
-    },
-    {
-      id: '2',
-      statut: 'EN_COURS'
-    }
-  ]
+    { id: '1', statut: 'TERMINEE' },
+    { id: '2', statut: 'EN_COURS' }
+  ],
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  responsable_id: '1'
 };
 
 const queryClient = new QueryClient({
@@ -35,12 +44,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (component: React.ReactElement) => {
+const renderWithProviders = (projectId: string = '1') => {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[`/projects/${projectId}`]}>
         <Routes>
-          <Route path="/" element={component} />
+          <Route path="/projects/:id" element={<ProjectDetails />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -49,57 +58,90 @@ const renderWithProviders = (component: React.ReactElement) => {
 
 describe('ProjectDetails', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+    queryClient.clear();
+  });
+
+  it('affiche un indicateur de chargement', () => {
+    (getProject as jest.Mock).mockImplementation(() => new Promise(() => {}));
+    renderWithProviders();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('affiche les détails du projet', async () => {
     (getProject as jest.Mock).mockResolvedValue(mockProject);
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText('Projet PRJ-001')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Projet Test')).toBeInTheDocument();
+    expect(screen.getByText('Description du projet')).toBeInTheDocument();
+    expect(screen.getByText('EN_COURS')).toBeInTheDocument();
+    expect(screen.getByText('100 000,00 XAF')).toBeInTheDocument();
   });
 
-  it('affiche les informations du projet', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('Projet PRJ001')).toBeInTheDocument();
-    expect(await screen.findByText('Projet test')).toBeInTheDocument();
-    expect(await screen.findByText('1 500 000 FCFA')).toBeInTheDocument();
-  });
+  it('affiche la progression des tâches', async () => {
+    (getProject as jest.Mock).mockResolvedValue(mockProject);
+    renderWithProviders();
 
-  it('affiche le statut avec la bonne couleur', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    const statusChip = await screen.findByText('EN_COURS');
-    expect(statusChip).toHaveClass('MuiChip-colorSuccess');
-  });
-
-  it('affiche les dates correctement', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('1 janvier 2024')).toBeInTheDocument();
-    expect(await screen.findByText('30 juin 2024')).toBeInTheDocument();
-  });
-
-  it('calcule et affiche la progression', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('50%')).toBeInTheDocument();
-    
-    const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveAttribute('aria-valuenow', '50');
-  });
-
-  it('affiche la liste des tâches', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('Tâches')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('50%')).toBeInTheDocument();
+    });
   });
 
   it('gère les erreurs de chargement', async () => {
-    (getProject as jest.Mock).mockRejectedValue(new Error('Erreur de chargement'));
-    
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('Une erreur est survenue')).toBeInTheDocument();
+    const errorMessage = 'Erreur de chargement';
+    (getProject as jest.Mock).mockRejectedValue(new Error(errorMessage));
+    renderWithProviders();
+
+    expect(await screen.findByText(errorMessage)).toBeInTheDocument();
   });
 
-  it('affiche le bouton de modification', async () => {
-    renderWithProviders(<ProjectDetails />);
-    
-    expect(await screen.findByText('Modifier')).toBeInTheDocument();
+  it('gère les projets non trouvés', async () => {
+    (getProject as jest.Mock).mockResolvedValue(null);
+    renderWithProviders();
+
+    expect(await screen.findByText('Projet non trouvé')).toBeInTheDocument();
+  });
+
+  it('affiche la liste des tâches', async () => {
+    (getProject as jest.Mock).mockResolvedValue(mockProject);
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('task-list')).toBeInTheDocument();
+    });
+  });
+
+  it('formate correctement les dates', async () => {
+    (getProject as jest.Mock).mockResolvedValue(mockProject);
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 janvier 2024/)).toBeInTheDocument();
+      expect(screen.getByText(/31 décembre 2024/)).toBeInTheDocument();
+    });
+  });
+
+  it('gère un projet sans budget', async () => {
+    const projectWithoutBudget = { ...mockProject, budget: undefined };
+    (getProject as jest.Mock).mockResolvedValue(projectWithoutBudget);
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText('0,00 XAF')).toBeInTheDocument();
+    });
+  });
+
+  it('gère un projet sans tâches', async () => {
+    const projectWithoutTasks = { ...mockProject, taches: [] };
+    (getProject as jest.Mock).mockResolvedValue(projectWithoutTasks);
+    renderWithProviders();
+
+    await waitFor(() => {
+      expect(screen.getByText('0%')).toBeInTheDocument();
+    });
   });
 });

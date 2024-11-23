@@ -1,6 +1,7 @@
 import pytest
 from playwright.sync_api import Page, expect
 import json
+from datetime import datetime, timezone, timedelta
 
 class TestTaskManagement:
     """Tests End-to-End pour la gestion des tâches"""
@@ -9,6 +10,7 @@ class TestTaskManagement:
     def setup(self, page: Page):
         """Configuration initiale pour chaque test"""
         # Mock des données de tâches
+        current_time = datetime.now(timezone.utc)
         page.route("**/api/v1/projects/*/tasks*", lambda route: route.fulfill(
             status=200,
             content_type="application/json",
@@ -21,8 +23,8 @@ class TestTaskManagement:
                         "status": "EN_COURS",
                         "priority": "HAUTE",
                         "category": "PLANTATION",
-                        "start_date": "2024-02-01T08:00:00Z",
-                        "due_date": "2024-02-03T17:00:00Z",
+                        "start_date": current_time.isoformat(),
+                        "due_date": (current_time + timedelta(days=2)).isoformat(),
                         "completion_percentage": 30,
                         "weather_dependent": True
                     }
@@ -75,42 +77,42 @@ class TestTaskManagement:
     def test_task_list_display(self, page: Page):
         """Vérifie l'affichage de la liste des tâches"""
         # Vérification du titre
-        expect(page.get_by_text("Tâches du Projet")).to_be_visible()
+        expect(page.locator("[data-testid='page-title']")).to_contain_text("Tâches du Projet")
         
         # Vérification des filtres
-        expect(page.get_by_label("Statut")).to_be_visible()
-        expect(page.get_by_label("Catégorie")).to_be_visible()
+        expect(page.locator("[data-testid='status-filter']")).to_be_visible()
+        expect(page.locator("[data-testid='category-filter']")).to_be_visible()
         
         # Vérification de la tâche affichée
-        expect(page.get_by_text("Plantation palmiers zone A")).to_be_visible()
-        expect(page.get_by_text("EN_COURS")).to_be_visible()
-        expect(page.get_by_text("HAUTE")).to_be_visible()
-        expect(page.get_by_text("30%")).to_be_visible()
+        expect(page.locator("[data-testid='task-title']")).to_contain_text("Plantation palmiers zone A")
+        expect(page.locator("[data-testid='task-status']")).to_contain_text("EN_COURS")
+        expect(page.locator("[data-testid='task-priority']")).to_contain_text("HAUTE")
+        expect(page.locator("[data-testid='task-completion']")).to_contain_text("30%")
 
     def test_task_creation(self, page: Page):
         """Vérifie la création d'une nouvelle tâche"""
         # Clic sur le bouton de création
-        page.get_by_text("Nouvelle Tâche").click()
+        page.locator("[data-testid='new-task-button']").click()
         
         # Remplissage du formulaire
-        page.get_by_label("Titre").fill("Nouvelle plantation")
-        page.get_by_label("Description").fill("Description de test")
-        page.get_by_label("Statut").select_option("A_FAIRE")
-        page.get_by_label("Priorité").select_option("MOYENNE")
-        page.get_by_label("Catégorie").select_option("PLANTATION")
+        page.locator("[data-testid='task-title-input']").fill("Nouvelle plantation")
+        page.locator("[data-testid='task-description-input']").fill("Description de test")
+        page.locator("[data-testid='task-status-select']").select_option("A_FAIRE")
+        page.locator("[data-testid='task-priority-select']").select_option("MOYENNE")
+        page.locator("[data-testid='task-category-select']").select_option("PLANTATION")
         
         # Activation des conditions météo
-        page.get_by_label("Tâche dépendante de la météo").check()
-        page.get_by_label("Température minimale (°C)").fill("20")
-        page.get_by_label("Température maximale (°C)").fill("35")
+        page.locator("[data-testid='weather-dependent-checkbox']").check()
+        page.locator("[data-testid='min-temperature-input']").fill("20")
+        page.locator("[data-testid='max-temperature-input']").fill("35")
         
         # Ajout d'une ressource
-        page.get_by_text("Ajouter une ressource").click()
-        page.get_by_label("Ressource").select_option("1")  # Premier élément
-        page.get_by_label("Quantité requise").fill("50")
+        page.locator("[data-testid='add-resource-button']").click()
+        page.locator("[data-testid='resource-select']").select_option("1")
+        page.locator("[data-testid='resource-quantity-input']").fill("50")
         
         # Sauvegarde
-        page.get_by_text("Enregistrer").click()
+        page.locator("[data-testid='submit-button']").click()
         
         # Vérification du retour à la liste
         expect(page.url).to_end_with("/tasks")
@@ -118,43 +120,43 @@ class TestTaskManagement:
     def test_task_weather_details(self, page: Page):
         """Vérifie l'affichage des détails météo d'une tâche"""
         # Clic sur l'icône météo
-        page.get_by_title("Conditions météo").click()
+        page.locator("[data-testid='weather-conditions-button']").click()
         
         # Vérification des informations affichées
-        expect(page.get_by_text("Conditions Météorologiques Actuelles")).to_be_visible()
-        expect(page.get_by_text("25°C")).to_be_visible()
-        expect(page.get_by_text("70%")).to_be_visible()
-        expect(page.get_by_text("15 km/h")).to_be_visible()
-        expect(page.get_by_text("Conditions météo favorables")).to_be_visible()
+        expect(page.locator("[data-testid='weather-dialog-title']")).to_contain_text("Conditions Météorologiques Actuelles")
+        expect(page.locator("[data-testid='temperature-value']")).to_contain_text("25°C")
+        expect(page.locator("[data-testid='humidity-value']")).to_contain_text("70%")
+        expect(page.locator("[data-testid='wind-speed-value']")).to_contain_text("15 km/h")
+        expect(page.locator("[data-testid='weather-status']")).to_contain_text("Conditions météo favorables")
 
     def test_task_filtering(self, page: Page):
         """Vérifie le filtrage des tâches"""
         # Test du filtre par statut
-        page.get_by_label("Statut").select_option("EN_COURS")
-        expect(page.get_by_text("Plantation palmiers zone A")).to_be_visible()
+        page.locator("[data-testid='status-filter']").select_option("EN_COURS")
+        expect(page.locator("[data-testid='task-title']")).to_contain_text("Plantation palmiers zone A")
         
-        page.get_by_label("Statut").select_option("TERMINEE")
-        expect(page.get_by_text("Plantation palmiers zone A")).not_to_be_visible()
+        page.locator("[data-testid='status-filter']").select_option("TERMINEE")
+        expect(page.locator("[data-testid='task-title']")).not_to_be_visible()
         
         # Test du filtre par catégorie
-        page.get_by_label("Statut").select_option("ALL")
-        page.get_by_label("Catégorie").select_option("PLANTATION")
-        expect(page.get_by_text("Plantation palmiers zone A")).to_be_visible()
+        page.locator("[data-testid='status-filter']").select_option("ALL")
+        page.locator("[data-testid='category-filter']").select_option("PLANTATION")
+        expect(page.locator("[data-testid='task-title']")).to_contain_text("Plantation palmiers zone A")
         
-        page.get_by_label("Catégorie").select_option("MAINTENANCE")
-        expect(page.get_by_text("Plantation palmiers zone A")).not_to_be_visible()
+        page.locator("[data-testid='category-filter']").select_option("MAINTENANCE")
+        expect(page.locator("[data-testid='task-title']")).not_to_be_visible()
 
     def test_task_editing(self, page: Page):
         """Vérifie l'édition d'une tâche"""
         # Clic sur l'icône d'édition
-        page.get_by_title("Modifier").click()
+        page.locator("[data-testid='edit-task-button']").click()
         
         # Modification des champs
-        page.get_by_label("Titre").fill("Plantation palmiers zone A - Modifié")
-        page.get_by_label("Progression (%)").fill("50")
+        page.locator("[data-testid='task-title-input']").fill("Plantation palmiers zone A - Modifié")
+        page.locator("[data-testid='completion-percentage-input']").fill("50")
         
         # Sauvegarde
-        page.get_by_text("Enregistrer").click()
+        page.locator("[data-testid='submit-button']").click()
         
         # Vérification du retour à la liste
         expect(page.url).to_end_with("/tasks")
@@ -165,10 +167,10 @@ class TestTaskManagement:
         page.on("dialog", lambda dialog: dialog.accept())
         
         # Clic sur l'icône de suppression
-        page.get_by_title("Supprimer").click()
+        page.locator("[data-testid='delete-task-button']").click()
         
         # Vérification que la tâche n'est plus visible
-        expect(page.get_by_text("Plantation palmiers zone A")).not_to_be_visible()
+        expect(page.locator("[data-testid='task-title']")).not_to_be_visible()
 
     def test_error_handling(self, page: Page):
         """Vérifie la gestion des erreurs"""
@@ -183,4 +185,4 @@ class TestTaskManagement:
         page.reload()
         
         # Vérification du message d'erreur
-        expect(page.get_by_text("Impossible de charger les tâches")).to_be_visible()
+        expect(page.locator("[data-testid='error-message']")).to_contain_text("Impossible de charger les tâches")
