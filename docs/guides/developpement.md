@@ -25,6 +25,78 @@ interface StatCardProps {
 }
 ```
 
+#### Gestion d'État avec React Query
+
+Nous avons standardisé l'utilisation de react-query dans l'application :
+
+1. Configuration des Requêtes
+```typescript
+const { data, isLoading, error } = useQuery({
+  queryKey: queryKeys.domain.action(),
+  queryFn: () => service.getData(),
+  staleTime: 1000 * 60 * 5, // 5 minutes
+  refetchInterval: 1000 * 60 * 15 // 15 minutes
+});
+```
+
+2. Gestion Standard des États
+```typescript
+// État de chargement
+if (isLoading) {
+  return (
+    <Card>
+      <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+        <CircularProgress />
+      </CardContent>
+    </Card>
+  );
+}
+
+// État d'erreur
+if (error) {
+  return (
+    <Card>
+      <CardContent>
+        <Typography color="error">
+          Erreur lors du chargement des données
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
+
+// État sans données
+if (!data) {
+  return (
+    <Card>
+      <CardContent>
+        <Typography color="textSecondary">
+          Aucune donnée disponible
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+3. Organisation des Clés de Requête
+```typescript
+// Dans config/queryClient.ts
+export const queryKeys = {
+  finance: {
+    stats: () => ['finance', 'stats'],
+    cashflow: () => ['finance', 'cashflow']
+  },
+  production: {
+    stats: () => ['production', 'stats'],
+    events: (filter: string) => ['production', 'events', filter]
+  },
+  weather: {
+    current: () => ['weather', 'current']
+  }
+};
+```
+
 #### Améliorations des Composants de Statistiques
 
 - Mise à jour des composants FinanceStats, EmployeeStats et StatsInventaire
@@ -67,6 +139,23 @@ interface StatCardProps {
 - Éviter `any` autant que possible
 - Créer des interfaces spécifiques pour chaque composant
 - Utiliser des unions de types pour les variations
+
+#### Gestion des États
+
+1. États de Chargement
+   - Utiliser CircularProgress dans une Card
+   - Hauteur minimale cohérente
+   - Centrage avec flexbox
+
+2. États d'Erreur
+   - Messages d'erreur en français
+   - Style cohérent avec Typography color="error"
+   - Conteneur Card pour l'alignement
+
+3. États Sans Données
+   - Messages explicites
+   - Style cohérent avec Typography color="textSecondary"
+   - Maintien de la structure visuelle
 
 #### Gestion des Erreurs
 
@@ -155,3 +244,4 @@ interface StatCardProps {
 - [Documentation TypeScript](https://www.typescriptlang.org/docs/)
 - [React avec TypeScript](https://react-typescript-cheatsheet.netlify.app/)
 - [Material-UI Documentation](https://mui.com/material-ui/getting-started/overview/)
+- [React Query Documentation](https://tanstack.com/query/latest/docs/react/overview)

@@ -49,6 +49,58 @@ tests/
     └── test_comptabilite_integration.py
 ```
 
+## Tests React avec React Query
+
+### Structure des Tests React Query
+Les tests des composants utilisant react-query doivent vérifier :
+- L'état de chargement initial
+- Le rendu avec les données
+- La gestion des erreurs
+- Les états sans données
+- La configuration correcte des requêtes
+
+Exemple de structure :
+```typescript
+describe('MonComposant', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false
+        }
+      }
+    });
+  });
+
+  it('affiche le chargement', () => {
+    // Test de l'état de chargement
+  });
+
+  it('affiche les données', async () => {
+    // Test du rendu avec données
+  });
+
+  it('affiche une erreur', async () => {
+    // Test de la gestion d'erreur
+  });
+
+  it('utilise la bonne configuration', () => {
+    // Test de la configuration react-query
+  });
+});
+```
+
+### Standards de Test React Query
+1. Toujours wrapper les composants avec QueryClientProvider
+2. Désactiver les retry en test
+3. Mocker les fonctions de service
+4. Vérifier les états de chargement
+5. Tester la configuration des requêtes (staleTime, etc.)
+6. Vérifier la gestion des erreurs
+7. Tester les cas sans données
+
 ## Tests E2E
 
 Les tests E2E utilisent Playwright pour tester l'application dans un vrai navigateur.

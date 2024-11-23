@@ -37,14 +37,52 @@
    - Redux pour état global
    - React Router pour navigation
 
-2. Performance :
+2. Gestion d'État avec React Query :
+   - Configuration centralisée des clés de requête
+   - Gestion standardisée des états de chargement
+   - Gestion cohérente des erreurs
+   - Cache optimisé par domaine
+   - Invalidation intelligente
+
+3. Standards de Gestion d'État :
+   ```typescript
+   // Configuration des clés de requête
+   export const queryKeys = {
+     domain: {
+       action: () => ['domain', 'action'],
+       detail: (id: string) => ['domain', 'detail', id]
+     }
+   };
+
+   // Configuration des requêtes
+   const { data, isLoading } = useQuery({
+     queryKey: queryKeys.domain.action(),
+     queryFn: () => service.getData(),
+     staleTime: 1000 * 60 * 5
+   });
+
+   // Gestion des états
+   if (isLoading) {
+     return <LoadingCard height={200} />;
+   }
+
+   if (error) {
+     return <ErrorCard message="Message d'erreur" />;
+   }
+
+   if (!data) {
+     return <EmptyCard message="Aucune donnée" />;
+   }
+   ```
+
+4. Performance :
    - Code splitting
    - Lazy loading
    - Optimisation des bundles
    - Caching local
    - Service Workers
 
-3. Composants :
+5. Composants :
    - Architecture modulaire
    - Composants réutilisables
    - Styled-components
@@ -89,6 +127,23 @@
    - Tests E2E
    - Tests de performance
    - Tests de sécurité
+
+4. Tests React Query :
+   ```typescript
+   describe('MonComposant', () => {
+     it('gère le chargement', () => {
+       // Test état de chargement
+     });
+
+     it('gère les erreurs', () => {
+       // Test gestion erreurs
+     });
+
+     it('affiche les données', () => {
+       // Test affichage données
+     });
+   });
+   ```
 
 ### B. Base de Données
 1. Modèles :
