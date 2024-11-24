@@ -1,37 +1,8 @@
-0s
-Current runner version: '2.321.0'
-Operating System
-Runner Image
-Runner Image Provisioner
-GITHUB_TOKEN Permissions
-Secret source: Actions
-Prepare workflow directory
-Prepare all required actions
-Getting action download info
-Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e18286ca9a3d1956744)
-Download action repository 'actions/setup-node@v3' (SHA:1a4442cacd436585916779262731d5b162bc6ec7)
-Complete job name: build-frontend
-0s
-Run actions/checkout@v3
-Syncing repository: Kaiser9005/ERP
-Getting Git version info
-Temporarily overriding HOME='/home/runner/work/_temp/81774ff1-8c04-400d-b462-23d07e6f5efa' before making global git config changes
-Adding repository directory to the temporary git global config as a safe directory
-/usr/bin/git config --global --add safe.directory /home/runner/work/ERP/ERP
-Deleting the contents of '/home/runner/work/ERP/ERP'
-Initializing the repository
-Disabling automatic garbage collection
-Setting up auth
-Fetching the repository
-Determining the checkout info
-Checking out the ref
-/usr/bin/git log -1 --format='%H'
-'6bdabaf841ba3ced2f052c0763c364d247d0ca13'
-0s
+2s
 Run actions/setup-node@v3
 Found in cache @ /opt/hostedtoolcache/node/18.20.5/x64
 Environment details
-18s
+19s
 0s
 Run echo "VITE_WEATHER_API_KEY=" >> .env
 6s
@@ -41,70 +12,9 @@ Run npm run build
 > tsc && vite build
 
 Error: src/App.tsx(5,1): error TS6133: 'ThemeProvider' is declared but its value is never read.
-Error: src/components/finance/BudgetOverview.tsx(13,10): error TS2305: Module '"../../services/finance"' has no exported member 'getBudgetOverview'.
-Error: src/components/finance/BudgetOverview.tsx(13,29): error TS2459: Module '"../../services/finance"' declares 'Budget' locally, but it is not exported.
-Error: src/components/finance/BudgetOverview.tsx(16,53): error TS2769: No overload matches this call.
-  Overload 1 of 3, '(options: DefinedInitialDataOptions<Budget[], Error, Budget[], QueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<Budget[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'DefinedInitialDataOptions<Budget[], Error, Budget[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Budget[], Error, Budget[], QueryKey>'.
-  Overload 2 of 3, '(options: UndefinedInitialDataOptions<Budget[], Error, Budget[], QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<Budget[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UndefinedInitialDataOptions<Budget[], Error, Budget[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Budget[], Error, Budget[], QueryKey>'.
-  Overload 3 of 3, '(options: UseQueryOptions<Budget[], Error, Budget[], QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<Budget[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UseQueryOptions<Budget[], Error, Budget[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Budget[], Error, Budget[], QueryKey>'.
-Error: src/components/finance/BudgetOverview.tsx(32,20): error TS2339: Property 'map' does not exist on type 'never[] | TQueryFnData'.
-  Property 'map' does not exist on type 'TQueryFnData'.
-Error: src/components/finance/BudgetOverview.tsx(32,25): error TS7006: Parameter 'budget' implicitly has an 'any' type.
-Error: src/components/finance/TransactionDetails.tsx(153,49): error TS2339: Property 'numero' does not exist on type 'string'.
-Error: src/components/finance/TransactionDetails.tsx(156,49): error TS2339: Property 'libelle' does not exist on type 'string'.
-Error: src/components/finance/TransactionDetails.tsx(173,54): error TS2339: Property 'numero' does not exist on type 'string'.
-Error: src/components/finance/TransactionDetails.tsx(176,54): error TS2339: Property 'libelle' does not exist on type 'string'.
-Error: src/components/finance/TransactionDetails.tsx(193,47): error TS2339: Property 'nom' does not exist on type 'string'.
-Error: src/components/finance/TransactionDetails.tsx(193,80): error TS2339: Property 'prenom' does not exist on type 'string'.
-Error: src/components/finance/TransactionForm.tsx(18,64): error TS2305: Module '"../../services/finance"' has no exported member 'getComptes'.
-Error: src/components/finance/TransactionForm.tsx(18,76): error TS2724: '"../../services/finance"' has no exported member named 'Transaction'. Did you mean 'getTransaction'?
-Error: src/components/finance/TransactionForm.tsx(64,5): error TS2554: Expected 1-2 arguments, but got 3.
-Error: src/components/finance/TransactionForm.tsx(67,43): error TS2769: No overload matches this call.
-  Overload 1 of 3, '(options: DefinedInitialDataOptions<unknown, Error, unknown, QueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<unknown, Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'DefinedInitialDataOptions<unknown, Error, unknown, QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<unknown, Error, unknown, QueryKey>'.
-  Overload 2 of 3, '(options: UndefinedInitialDataOptions<unknown, Error, unknown, QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<unknown, Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UndefinedInitialDataOptions<unknown, Error, unknown, QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<unknown, Error, unknown, QueryKey>'.
-  Overload 3 of 3, '(options: UseQueryOptions<unknown, Error, unknown, QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<unknown, Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UseQueryOptions<unknown, Error, unknown, QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<unknown, Error, unknown, QueryKey>'.
-Error: src/components/finance/TransactionForm.tsx(82,5): error TS2322: Type 'Resolver<{ description?: string | undefined; compte_source?: string | undefined; compte_destination?: string | undefined; categorie: string; statut: string; reference: string; date_transaction: string; type_transaction: string; montant: number; }>' is not assignable to type 'Resolver<TransactionFormData, any>'.
-  Types of parameters 'values' and 'values' are incompatible.
-    Type 'TransactionFormData' is missing the following properties from type '{ description?: string | undefined; compte_source?: string | undefined; compte_destination?: string | undefined; categorie: string; statut: string; reference: string; date_transaction: string; type_transaction: string; montant: number; }': categorie, statut, reference, date_transaction, and 2 more.
-Error: src/components/finance/TransactionForm.tsx(89,5): error TS2559: Type '(data: TransactionFormData) => Promise<Transaction>' has no properties in common with type 'UseMutationOptions<unknown, Error, void, unknown>'.
-Error: src/components/finance/TransactionForm.tsx(94,83): error TS2345: Argument of type '{ date_transaction: string; compte_source?: string; compte_destination?: string; }' is not assignable to parameter of type 'TransactionFormData'.
-  Type '{ date_transaction: string; compte_source?: string | undefined; compte_destination?: string | undefined; }' is missing the following properties from type 'TransactionFormData': type_transaction, categorie, montant
-Error: src/components/finance/TransactionForm.tsx(98,39): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters'.
-Error: src/components/finance/TransactionForm.tsx(105,21): error TS2345: Argument of type 'TransactionFormData' is not assignable to parameter of type 'void'.
-Error: src/components/finance/TransactionForm.tsx(116,60): error TS2339: Property 'reference' does not exist on type '{}'.
-Error: src/components/finance/TransactionForm.tsx(241,26): error TS18046: 'comptes' is of type 'unknown'.
-Error: src/components/finance/TransactionForm.tsx(241,39): error TS7006: Parameter 'compte' implicitly has an 'any' type.
-Error: src/components/finance/TransactionForm.tsx(266,26): error TS18046: 'comptes' is of type 'unknown'.
-Error: src/components/finance/TransactionForm.tsx(266,39): error TS7006: Parameter 'compte' implicitly has an 'any' type.
-Error: src/components/finance/TransactionForm.tsx(306,39): error TS2339: Property 'isLoading' does not exist on type 'UseMutationResult<unknown, Error, void, unknown>'.
-  Property 'isLoading' does not exist on type 'Override<MutationObserverIdleResult<unknown, Error, void, unknown>, { mutate: UseMutateFunction<unknown, Error, void, unknown>; }> & { ...; }'.
-Error: src/components/finance/TransactionsList.tsx(19,27): error TS2724: '"../../services/finance"' has no exported member named 'Transaction'. Did you mean 'getTransaction'?
-Error: src/components/finance/TransactionsList.tsx(27,63): error TS2769: No overload matches this call.
-  Overload 1 of 3, '(options: DefinedInitialDataOptions<Transaction[], Error, Transaction[], QueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<Transaction[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'DefinedInitialDataOptions<Transaction[], Error, Transaction[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Transaction[], Error, Transaction[], QueryKey>'.
-  Overload 2 of 3, '(options: UndefinedInitialDataOptions<Transaction[], Error, Transaction[], QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<Transaction[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UndefinedInitialDataOptions<Transaction[], Error, Transaction[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Transaction[], Error, Transaction[], QueryKey>'.
-  Overload 3 of 3, '(options: UseQueryOptions<Transaction[], Error, Transaction[], QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<Transaction[], Error>', gave the following error.
-    Argument of type 'string[]' is not assignable to parameter of type 'UseQueryOptions<Transaction[], Error, Transaction[], QueryKey>'.
-      Property 'queryKey' is missing in type 'string[]' but required in type 'UseQueryOptions<Transaction[], Error, Transaction[], QueryKey>'.
-Error: src/components/finance/TransactionsList.tsx(29,45): error TS2339: Property 'filter' does not exist on type 'never[] | TQueryFnData'.
-  Property 'filter' does not exist on type 'TQueryFnData'.
-Error: src/components/finance/TransactionsList.tsx(29,52): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
-Error: src/components/finance/TransactionsList.tsx(78,40): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+Error: src/components/dashboard/DashboardPage.tsx(7,27): error TS2307: Cannot find module '../finance/CashFlowChart' or its corresponding type declarations.
+Error: src/components/dashboard/ProductionChart.tsx(6,27): error TS2307: Cannot find module '../../config/queryClient' or its corresponding type declarations.
+Error: src/components/dashboard/WeatherWidget.tsx(6,27): error TS2307: Cannot find module '../../config/queryClient' or its corresponding type declarations.
 Error: src/components/hr/AttendanceOverview.tsx(18,28): error TS6133: 'EmployeeStats' is declared but its value is never read.
 Error: src/components/hr/EmployeeForm.tsx(55,5): error TS2554: Expected 1-2 arguments, but got 3.
 Error: src/components/hr/EmployeeForm.tsx(80,5): error TS2559: Type '(data: EmployeeFormData) => Promise<Employee>' has no properties in common with type 'UseMutationOptions<unknown, Error, void, unknown>'.
@@ -212,9 +122,9 @@ Error: src/components/projects/ProjectDetails.tsx(93,43): error TS2339: Property
 Error: src/components/projects/ProjectDetails.tsx(94,47): error TS2339: Property 'date_fin_prevue' does not exist on type '{}'.
 Error: src/components/projects/ProjectForm.tsx(10,3): error TS6133: 'MenuItem' is declared but its value is never read.
 Error: src/components/projects/ProjectForm.tsx(45,5): error TS2554: Expected 1-2 arguments, but got 3.
-Error: src/components/projects/ProjectForm.tsx(49,5): error TS2322: Type 'Resolver<{ description?: string | undefined; code: string; budget: number; date_debut: Date; responsable_id: string; nom: string; date_fin_prevue: Date; }>' is not assignable to type 'Resolver<{}, any>'.
+Error: src/components/projects/ProjectForm.tsx(49,5): error TS2322: Type 'Resolver<{ description?: string | undefined; code: string; date_debut: Date; responsable_id: string; nom: string; date_fin_prevue: Date; budget: number; }>' is not assignable to type 'Resolver<{}, any>'.
   Types of parameters 'values' and 'values' are incompatible.
-    Type '{}' is missing the following properties from type '{ description?: string | undefined; code: string; budget: number; date_debut: Date; responsable_id: string; nom: string; date_fin_prevue: Date; }': code, budget, date_debut, responsable_id, and 2 more.
+    Type '{}' is missing the following properties from type '{ description?: string | undefined; code: string; date_debut: Date; responsable_id: string; nom: string; date_fin_prevue: Date; budget: number; }': code, date_debut, responsable_id, nom, and 2 more.
 Error: src/components/projects/ProjectForm.tsx(64,5): error TS2559: Type '(data: any) => Promise<Project>' has no properties in common with type 'UseMutationOptions<unknown, Error, void, unknown>'.
 Error: src/components/projects/ProjectForm.tsx(67,39): error TS2559: Type '"projects"' has no properties in common with type 'InvalidateQueryFilters'.
 Error: src/components/projects/ProjectForm.tsx(85,56): error TS2339: Property 'nom' does not exist on type '{}'.
@@ -241,8 +151,7 @@ Error: src/components/projects/ProjectForm.tsx(216,39): error TS2339: Property '
 Error: src/components/projects/ProjectsPage.tsx(5,26): error TS2307: Cannot find module './ProjectsList' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(6,29): error TS2307: Cannot find module './ProjectTimeline' or its corresponding type declarations.
 Error: src/components/projects/ProjectsPage.tsx(7,27): error TS2307: Cannot find module './TasksOverview' or its corresponding type declarations.
-Error: src/config/queryClient.ts(7,7): error TS2353: Object literal may only specify known properties, and 'cacheTime' does not exist in type 'OmitKeyof<QueryObserverOptions<unknown, Error, unknown, unknown, QueryKey, never>, "suspense" | "queryKey", "strictly">'.
-Error: src/routes/finance.tsx(20,19): error TS2741: Property 'transactionId' is missing in type '{}' but required in type 'TransactionDetailsProps'.
+Error: src/routes/index.tsx(6,31): error TS2307: Cannot find module './finance' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(2,31): error TS2307: Cannot find module '../components/parametrage/ParametrageLayout' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(3,32): error TS2307: Cannot find module '../components/parametrage/ParametresGeneraux' or its corresponding type declarations.
 Error: src/routes/parametrage.tsx(4,34): error TS2307: Cannot find module '../components/parametrage/ConfigurationModules' or its corresponding type declarations.
