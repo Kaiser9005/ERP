@@ -1,63 +1,95 @@
-import { createTheme, Theme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-// Thème clair
-export const lightTheme: Theme = createTheme({
+export const theme = createTheme({
   palette: {
-    mode: 'light',
     primary: {
-      main: '#2E7D32',
+      main: '#2E7D32', // Vert pour représenter l'agriculture
       light: '#4CAF50',
       dark: '#1B5E20',
+      contrastText: '#fff'
     },
     secondary: {
-      main: '#FFA000',
+      main: '#FFA000', // Orange pour les alertes et actions secondaires
       light: '#FFB74D',
       dark: '#F57C00',
+      contrastText: '#000'
     },
     background: {
       default: '#F5F5F5',
-      paper: '#FFFFFF',
+      paper: '#FFFFFF'
+    }
+  },
+  typography: {
+    fontFamily: [
+      'Roboto',
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif'
+    ].join(','),
+    h1: {
+      fontSize: '2.5rem',
+      fontWeight: 500
     },
+    h2: {
+      fontSize: '2rem',
+      fontWeight: 500
+    },
+    h3: {
+      fontSize: '1.75rem',
+      fontWeight: 500
+    },
+    h4: {
+      fontSize: '1.5rem',
+      fontWeight: 500
+    },
+    h5: {
+      fontSize: '1.25rem',
+      fontWeight: 500
+    },
+    h6: {
+      fontSize: '1rem',
+      fontWeight: 500
+    }
   },
   components: {
-    MuiAppBar: {
+    MuiButton: {
       styleOverrides: {
         root: {
-          backgroundColor: '#FFFFFF',
-          color: '#2E7D32',
-        },
-      },
+          textTransform: 'none',
+          borderRadius: 8
+        }
+      }
     },
-  },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        }
+      }
+    },
+    MuiTextField: {
+      defaultProps: {
+        variant: 'outlined',
+        size: 'small'
+      }
+    }
+  }
 });
 
-// Thème sombre
-export const darkTheme: Theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#4CAF50',
-      light: '#81C784',
-      dark: '#388E3C',
-    },
-    secondary: {
-      main: '#FFB74D',
-      light: '#FFD54F',
-      dark: '#FFA000',
-    },
-    background: {
-      default: '#121212',
-      paper: '#1E1E1E',
-    },
-  },
-  components: {
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#1E1E1E',
-          color: '#4CAF50',
-        },
-      },
-    },
-  },
-});
+// Déclaration des types pour TypeScript
+declare module '@mui/material/styles' {
+  interface Theme {
+    status?: {
+      danger?: string;
+    };
+  }
+  interface ThemeOptions {
+    status?: {
+      danger?: string;
+    };
+  }
+}

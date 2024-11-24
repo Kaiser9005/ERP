@@ -1,13 +1,13 @@
 import React from 'react';
 import { Grid, Typography, Box } from '@mui/material';
-import StatCard from '../common/StatCard';
 import { Agriculture, Inventory, AccountBalance, People } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
-import { getDashboardStats } from '../../services/dashboard';
-import CashFlowChart from '../finance/CashFlowChart';
+import StatCard from '../common/StatCard';
+import CashFlowChart from '../comptabilite/CashFlowChart';
 import ProductionChart from './ProductionChart';
 import RecentActivities from './RecentActivities';
 import WeatherWidget from './WeatherWidget';
+import { getDashboardStats } from '../../services/dashboard';
 
 type ApiVariation = {
   value: number;

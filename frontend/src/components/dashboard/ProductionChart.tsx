@@ -2,8 +2,8 @@ import React from 'react';
 import { Card, CardContent, Typography, CircularProgress } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { productionService } from '../../services/production';
-import { queryKeys } from '../../config/queryClient';
+import { productionService } from '@services/production';
+import { queryKeys } from '@config/queryClient';
 
 interface ChartData {
   mois: string;
