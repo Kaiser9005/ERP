@@ -1,179 +1,223 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
-  Grid,
   Typography,
-  Button,
-  Chip,
   Box,
+  Grid,
+  Chip,
+  Button,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  IconButton
+  Paper
 } from '@mui/material';
-import { Add, Edit, Visibility } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
-import { getParcelle, getRecoltes } from '../../services/production';
-import PageHeader from '../layout/PageHeader';
-import RecolteForm from './RecolteForm';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { productionService } from '../../services/production';
+import { Agriculture, WaterDrop, Thermostat } from '@mui/icons-material';
+import { Parcelle, ProductionEvent, Recolte, QualiteRecolte } from '../../types/production';
+
+interface MeteoData {
+  temperature: number;
+  humidite: number;
+  precipitation: number;
+}
+
+interface ParcelleWithDetails extends Parcelle {
+  events?: ProductionEvent[];
+  recoltes?: Recolte[];
+}
+
+const MeteoWidget: React.FC<{ data: MeteoData }> = ({ data }) => (
+  <Box>
+    <Typography variant="subtitle1" gutterBottom>
+      Conditions Météo Actuelles
+    </Typography>
+    <Grid container spacing={2}>
+      <Grid item xs={4}>
+        <Box display="flex" alignItems="center">
+          <Thermostat color="primary" sx={{ mr: 1 }} />
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Température
+            </Typography>
+            <Typography>{data.temperature}°C</Typography>
+          </Box>
+        </Box>
+      </Grid>
+      <Grid item xs={4}>
+        <Box display="flex" alignItems="center">
+          <WaterDrop color="info" sx={{ mr: 1 }} />
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Humidité
+            </Typography>
+            <Typography>{data.humidite}%</Typography>
+          </Box>
+        </Box>
+      </Grid>
+      <Grid item xs={4}>
+        <Box display="flex" alignItems="center">
+          <Agriculture color="success" sx={{ mr: 1 }} />
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Précipitations
+            </Typography>
+            <Typography>{data.precipitation} mm</Typography>
+          </Box>
+        </Box>
+      </Grid>
+    </Grid>
+  </Box>
+);
 
 const ParcelleDetails: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [recolteFormOpen, setRecolteFormOpen] = useState(false);
-
-  const { data: parcelle } = useQuery(
+  const { data: parcelle, isLoading } = useQuery<ParcelleWithDetails>(
     ['parcelle', id],
-    () => getParcelle(id!)
+    () => productionService.getParcelle(id!)
   );
 
-  const { data: recoltes } = useQuery(
-    ['recoltes', id],
-    () => getRecoltes(id!)
-  );
+  if (isLoading) {
+    return <Typography>Chargement...</Typography>;
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'success';
-      case 'EN_REPOS':
-        return 'warning';
-      case 'EN_PREPARATION':
-        return 'info';
-      default:
-        return 'default';
-    }
-  };
+  if (!parcelle) {
+    return <Typography>Parcelle non trouvée</Typography>;
+  }
 
   return (
-    <>
-      <PageHeader
-        title={`Parcelle ${parcelle?.code}`}
-        subtitle="Détails et historique des récoltes"
-        action={{
-          label: "Modifier",
-          onClick: () => navigate(`/production/parcelles/${id}/edit`),
-          icon: <Edit />
-        }}
-      />
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5">
+          Détails de la Parcelle
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/production/parcelles')}
+        >
+          Retour à la liste
+        </Button>
+      </Box>
 
       <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Box mb={3}>
+                <Typography variant="h6" gutterBottom>
+                  {parcelle.code} - {parcelle.culture_type}
+                </Typography>
+                <Chip
+                  label={parcelle.statut}
+                  color={parcelle.statut === 'ACTIVE' ? 'success' : 'default'}
+                  size="small"
+                />
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Surface
+                  </Typography>
+                  <Typography>{parcelle.surface_hectares} hectares</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Date de plantation
+                  </Typography>
+                  <Typography>
+                    {new Date(parcelle.date_plantation).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Box mt={3}>
+                <MeteoWidget
+                  data={{
+                    temperature: 28,
+                    humidite: 65,
+                    precipitation: 2.5
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Informations Générales
+                Dernières Activités
               </Typography>
-
-              <Box sx={{ '& > *': { mb: 2 } }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Type de Culture
+              {parcelle.events?.map((event) => (
+                <Box key={event.id} mb={2}>
+                  <Typography variant="subtitle2">
+                    {event.type}
                   </Typography>
-                  <Chip
-                    label={parcelle?.culture_type === 'PALMIER' ? 'Palmier à huile' : 'Papaye'}
-                    color="primary"
-                  />
-                </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Statut
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date(event.date_debut).toLocaleDateString()}
                   </Typography>
-                  <Chip
-                    label={parcelle?.statut}
-                    color={getStatusColor(parcelle?.statut)}
-                  />
-                </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Surface
-                  </Typography>
-                  <Typography variant="h6">
-                    {parcelle?.surface_hectares} ha
+                  <Typography variant="body2">
+                    {event.description}
                   </Typography>
                 </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Date de Plantation
-                  </Typography>
-                  <Typography>
-                    {parcelle?.date_plantation &&
-                      format(new Date(parcelle.date_plantation), 'PP', { locale: fr })}
-                  </Typography>
-                </Box>
-              </Box>
+              ))}
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">
-                  Historique des Récoltes
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={() => setRecolteFormOpen(true)}
-                >
-                  Nouvelle Récolte
-                </Button>
-              </Box>
-
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Quantité</TableCell>
-                    <TableCell>Qualité</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {recoltes?.map((recolte) => (
-                    <TableRow key={recolte.id}>
-                      <TableCell>
-                        {format(new Date(recolte.date_recolte), 'PP', { locale: fr })}
-                      </TableCell>
-                      <TableCell>{recolte.quantite_kg} kg</TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={recolte.qualite}
-                          color={recolte.qualite === 'A' ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton size="small">
-                          <Visibility />
-                        </IconButton>
-                      </TableCell>
+              <Typography variant="h6" gutterBottom>
+                Historique des Récoltes
+              </Typography>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Quantité (kg)</TableCell>
+                      <TableCell>Qualité</TableCell>
+                      <TableCell>Notes</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {parcelle.recoltes?.map((recolte) => (
+                      <TableRow key={recolte.id}>
+                        <TableCell>
+                          {new Date(recolte.date_recolte).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{recolte.quantite_kg}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={recolte.qualite}
+                            size="small"
+                            color={
+                              recolte.qualite === QualiteRecolte.A ? 'success' :
+                              recolte.qualite === QualiteRecolte.B ? 'primary' :
+                              'warning'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>{recolte.notes}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-
-      <RecolteForm
-        open={recolteFormOpen}
-        onClose={() => setRecolteFormOpen(false)}
-        parcelleId={id}
-      />
-    </>
+    </Box>
   );
 };
 

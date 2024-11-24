@@ -1,66 +1,127 @@
 import React from 'react';
-import { Grid } from '@mui/material';
-import PageHeader from '../layout/PageHeader';
-import StatsProduction from './StatsProduction';
-import StatsInventaire from './StatsInventaire';
-import StatsFinance from './StatsFinance';
-import StatsRH from './StatsRH';
-import WidgetMeteo from './WidgetMeteo';
-import ActivitesRecentes from './ActivitesRecentes';
-import GraphiqueProduction from './GraphiqueProduction';
-import GraphiqueTresorerie from './GraphiqueTresorerie';
+import { Grid, Typography, Box } from '@mui/material';
+import StatCard from '../common/StatCard';
+import { Agriculture, Inventory, AccountBalance, People } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import { getDashboardStats } from '../../services/dashboard';
+import CashFlowChart from '../finance/CashFlowChart';
+import ProductionChart from './ProductionChart';
+import RecentActivities from './RecentActivities';
+import WeatherWidget from './WeatherWidget';
 
-const TableauBord: React.FC = () => {
+type ApiVariation = {
+  value: number;
+  type: 'increase' | 'decrease';
+};
+
+type UiVariation = {
+  valeur: number;
+  type: 'hausse' | 'baisse';
+};
+
+// Fonction utilitaire pour convertir le format des variations
+const convertirVariation = (variation?: ApiVariation): UiVariation | undefined => {
+  if (!variation) return undefined;
+  return {
+    valeur: variation.value,
+    type: variation.type === 'increase' ? 'hausse' as const : 'baisse' as const
+  };
+};
+
+const DashboardPage: React.FC = () => {
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['dashboard', 'stats'],
+    queryFn: getDashboardStats,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+
+  if (error) {
+    return (
+      <Box>
+        <Typography variant="h4" gutterBottom>
+          Tableau de Bord
+        </Typography>
+        <Typography color="error">
+          Une erreur est survenue lors du chargement des données
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
-    <>
-      <PageHeader
-        title="Tableau de Bord"
-        subtitle="Vue d'ensemble des opérations de FOFAL"
-      />
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Tableau de Bord
+      </Typography>
 
       <Grid container spacing={3}>
-        {/* Statistiques de production */}
-        <Grid item xs={12} lg={3}>
-          <StatsProduction />
+        {/* Statistiques principales */}
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Production"
+            value={stats?.production.total || 0}
+            unit="tonnes"
+            variation={convertirVariation(stats?.production.variation)}
+            icon={<Agriculture />}
+            color="primary"
+            loading={isLoading}
+          />
         </Grid>
 
-        {/* Statistiques d'inventaire */}
-        <Grid item xs={12} lg={3}>
-          <StatsInventaire />
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Stock"
+            value={stats?.inventory.value || 0}
+            unit="FCFA"
+            variation={convertirVariation(stats?.inventory.variation)}
+            icon={<Inventory />}
+            color="success"
+            loading={isLoading}
+          />
         </Grid>
 
-        {/* Statistiques financières */}
-        <Grid item xs={12} lg={3}>
-          <StatsFinance />
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Chiffre d'Affaires"
+            value={stats?.finance.revenue || 0}
+            unit="FCFA"
+            variation={convertirVariation(stats?.finance.variation)}
+            icon={<AccountBalance />}
+            color="info"
+            loading={isLoading}
+          />
         </Grid>
 
-        {/* Statistiques RH */}
-        <Grid item xs={12} lg={3}>
-          <StatsRH />
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Employés Actifs"
+            value={stats?.hr.activeEmployees || 0}
+            variation={convertirVariation(stats?.hr.variation)}
+            icon={<People />}
+            color="warning"
+            loading={isLoading}
+          />
         </Grid>
 
-        {/* Graphique de production */}
+        {/* Graphiques et widgets */}
         <Grid item xs={12} lg={8}>
-          <GraphiqueProduction />
+          <ProductionChart />
         </Grid>
 
-        {/* Widget météo */}
         <Grid item xs={12} lg={4}>
-          <WidgetMeteo />
+          <WeatherWidget />
         </Grid>
 
-        {/* Graphique des flux financiers */}
         <Grid item xs={12} lg={8}>
-          <GraphiqueTresorerie />
+          <CashFlowChart />
         </Grid>
 
-        {/* Activités récentes */}
         <Grid item xs={12} lg={4}>
-          <ActivitesRecentes />
+          <RecentActivities />
         </Grid>
       </Grid>
-    </>
+    </Box>
   );
 };
 
-export default TableauBord;
+export default DashboardPage;

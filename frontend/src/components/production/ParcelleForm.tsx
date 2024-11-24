@@ -10,12 +10,11 @@ import {
   MenuItem,
   Button,
   Box,
-  Typography,
   Alert
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createParcelle, updateParcelle, getParcelle } from '../../services/production';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
@@ -77,7 +76,7 @@ const ParcelleForm: React.FC = () => {
     <>
       <PageHeader
         title={isEdit ? 'Modifier la Parcelle' : 'Nouvelle Parcelle'}
-        subtitle={isEdit ? `Modification de ${parcelle?.code}` : 'Création d'une nouvelle parcelle'}
+        subtitle={isEdit ? `Modification de ${parcelle?.code}` : 'Création d\'une nouvelle parcelle'}
       />
 
       <Card>

@@ -3,91 +3,130 @@ import {
   Card,
   CardContent,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   IconButton,
   Chip,
-  Box
+  Button
 } from '@mui/material';
 import { Edit, Visibility } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getParcelles } from '../../services/production';
 import { useNavigate } from 'react-router-dom';
+import { productionService } from '../../services/production';
+import { Parcelle, CultureType, ParcelleStatus } from '../../types/production';
+
+const getCultureTypeLabel = (type: CultureType) => {
+  switch (type) {
+    case CultureType.PALMIER:
+      return 'Palmier à huile';
+    case CultureType.PAPAYE:
+      return 'Papaye';
+    default:
+      return type;
+  }
+};
+
+const getStatusColor = (status: ParcelleStatus) => {
+  switch (status) {
+    case ParcelleStatus.ACTIVE:
+      return 'success';
+    case ParcelleStatus.EN_PREPARATION:
+      return 'warning';
+    case ParcelleStatus.EN_REPOS:
+      return 'error';
+    default:
+      return 'default';
+  }
+};
 
 const ParcellesList: React.FC = () => {
   const navigate = useNavigate();
-  const { data: parcelles, isLoading } = useQuery('parcelles', getParcelles);
+  const { data: parcelles, isLoading } = useQuery(
+    'parcelles',
+    productionService.getParcelles
+  );
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'success';
-      case 'EN_REPOS':
-        return 'warning';
-      case 'EN_PREPARATION':
-        return 'info';
-      default:
-        return 'default';
-    }
-  };
+  if (isLoading) {
+    return <Typography>Chargement...</Typography>;
+  }
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Parcelles
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5">
+          Liste des Parcelles
         </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate('/production/parcelles/new')}
+        >
+          Nouvelle Parcelle
+        </Button>
+      </Box>
 
-        <List>
-          {parcelles?.map((parcelle) => (
-            <ListItem key={parcelle.id} divider>
-              <ListItemText
-                primary={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    {parcelle.code}
-                    <Chip
-                      size="small"
-                      label={parcelle.culture_type}
-                      color="primary"
-                    />
-                  </Box>
-                }
-                secondary={
-                  <>
-                    <Chip
-                      size="small"
-                      label={parcelle.statut}
-                      color={getStatusColor(parcelle.statut)}
-                      sx={{ mr: 1 }}
-                    />
-                    {parcelle.surface_hectares} ha
-                  </>
-                }
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge="end"
-                  onClick={() => navigate(`/production/parcelles/${parcelle.id}`)}
-                  sx={{ mr: 1 }}
-                  data-testid="view-button"
-                >
-                  <Visibility />
-                </IconButton>
-                <IconButton
-                  edge="end"
-                  onClick={() => navigate(`/production/parcelles/${parcelle.id}/edit`)}
-                  data-testid="edit-button"
-                >
-                  <Edit />
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-        </List>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardContent>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Code</TableCell>
+                  <TableCell>Culture</TableCell>
+                  <TableCell>Surface (ha)</TableCell>
+                  <TableCell>Date Plantation</TableCell>
+                  <TableCell>Statut</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {parcelles?.map((parcelle: Parcelle) => (
+                  <TableRow key={parcelle.id}>
+                    <TableCell>{parcelle.code}</TableCell>
+                    <TableCell>{getCultureTypeLabel(parcelle.culture_type)}</TableCell>
+                    <TableCell>{parcelle.surface_hectares}</TableCell>
+                    <TableCell>
+                      {new Date(parcelle.date_plantation).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={parcelle.statut}
+                        size="small"
+                        color={getStatusColor(parcelle.statut)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => navigate(`/production/parcelles/${parcelle.id}`)}
+                        title="Voir les détails"
+                      >
+                        <Visibility />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => navigate(`/production/parcelles/${parcelle.id}/edit`)}
+                        title="Modifier"
+                      >
+                        <Edit />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

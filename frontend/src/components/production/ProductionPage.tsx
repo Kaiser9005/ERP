@@ -1,10 +1,9 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
+import ProductionStats from './ProductionStats';
 import ParcellesList from './ParcellesList';
 import ProductionCalendar from './ProductionCalendar';
-import ProductionStats from './ProductionStats';
-import RecolteForm from './RecolteForm';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
