@@ -1,101 +1,61 @@
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  errors?: Record<string, string[]>;
-}
+// Types communs utilisés dans toute l'application
 
+// Type pour les identifiants uniques
+export type UUID = string;
+
+// Type pour les dates au format ISO
+export type ISODate = string;
+
+// Type pour les timestamps au format ISO
+export type ISODateTime = string;
+
+// Type pour les montants décimaux
+export type Decimal = number;
+
+// Type pour les métadonnées
+export type Metadata = Record<string, any>;
+
+// Type pour les réponses paginées
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
-  limit: number;
+  pageSize: number;
   totalPages: number;
 }
 
-export interface ApiError {
-  message: string;
-  code?: string;
-  details?: Record<string, string[]>;
-}
-
-export interface QueryFilters {
+// Type pour les filtres de base
+export interface BaseFilter {
   page?: number;
-  limit?: number;
+  pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  search?: string;
-  [key: string]: any;
 }
 
-export interface DateRange {
-  dateDebut: string;
-  dateFin: string;
+// Type pour les réponses d'API
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: number;
 }
 
-export interface SelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-  group?: string;
-}
-
-export type SortDirection = 'asc' | 'desc';
-
-export interface SortConfig {
-  field: string;
-  direction: SortDirection;
-}
-
-export interface FileUploadResponse {
-  url: string;
-  filename: string;
-  mimetype: string;
-  size: number;
-}
-
-export interface MetadataField {
-  key: string;
-  value: any;
-  type: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array';
-  label?: string;
-  description?: string;
-}
-
-export interface AuditInfo {
-  created_at: string;
-  created_by: string;
-  updated_at?: string;
-  updated_by?: string;
-  version: number;
-}
-
-export interface BaseEntity extends AuditInfo {
-  id: string;
-  metadata?: Record<string, any>;
-}
-
-export interface ValidationError {
-  field: string;
+// Type pour les erreurs d'API
+export interface ApiError {
   message: string;
-  code?: string;
+  code: string;
+  details?: Record<string, any>;
 }
 
-export interface ApiValidationError {
-  message: string;
-  errors: ValidationError[];
+// Type pour les champs de traçabilité
+export interface AuditFields {
+  created_at?: ISODateTime;
+  updated_at?: ISODateTime;
+  created_by_id?: UUID;
+  updated_by_id?: UUID;
 }
 
-export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
-
-export interface LoadingStatus {
-  state: LoadingState;
-  error?: string | null;
-  timestamp?: number;
-}
-
-export interface CacheConfig {
-  ttl?: number;
-  staleTime?: number;
-  cacheKey?: string[];
+// Type pour les entités de base
+export interface BaseEntity extends AuditFields {
+  id: UUID;
+  metadata?: Metadata;
 }

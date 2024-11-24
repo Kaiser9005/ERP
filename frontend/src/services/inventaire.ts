@@ -1,96 +1,52 @@
 import { api } from './api';
-import { 
-  Produit, 
+import {
+  Produit,
   MouvementStock,
-  CreateMouvementStock,
-  Stock, 
+  Stock,
   StatsInventaire
 } from '../types/inventaire';
 
-// Produits
 export const getProduits = async (): Promise<Produit[]> => {
-  const response = await api.get('/api/v1/inventory/produits');
-  return response.data;
+  const { data } = await api.get<Produit[]>('/api/inventaire/produits');
+  return data;
 };
 
 export const getProduit = async (id: string): Promise<Produit> => {
-  const response = await api.get(`/api/v1/inventory/produits/${id}`);
-  return response.data;
+  const { data } = await api.get<Produit>(`/api/inventaire/produits/${id}`);
+  return data;
 };
 
-export const createProduit = async (produit: Omit<Produit, 'id'>): Promise<Produit> => {
-  const response = await api.post('/api/v1/inventory/produits', produit);
-  return response.data;
+export const creerProduit = async (produitData: Partial<Produit>): Promise<Produit> => {
+  const { data } = await api.post<Produit>('/api/inventaire/produits', produitData);
+  return data;
 };
 
-export const updateProduit = async (id: string, produit: Partial<Produit>): Promise<Produit> => {
-  const response = await api.put(`/api/v1/inventory/produits/${id}`, produit);
-  return response.data;
+export const modifierProduit = async (id: string, produitData: Partial<Produit>): Promise<Produit> => {
+  const { data } = await api.put<Produit>(`/api/inventaire/produits/${id}`, produitData);
+  return data;
 };
 
-export const deleteProduit = async (id: string): Promise<void> => {
-  await api.delete(`/api/v1/inventory/produits/${id}`);
+export const getMouvements = async (): Promise<MouvementStock[]> => {
+  const { data } = await api.get<MouvementStock[]>('/api/inventaire/mouvements');
+  return data;
 };
 
-// Mouvements de stock
-export const getMouvements = async (params?: {
-  debut?: string;
-  fin?: string;
-  type?: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
-  produit_id?: string;
-}): Promise<MouvementStock[]> => {
-  const response = await api.get('/api/v1/inventory/mouvements', { params });
-  return response.data;
+export const getProductMovements = async (productId: string): Promise<MouvementStock[]> => {
+  const { data } = await api.get<MouvementStock[]>(`/api/inventaire/produits/${productId}/mouvements`);
+  return data;
 };
 
-export const getMouvementsProduit = async (produitId: string): Promise<MouvementStock[]> => {
-  const response = await api.get(`/api/v1/inventory/mouvements/produit/${produitId}`);
-  return response.data;
+export const creerMouvement = async (mouvementData: Partial<MouvementStock>): Promise<MouvementStock> => {
+  const { data } = await api.post<MouvementStock>('/api/inventaire/mouvements', mouvementData);
+  return data;
 };
 
-export const createMouvement = async (mouvement: CreateMouvementStock): Promise<MouvementStock> => {
-  const response = await api.post('/api/v1/inventory/mouvements', mouvement);
-  return response.data;
+export const getStatsInventaire = async (): Promise<StatsInventaire> => {
+  const { data } = await api.get<StatsInventaire>('/api/inventaire/stats');
+  return data;
 };
 
-// Stock
-export const getStocks = async (params?: {
-  entrepot_id?: string;
-  produit_id?: string;
-  seuil_alerte?: boolean;
-}): Promise<Stock[]> => {
-  const response = await api.get('/api/v1/inventory/stocks', { params });
-  return response.data;
-};
-
-export const getStockProduit = async (produitId: string): Promise<Stock[]> => {
-  const response = await api.get(`/api/v1/inventory/stocks/produit/${produitId}`);
-  return response.data;
-};
-
-// Statistiques
-export const getStatsInventaire = async (params?: {
-  debut?: string;
-  fin?: string;
-  categorie?: string;
-}): Promise<StatsInventaire> => {
-  const response = await api.get('/api/v1/inventory/stats', { params });
-  return response.data;
-};
-
-// Alertes
-export const getAlertesSeuil = async (): Promise<Produit[]> => {
-  const response = await api.get('/api/v1/inventory/alertes/seuil');
-  return response.data;
-};
-
-// Utilitaires
-export const getValeurStock = async (produitId: string): Promise<number> => {
-  const response = await api.get(`/api/v1/inventory/stocks/valeur/${produitId}`);
-  return response.data.valeur;
-};
-
-export const validerMouvement = async (mouvement: CreateMouvementStock): Promise<boolean> => {
-  const response = await api.post('/api/v1/inventory/mouvements/valider', mouvement);
-  return response.data.valide;
+export const getStocks = async (): Promise<Stock[]> => {
+  const { data } = await api.get<Stock[]>('/api/inventaire/stocks');
+  return data;
 };

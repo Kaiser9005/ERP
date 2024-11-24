@@ -1,59 +1,60 @@
+export enum CategoryProduit {
+  INTRANT = 'INTRANT',
+  PRODUIT_FINI = 'PRODUIT_FINI',
+  MATERIEL = 'MATERIEL',
+  FOURNITURE = 'FOURNITURE'
+}
+
+export enum UniteMesure {
+  KG = 'KG',
+  L = 'L',
+  UNITE = 'UNITE',
+  CARTON = 'CARTON'
+}
+
+export enum TypeMouvement {
+  ENTREE = 'ENTREE',
+  SORTIE = 'SORTIE',
+  TRANSFERT = 'TRANSFERT'
+}
+
 export interface Produit {
   id: string;
   code: string;
   nom: string;
-  description?: string;
-  categorie: 'INTRANT' | 'EQUIPEMENT' | 'RECOLTE' | 'EMBALLAGE' | 'PIECE_RECHANGE';
-  unite_mesure: 'KG' | 'LITRE' | 'UNITE' | 'TONNE' | 'METRE';
-  prix_unitaire: number;
+  categorie: CategoryProduit;
+  unite_mesure: UniteMesure;
   seuil_alerte: number;
+  prix_unitaire: number;
+  quantite_stock?: number;
+  description?: string;
+  emplacement?: string;
   specifications?: Record<string, any>;
-}
-
-export interface Responsable {
-  id: string;
-  nom: string;
-  prenom: string;
+  date_derniere_maj?: string;
 }
 
 export interface MouvementStock {
   id: string;
+  produit_id: string;
+  type_mouvement: TypeMouvement;
+  quantite: number;
+  entrepot_source_id?: string;
+  entrepot_destination_id?: string;
+  responsable_id?: string;
+  responsable: {
+    id: string;
+    nom: string;
+    prenom: string;
+  };
+  reference_document?: string;
+  notes?: string;
+  cout_unitaire?: number;
   date_mouvement: string;
-  type_mouvement: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
-  quantite: number;
-  reference_document?: string;
-  responsable: Responsable;
-  produit_id: string;
-  produit: Produit;
-  entrepot_source_id?: string;
-  entrepot_destination_id?: string;
-  cout_unitaire?: number;
-  notes?: string;
-}
-
-export interface CreateMouvementStock {
-  produit_id: string;
-  type_mouvement: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
-  quantite: number;
-  reference_document?: string;
-  entrepot_source_id?: string;
-  entrepot_destination_id?: string;
-  cout_unitaire?: number;
-  notes?: string;
-}
-
-export interface StockLevel {
-  quantite: number;
-  valeur_unitaire: number;
-  emplacement?: string;
-  lot?: string;
-  date_derniere_maj: string;
 }
 
 export interface Stock {
   id: string;
   produit_id: string;
-  produit: Produit;
   quantite: number;
   valeur_unitaire: number;
   emplacement?: string;
@@ -63,37 +64,18 @@ export interface Stock {
 
 export interface StatsInventaire {
   total_produits: number;
+  stock_faible: number;
   valeur_totale: number;
-  produits_sous_seuil: number;
-  mouvements_recents: number;
-  repartition_categories: Record<string, number>;
-  evolution_stock: {
-    date: string;
+  mouvements: {
+    entrees: number;
+    sorties: number;
+  };
+  valeur_stock: {
     valeur: number;
-  }[];
-  valueVariation: Variation;
-  turnoverRate: number;
-  turnoverVariation: Variation;
-  alerts: number;
-  alertsVariation: Variation;
-  movements: number;
-  movementsVariation: Variation;
+    type: 'hausse' | 'baisse';
+  };
+  rotation_stock: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
 }
-
-export interface Variation {
-  value: number;
-  type: 'increase' | 'decrease';
-}
-
-export interface Entrepot {
-  id: string;
-  code: string;
-  nom: string;
-  localisation: string;
-  description?: string;
-  responsable_id?: string;
-  responsable?: Responsable;
-}
-
-// Type alias pour la compatibilité avec les anciens composants
-export type StockMovement = MouvementStock;
