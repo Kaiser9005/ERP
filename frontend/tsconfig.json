@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "src",
+    "paths": {
+      "*": ["./*"],
+      "@components/*": ["components/*"],
+      "@services/*": ["services/*"],
+      "@hooks/*": ["hooks/*"],
+      "@types/*": ["types/*"],
+      "@utils/*": ["utils/*"],
+      "@config/*": ["config/*"],
+      "@contexts/*": ["contexts/*"]
+    },
+    "types": [
+      "node",
+      "react",
+      "react-dom",
+      "vite/client",
+      "jest",
+      "@testing-library/jest-dom",
+      "@mui/material",
+      "@mui/icons-material",
+      "vitest"
+    ],
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
