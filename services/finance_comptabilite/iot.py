@@ -1,5 +1,5 @@
 """
-Module d'intégration IoT avec la finance et la comptabilité
+Module d'intégration IoT avec la finance et la comptabilité avec ML
 """
 
 from typing import Dict, Any, List, Optional
@@ -17,13 +17,17 @@ from models.finance import Transaction
 from models.production import Parcelle
 from models.iot_sensor import IoTSensor, SensorData
 from services.iot_service import IoTService
+from services.finance_comptabilite.analyse import AnalyseFinanceCompta
+from services.cache_service import CacheService
 
 class GestionIoT:
-    """Gestion de l'intégration IoT avec la finance et la comptabilité"""
+    """Gestion de l'intégration IoT avec la finance et la comptabilité avec ML"""
     
     def __init__(self, db: Session):
         self.db = db
         self.iot_service = IoTService(db)
+        self.analyse = AnalyseFinanceCompta(db)
+        self.cache = CacheService()
 
     async def _get_iot_analysis(
         self,
@@ -31,7 +35,13 @@ class GestionIoT:
         date_debut: date,
         date_fin: date
     ) -> Dict[str, Any]:
-        """Analyse des données IoT pour la parcelle"""
+        """Analyse des données IoT pour la parcelle avec ML"""
+        # Cache key
+        cache_key = f"iot_analysis_ml_{parcelle_id}_{date_debut}_{date_fin}"
+        cached = await self.cache.get(cache_key)
+        if cached:
+            return cached
+            
         # Récupération des capteurs de la parcelle
         sensors = self.db.query(IoTSensor).filter(
             IoTSensor.parcelle_id == parcelle_id
@@ -40,13 +50,29 @@ class GestionIoT:
         if not sensors:
             return {"status": "Aucun capteur installé"}
             
+        # Analyse ML
+        analyse_ml = await self.analyse.get_analyse_parcelle(
+            parcelle_id=parcelle_id,
+            date_debut=date_debut,
+            date_fin=date_fin,
+            include_predictions=True
+        )
+        
+        # Optimisation ML
+        optimization = await self.analyse.optimize_costs(
+            parcelle_id=parcelle_id,
+            target_date=date_fin
+        )
+            
         analysis = {
             "alertes": [],
             "mesures": {},
             "tendances": {},
             "recommendations": [],
             "impact_financier": {},
-            "provisions_suggeres": {}
+            "provisions_suggeres": {},
+            "ml_analysis": analyse_ml["ml_analysis"],
+            "optimization": optimization
         }
         
         for sensor in sensors:
@@ -65,33 +91,158 @@ class GestionIoT:
                     "avg": sum(d.value for d in data) / len(data)
                 }
                 
-                # Détection des tendances
-                analysis["tendances"][sensor.type] = self._analyser_tendance(data)
+                # Détection des tendances avec ML
+                analysis["tendances"][sensor.type] = await self._analyser_tendance_ml(
+                    data,
+                    analyse_ml
+                )
                 
                 # Génération d'alertes si nécessaire
-                alertes = self._generer_alertes_iot(sensor.type, data)
+                alertes = await self._generer_alertes_iot_ml(
+                    sensor.type,
+                    data,
+                    analyse_ml
+                )
                 if alertes:
                     analysis["alertes"].extend(alertes)
                     
-                # Analyse de l'impact financier
-                impact = self._analyser_impact_financier(
+                # Analyse de l'impact financier avec ML
+                impact = await self._analyser_impact_financier_ml(
                     sensor.type,
                     data,
-                    analysis["tendances"][sensor.type]
+                    analysis["tendances"][sensor.type],
+                    analyse_ml
                 )
                 analysis["impact_financier"][sensor.type] = impact
                 
-                # Calcul des provisions suggérées
+                # Calcul des provisions suggérées avec ML
                 if impact["score"] > 50:  # Seuil d'impact significatif
-                    provision = self._calculer_provision_iot(
+                    provision = await self._calculer_provision_iot_ml(
                         sensor.type,
                         impact,
-                        analysis["tendances"][sensor.type]
+                        analysis["tendances"][sensor.type],
+                        optimization
                     )
                     if provision:
                         analysis["provisions_suggeres"][sensor.type] = provision
-                    
+                        
+        # Recommandations ML
+        analysis["recommendations"] = await self._generate_iot_recommendations(
+            analysis,
+            analyse_ml,
+            optimization
+        )
+        
+        # Cache result
+        await self.cache.set(cache_key, analysis, expire=3600)
         return analysis
+
+    async def _analyser_tendance_ml(
+        self,
+        data: List[SensorData],
+        analyse_ml: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Analyse la tendance des données IoT avec ML"""
+        if not data or len(data) < 2:
+            return {"status": "Données insuffisantes"}
+            
+        # Analyse de base
+        tendance = self._analyser_tendance(data)
+        
+        # Enrichissement ML
+        if "sensor_trends" in analyse_ml:
+            ml_trends = analyse_ml["sensor_trends"]
+            tendance["ml_confidence"] = ml_trends.get("confidence", 0.8)
+            tendance["ml_forecast"] = ml_trends.get("forecast", {})
+            tendance["ml_patterns"] = ml_trends.get("patterns", [])
+            
+        return tendance
+
+    async def _generer_alertes_iot_ml(
+        self,
+        sensor_type: str,
+        data: List[SensorData],
+        analyse_ml: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Génère des alertes basées sur les données IoT avec ML"""
+        # Alertes de base
+        alertes = self._generer_alertes_iot(sensor_type, data)
+        
+        # Enrichissement ML
+        if "sensor_alerts" in analyse_ml:
+            ml_alerts = analyse_ml["sensor_alerts"]
+            for alerte in alertes:
+                if alerte["sensor"] in ml_alerts:
+                    ml_data = ml_alerts[alerte["sensor"]]
+                    alerte["ml_probability"] = ml_data.get("probability", 0.8)
+                    alerte["ml_severity"] = ml_data.get("severity", "MEDIUM")
+                    alerte["ml_impact"] = ml_data.get("impact", {})
+                    
+        return alertes
+
+    async def _analyser_impact_financier_ml(
+        self,
+        sensor_type: str,
+        data: List[SensorData],
+        tendance: Dict[str, Any],
+        analyse_ml: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Analyse l'impact financier des données IoT avec ML"""
+        # Impact de base
+        impact = self._analyser_impact_financier(sensor_type, data, tendance)
+        
+        # Enrichissement ML
+        if "financial_impact" in analyse_ml:
+            ml_impact = analyse_ml["financial_impact"]
+            if sensor_type in ml_impact:
+                ml_data = ml_impact[sensor_type]
+                
+                # Ajustement score
+                impact["score"] = (impact["score"] + ml_data.get("score", 0)) / 2
+                
+                # Ajout prédictions ML
+                impact["ml_predictions"] = ml_data.get("predictions", {})
+                impact["ml_confidence"] = ml_data.get("confidence", 0.8)
+                
+                # Ajustement coûts
+                for category, cost in ml_data.get("adjusted_costs", {}).items():
+                    if category in impact["couts_potentiels"]:
+                        impact["couts_potentiels"][category] = (
+                            impact["couts_potentiels"][category] + cost
+                        ) / 2
+                        
+        return impact
+
+    async def _calculer_provision_iot_ml(
+        self,
+        sensor_type: str,
+        impact: Dict[str, Any],
+        tendance: Dict[str, Any],
+        optimization: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Calcule la provision suggérée basée sur l'impact IoT avec ML"""
+        # Provision de base
+        provision = self._calculer_provision_iot(sensor_type, impact, tendance)
+        if not provision:
+            return None
+            
+        # Optimisation ML
+        if "sensor_provisions" in optimization:
+            opt_data = optimization["sensor_provisions"]
+            if sensor_type in opt_data:
+                opt_provision = opt_data[sensor_type]
+                
+                # Ajustement montant
+                provision["montant"] = (
+                    provision["montant"] + opt_provision.get("amount", 0)
+                ) / 2
+                
+                # Ajout données ML
+                provision["ml_confidence"] = opt_provision.get("confidence", 0.8)
+                provision["ml_factors"] = opt_provision.get("factors", [])
+                provision["ml_timeline"] = opt_provision.get("timeline", "3M")
+                
+        return provision
 
     def _analyser_tendance(self, data: List[SensorData]) -> Dict[str, Any]:
         """Analyse la tendance des données IoT"""
@@ -343,3 +494,54 @@ class GestionIoT:
             "tendance": tendance["direction"],
             "fiabilite": tendance["fiabilite"]
         }
+
+    async def _generate_iot_recommendations(
+        self,
+        analysis: Dict[str, Any],
+        analyse_ml: Dict[str, Any],
+        optimization: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Génère des recommandations ML basées sur l'analyse IoT"""
+        recommendations = []
+        
+        # Recommandations ML
+        if "recommendations" in analyse_ml:
+            for rec in analyse_ml["recommendations"]:
+                if rec["type"] == "IOT":
+                    recommendations.append({
+                        "type": "ML",
+                        "priority": rec["priority"],
+                        "description": rec["description"],
+                        "actions": rec["actions"],
+                        "expected_impact": rec.get("expected_impact")
+                    })
+                    
+        # Recommandations optimisation
+        if "sensor_optimizations" in optimization:
+            for sensor_type, opt in optimization["sensor_optimizations"].items():
+                recommendations.append({
+                    "type": "OPTIMIZATION",
+                    "priority": "HIGH",
+                    "description": f"Optimisation {sensor_type}",
+                    "actions": opt["actions"],
+                    "expected_impact": {
+                        "savings": opt.get("savings", 0),
+                        "timeline": opt.get("timeline", "N/A")
+                    }
+                })
+                
+        # Recommandations alertes
+        for alerte in analysis["alertes"]:
+            if alerte.get("ml_severity", "LOW") in ["HIGH", "CRITICAL"]:
+                recommendations.append({
+                    "type": "ALERT",
+                    "priority": "HIGH",
+                    "description": alerte["message"],
+                    "actions": [
+                        "Vérifier capteur",
+                        "Appliquer corrections",
+                        "Suivre évolution"
+                    ]
+                })
+                
+        return recommendations

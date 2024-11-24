@@ -1,6 +1,10 @@
+"""
+Service de gestion comptable avec ML et cache
+"""
+
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from models.comptabilite import (
     CompteComptable, EcritureComptable, JournalComptable,
     ExerciceComptable, TypeCompte, StatutEcriture
@@ -8,11 +12,15 @@ from models.comptabilite import (
 from sqlalchemy import func, and_, or_
 from decimal import Decimal
 from .comptabilite_stats_service import ComptabiliteStatsService
+from .cache_service import CacheService
+from .finance_comptabilite.analyse import AnalyseFinanceCompta
 
 class ComptabiliteService:
     def __init__(self, db: Session):
         self.db = db
         self.stats_service = ComptabiliteStatsService(db)
+        self.cache = CacheService()
+        self.analyse = AnalyseFinanceCompta(db)
 
     async def create_compte(self, compte_data: Dict[str, Any]) -> CompteComptable:
         """Crée un nouveau compte comptable"""
@@ -20,6 +28,10 @@ class ComptabiliteService:
         self.db.add(compte)
         self.db.commit()
         self.db.refresh(compte)
+        
+        # Invalidation cache
+        await self._invalidate_cache()
+        
         return compte
 
     async def create_ecriture(self, ecriture_data: Dict[str, Any]) -> EcritureComptable:
@@ -34,6 +46,10 @@ class ComptabiliteService:
         
         self.db.add(ecriture)
         await self._update_compte_soldes(ecriture)
+        
+        # Invalidation cache
+        await self._invalidate_cache()
+        
         self.db.commit()
         self.db.refresh(ecriture)
         return ecriture
@@ -52,7 +68,10 @@ class ComptabiliteService:
 
         ecriture.statut = StatutEcriture.VALIDEE
         ecriture.validee_par_id = validee_par_id
-        ecriture.date_validation = datetime.utcnow()
+        ecriture.date_validation = datetime.now(datetime.timezone.utc)
+        
+        # Invalidation cache
+        await self._invalidate_cache()
         
         self.db.commit()
         self.db.refresh(ecriture)
@@ -64,7 +83,13 @@ class ComptabiliteService:
         date_debut: Optional[date] = None,
         date_fin: Optional[date] = None
     ) -> List[Dict[str, Any]]:
-        """Génère le grand livre pour un compte ou tous les comptes"""
+        """Génère le grand livre avec cache"""
+        # Clé de cache
+        cache_key = f"grand_livre_{compte_id or 'all'}_{date_debut}_{date_fin}"
+        cached_data = await self.cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         query = self.db.query(EcritureComptable)
 
         if compte_id:
@@ -95,6 +120,9 @@ class ComptabiliteService:
                 "solde": float(solde)
             })
 
+        # Mise en cache
+        await self.cache.set(cache_key, grand_livre, expire=3600)
+        
         return grand_livre
 
     async def get_balance_generale(
@@ -102,7 +130,13 @@ class ComptabiliteService:
         date_debut: Optional[date] = None,
         date_fin: Optional[date] = None
     ) -> List[Dict[str, Any]]:
-        """Génère la balance générale des comptes"""
+        """Génère la balance générale avec cache"""
+        # Clé de cache
+        cache_key = f"balance_{date_debut}_{date_fin}"
+        cached_data = await self.cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         query = self.db.query(
             EcritureComptable.compte_id,
             func.sum(EcritureComptable.debit).label('total_debit'),
@@ -132,6 +166,9 @@ class ComptabiliteService:
                 "solde": float((resultat.total_debit or 0) - (resultat.total_credit or 0))
             })
 
+        # Mise en cache
+        await self.cache.set(cache_key, balance, expire=3600)
+        
         return balance
 
     async def get_journal(
@@ -140,7 +177,13 @@ class ComptabiliteService:
         date_debut: Optional[date] = None,
         date_fin: Optional[date] = None
     ) -> List[EcritureComptable]:
-        """Récupère les écritures d'un journal comptable"""
+        """Récupère les écritures d'un journal avec cache"""
+        # Clé de cache
+        cache_key = f"journal_{journal_id}_{date_debut}_{date_fin}"
+        cached_data = await self.cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         query = self.db.query(EcritureComptable).filter(
             EcritureComptable.journal_id == journal_id
         )
@@ -150,7 +193,12 @@ class ComptabiliteService:
         if date_fin:
             query = query.filter(EcritureComptable.date_ecriture <= date_fin)
 
-        return query.order_by(EcritureComptable.date_ecriture).all()
+        ecritures = query.order_by(EcritureComptable.date_ecriture).all()
+        
+        # Mise en cache
+        await self.cache.set(cache_key, ecritures, expire=3600)
+        
+        return ecritures
 
     async def cloturer_exercice(self, annee: str, cloture_par_id: str) -> ExerciceComptable:
         """Clôture un exercice comptable"""
@@ -177,33 +225,24 @@ class ComptabiliteService:
             raise ValueError("Les comptes ne sont pas équilibrés")
 
         exercice.cloture = True
-        exercice.date_cloture = datetime.utcnow()
+        exercice.date_cloture = datetime.now(datetime.timezone.utc)
         exercice.cloture_par_id = cloture_par_id
+        
+        # Invalidation cache
+        await self._invalidate_cache()
         
         self.db.commit()
         self.db.refresh(exercice)
         return exercice
 
-    async def _get_exercice_for_date(self, date_ecriture: date) -> Optional[ExerciceComptable]:
-        """Récupère l'exercice comptable correspondant à une date"""
-        return self.db.query(ExerciceComptable).filter(
-            and_(
-                ExerciceComptable.date_debut <= date_ecriture,
-                ExerciceComptable.date_fin >= date_ecriture
-            )
-        ).first()
-
-    async def _update_compte_soldes(self, ecriture: EcritureComptable):
-        """Met à jour les soldes du compte après une écriture"""
-        compte = self.db.query(CompteComptable).get(ecriture.compte_id)
-        if not compte:
-            raise ValueError("Compte non trouvé")
-
-        compte.solde_debit += ecriture.debit or 0
-        compte.solde_credit += ecriture.credit or 0
-
     async def get_bilan(self, date_fin: date) -> Dict[str, Any]:
-        """Génère le bilan comptable"""
+        """Génère le bilan comptable avec ML"""
+        # Clé de cache
+        cache_key = f"bilan_{date_fin}"
+        cached_data = await self.cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         bilan = {
             "actif": {},
             "passif": {},
@@ -239,6 +278,25 @@ class ComptabiliteService:
                 }
                 bilan["total_passif"] += solde
 
+        # Analyse ML
+        ml_analysis = await self.analyse.get_analyse_parcelle(
+            parcelle_id=None,
+            date_debut=date_fin - timedelta(days=30),
+            date_fin=date_fin
+        )
+        
+        # Enrichissement ML
+        bilan.update({
+            "ml_analysis": ml_analysis["ml_analysis"],
+            "recommendations": await self._generate_bilan_recommendations(
+                bilan,
+                ml_analysis
+            )
+        })
+        
+        # Mise en cache
+        await self.cache.set(cache_key, bilan, expire=3600)
+        
         return bilan
 
     async def get_compte_resultat(
@@ -246,7 +304,13 @@ class ComptabiliteService:
         date_debut: date,
         date_fin: date
     ) -> Dict[str, Any]:
-        """Génère le compte de résultat"""
+        """Génère le compte de résultat avec ML"""
+        # Clé de cache
+        cache_key = f"resultat_{date_debut}_{date_fin}"
+        cached_data = await self.cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         resultat = {
             "produits": {},
             "charges": {},
@@ -284,7 +348,160 @@ class ComptabiliteService:
                 resultat["total_charges"] += solde
 
         resultat["resultat_net"] = resultat["total_produits"] - resultat["total_charges"]
+
+        # Analyse ML
+        ml_analysis = await self.analyse.get_analyse_parcelle(
+            parcelle_id=None,
+            date_debut=date_debut,
+            date_fin=date_fin
+        )
+        
+        # Optimisation ML
+        optimization = await self.analyse.optimize_costs(target_date=date_fin)
+        
+        # Performance ML
+        performance = await self.analyse.predict_performance(months_ahead=3)
+        
+        # Enrichissement ML
+        resultat.update({
+            "ml_analysis": ml_analysis["ml_analysis"],
+            "optimization": optimization,
+            "performance": performance,
+            "recommendations": await self._generate_resultat_recommendations(
+                resultat,
+                ml_analysis,
+                optimization,
+                performance
+            )
+        })
+        
+        # Mise en cache
+        await self.cache.set(cache_key, resultat, expire=3600)
+        
         return resultat
+
+    async def _get_exercice_for_date(self, date_ecriture: date) -> Optional[ExerciceComptable]:
+        """Récupère l'exercice comptable correspondant à une date"""
+        return self.db.query(ExerciceComptable).filter(
+            and_(
+                ExerciceComptable.date_debut <= date_ecriture,
+                ExerciceComptable.date_fin >= date_ecriture
+            )
+        ).first()
+
+    async def _update_compte_soldes(self, ecriture: EcritureComptable):
+        """Met à jour les soldes du compte après une écriture"""
+        compte = self.db.query(CompteComptable).get(ecriture.compte_id)
+        if not compte:
+            raise ValueError("Compte non trouvé")
+
+        compte.solde_debit += ecriture.debit or 0
+        compte.solde_credit += ecriture.credit or 0
+
+    async def _invalidate_cache(self):
+        """Invalide tous les caches comptables"""
+        patterns = [
+            "grand_livre_*",
+            "balance_*",
+            "journal_*",
+            "bilan_*",
+            "resultat_*"
+        ]
+        for pattern in patterns:
+            await self.cache.delete_pattern(pattern)
+
+    async def _generate_bilan_recommendations(
+        self,
+        bilan: Dict[str, Any],
+        ml_analysis: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Génère des recommandations pour le bilan"""
+        recommendations = []
+        
+        # Analyse ratios
+        ratio_liquidite = bilan["total_actif"] / bilan["total_passif"] if bilan["total_passif"] != 0 else 0
+        if ratio_liquidite < 1.5:
+            recommendations.append({
+                "type": "RATIO",
+                "priority": "HIGH",
+                "description": "Ratio de liquidité faible",
+                "actions": [
+                    "Optimiser BFR",
+                    "Réduire délais paiement",
+                    "Négocier délais fournisseurs"
+                ]
+            })
+            
+        # Recommandations ML
+        if "recommendations" in ml_analysis["ml_analysis"]:
+            for rec in ml_analysis["ml_analysis"]["recommendations"]:
+                recommendations.append({
+                    "type": "ML",
+                    "priority": rec.get("priority", "MEDIUM"),
+                    "description": rec["description"],
+                    "actions": rec["actions"]
+                })
+                
+        return recommendations
+
+    async def _generate_resultat_recommendations(
+        self,
+        resultat: Dict[str, Any],
+        ml_analysis: Dict[str, Any],
+        optimization: Dict[str, Any],
+        performance: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Génère des recommandations pour le compte de résultat"""
+        recommendations = []
+        
+        # Analyse rentabilité
+        marge = resultat["resultat_net"] / resultat["total_produits"] if resultat["total_produits"] != 0 else 0
+        if marge < 0.1:
+            recommendations.append({
+                "type": "MARGIN",
+                "priority": "HIGH",
+                "description": "Marge nette faible",
+                "actions": [
+                    "Optimiser coûts",
+                    "Revoir pricing",
+                    "Analyser postes charges"
+                ]
+            })
+            
+        # Recommandations ML
+        if "recommendations" in ml_analysis["ml_analysis"]:
+            for rec in ml_analysis["ml_analysis"]["recommendations"]:
+                recommendations.append({
+                    "type": "ML",
+                    "priority": rec.get("priority", "MEDIUM"),
+                    "description": rec["description"],
+                    "actions": rec["actions"]
+                })
+                
+        # Recommandations optimisation
+        if optimization["potential_savings"]:
+            recommendations.append({
+                "type": "OPTIMIZATION",
+                "priority": "HIGH",
+                "description": "Potentiel d'optimisation identifié",
+                "actions": optimization["implementation_plan"],
+                "expected_savings": optimization["potential_savings"]
+            })
+            
+        # Recommandations performance
+        if performance["predictions"][0]["margin"] < 0:
+            recommendations.append({
+                "type": "PERFORMANCE",
+                "priority": "HIGH",
+                "description": "Marge négative prévue",
+                "actions": [
+                    "Revoir structure coûts",
+                    "Optimiser revenus",
+                    "Ajuster pricing"
+                ]
+            })
+            
+        return recommendations
 
     # Méthodes déléguées au service de statistiques
     async def get_stats(self) -> Dict[str, Any]:
