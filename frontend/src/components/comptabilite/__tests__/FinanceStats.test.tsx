@@ -2,11 +2,13 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import FinanceStats from '../FinanceStats';
-import { comptabiliteService } from '../../../services/comptabilite';
+import FinanceStats from '@components/comptabilite/FinanceStats';
+import { getComptabiliteStats } from '@services/comptabilite';
 
 // Mock du service
-jest.mock('../../../services/comptabilite');
+jest.mock('@services/comptabilite', () => ({
+  getComptabiliteStats: jest.fn()
+}));
 
 const mockStatsData = {
   revenue: 150000,
@@ -52,7 +54,7 @@ describe('FinanceStats', () => {
     // Reset des mocks
     jest.resetAllMocks();
     // Configuration du mock pour getStats
-    (comptabiliteService.getStats as jest.Mock).mockResolvedValue(mockStatsData);
+    (getComptabiliteStats as jest.Mock).mockResolvedValue(mockStatsData);
   });
 
   it('affiche le chargement initialement', () => {
@@ -123,7 +125,7 @@ describe('FinanceStats', () => {
 
   it('affiche un message d\'erreur en cas d\'échec du chargement', async () => {
     const error = new Error('Erreur de chargement');
-    (comptabiliteService.getStats as jest.Mock).mockRejectedValue(error);
+    (getComptabiliteStats as jest.Mock).mockRejectedValue(error);
 
     renderWithQuery(<FinanceStats />);
 
@@ -137,14 +139,14 @@ describe('FinanceStats', () => {
     renderWithQuery(<FinanceStats />);
 
     await waitFor(() => {
-      expect(comptabiliteService.getStats).toHaveBeenCalledTimes(1);
+      expect(getComptabiliteStats).toHaveBeenCalledTimes(1);
     });
 
     // Avance le temps de 5 minutes
     jest.advanceTimersByTime(5 * 60 * 1000);
 
     await waitFor(() => {
-      expect(comptabiliteService.getStats).toHaveBeenCalledTimes(2);
+      expect(getComptabiliteStats).toHaveBeenCalledTimes(2);
     });
 
     jest.useRealTimers();

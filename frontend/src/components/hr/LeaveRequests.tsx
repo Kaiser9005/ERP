@@ -19,7 +19,7 @@ import { Check, Close, RemoveRedEye } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getLeaves, approveLeave, rejectLeave } from '../../services/hr';
 import { queryKeys } from '../../config/queryClient';
-import { Leave, LeaveStatus } from '../../types/hr';
+import { LeaveStatus } from '../../types/hr';
 
 const getStatutColor = (statut: LeaveStatus): 'success' | 'error' | 'warning' | 'default' => {
   switch (statut) {

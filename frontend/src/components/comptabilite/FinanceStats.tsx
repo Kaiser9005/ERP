@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Grid,
   Card,
@@ -19,7 +19,9 @@ import {
   Calculate,
   Info,
 } from '@mui/icons-material';
-import { formatCurrency } from '../../utils/format';
+import { formatCurrency } from '@utils/format';
+import { getComptabiliteStats } from '@services/comptabilite';
+import { useQuery } from '@tanstack/react-query';
 
 interface Variation {
   value: number;
@@ -84,6 +86,7 @@ const StatCard: React.FC<{
           label={`${variation.value}%`}
           color={variation.type === 'increase' ? 'success' : 'error'}
           variant="outlined"
+          data-testid={`${variation.type}-chip`}
         />
         <Typography variant="body2" color="textSecondary">
           vs mois précédent
@@ -94,33 +97,20 @@ const StatCard: React.FC<{
 );
 
 const FinanceStats: React.FC = () => {
-  const [stats, setStats] = useState<FinanceStatsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading, error } = useQuery<FinanceStatsData>({
+    queryKey: ['comptabilite', 'stats'],
+    queryFn: getComptabiliteStats,
+    refetchInterval: 5 * 60 * 1000, // Rafraîchir toutes les 5 minutes
+  });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/v1/comptabilite/stats');
-        const data = await response.json();
-        setStats(data);
-      } catch (error) {
-        console.error('Erreur lors du chargement des statistiques:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Grid container spacing={3}>
         {[...Array(4)].map((_, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
             <Card>
               <CardContent>
-                <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
+                <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} data-testid="skeleton" />
                 <Skeleton variant="text" height={60} />
                 <Skeleton variant="text" width="60%" />
               </CardContent>
@@ -131,7 +121,7 @@ const FinanceStats: React.FC = () => {
     );
   }
 
-  if (!stats) {
+  if (error || !stats) {
     return (
       <Typography color="textSecondary">
         Aucune donnée statistique disponible
