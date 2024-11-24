@@ -1,4 +1,4 @@
-# Module Comptabilité (75%) - Documentation Complète
+# Module Comptabilité (90%) - Documentation Complète
 
 ## Vue d'Ensemble
 
@@ -11,13 +11,13 @@ Le module Comptabilité de l'ERP FOFAL gère l'ensemble de la comptabilité gén
 - Architecture générale
 - Composants principaux
 - Services et composants de base
-- Intégration avec la Finance
-- Impact météorologique
+- [Intégration Finance-Comptabilité](finance_comptabilite_integration.md)
+- Impact météorologique et IoT
 
 ### 2. [Technique et Intégration](comptabilite_part2.md)
 - Tests et validation
-- Workflow de clôture
-- Intégration météo
+- Workflow de clôture automatisé
+- Intégration météo et IoT
 - Maintenance et optimisation
 - Performance et archivage
 
@@ -29,28 +29,42 @@ Le module Comptabilité de l'ERP FOFAL gère l'ensemble de la comptabilité gén
 
 ## État d'Avancement
 
-Le module Comptabilité est actuellement à 75% d'avancement :
+Le module Comptabilité est actuellement à 90% d'avancement :
 
 ✅ Complété :
 - Plan comptable
 - Écritures comptables
 - Journaux
 - États financiers de base
-- Intégration finance
+- Intégration finance complète
+- Clôture automatisée
+- Impact météo
+- Intégration IoT
+- Analyse des coûts
 
 🟡 En cours :
-- Clôture automatisée
 - Rapports avancés
-- Impact météo
+- Tests d'intégration
+- Documentation complète
 
 ⚪️ Planifié :
 - Comptabilité analytique avancée
 - Prévisions intelligentes
 - Blockchain pour audit
 
+## Nouveautés
+
+### Service d'Intégration Finance-Comptabilité
+- Analyse financière et comptable unifiée
+- Impact météo sur les provisions
+- Données IoT pour l'analyse des coûts
+- Clôture automatisée intelligente
+- Tests d'intégration complets
+
 ## Intégration avec Autres Modules
 
 ### Finance
+- [Service d'intégration unifié](finance_comptabilite_integration.md)
 - Génération automatique d'écritures
 - Rapprochement bancaire
 - Validation croisée
@@ -59,20 +73,20 @@ Le module Comptabilité est actuellement à 75% d'avancement :
 ### Production
 - Ventilation analytique
 - Coûts de production
-- Impact météo
+- Impact météo et IoT
 - Valorisation stocks
 
 ### Inventaire
 - Valorisation des stocks
 - Écritures d'inventaire
-- Provisions
+- Provisions automatiques
 - Rapprochements
 
 ## Standards et Bonnes Pratiques
 
 ### Code
 - TypeScript strict
-- Tests unitaires
+- Tests unitaires et d'intégration
 - Documentation inline
 - Revue de code
 
@@ -121,6 +135,7 @@ Pour toute question ou assistance :
 - [Module Finance](finance_index.md)
 - [Module Production](../modules/production.md)
 - [Module Inventaire](../modules/inventaire.md)
+- [Intégration Finance-Comptabilité](finance_comptabilite_integration.md)
 
 ### Ressources
 - [Diagrammes](../diagrammes/)

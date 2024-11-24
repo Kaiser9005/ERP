@@ -1,4 +1,4 @@
-# Module Finance (70%) - Documentation Complète
+# Module Finance (85%) - Documentation Complète
 
 ## Vue d'Ensemble
 
@@ -13,7 +13,7 @@ Le module Finance de l'ERP FOFAL gère l'ensemble des opérations financières d
 - Types et services de base
 
 ### 2. [Intégration et Aspects Avancés](finance_part2.md)
-- Intégration avec la comptabilité
+- [Intégration Finance-Comptabilité](finance_comptabilite_integration.md)
 - Impact météorologique
 - Sécurité et contrôles
 - Tests et maintenance
@@ -42,23 +42,36 @@ Le module Finance de l'ERP FOFAL gère l'ensemble des opérations financières d
 
 ## État d'Avancement
 
-Le module Finance est actuellement à 70% d'avancement :
+Le module Finance est actuellement à 85% d'avancement :
 
 ✅ Complété :
 - Gestion des transactions
 - Comptes financiers
 - Rapports de base
-- Intégration comptable
+- Intégration comptable complète
+- Impact météo
+- Intégration IoT
+- Analyse des coûts
+- Processus de clôture
 
 🟡 En cours :
-- Impact météo
 - Projections avancées
 - Tests d'intégration
+- Documentation complète
 
 ⚪️ Planifié :
 - IA pour catégorisation
 - Blockchain pour audit
 - APIs partenaires
+
+## Nouveautés
+
+### Intégration Finance-Comptabilité
+- Service unifié d'intégration
+- Analyse financière et comptable combinée
+- Impact météo et IoT sur les provisions
+- Processus de clôture automatisé
+- Tests d'intégration complets
 
 ## Liens Connexes
 
@@ -71,6 +84,7 @@ Le module Finance est actuellement à 70% d'avancement :
 - [Module Comptabilité](../modules/comptabilite.md)
 - [Module Production](../modules/production.md)
 - [Module Météo](../modules/meteo.md)
+- [Intégration Finance-Comptabilité](finance_comptabilite_integration.md)
 
 ### Ressources
 - [Diagrammes](../diagrammes/)
