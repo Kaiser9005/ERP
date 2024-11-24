@@ -1,96 +1,202 @@
 # Module Production - Documentation Technique
 
-## Composants Météo
+## Vue d'Ensemble
 
-### WeatherWidget
-Composant de tableau de bord affichant les conditions météorologiques actuelles.
+Le module Production est le cœur de l'ERP FOFAL, gérant l'ensemble des opérations agricoles pour les cultures de palmier à huile (70 ha) et de papayes (10 ha).
 
-#### Fonctionnalités
-- Affichage en temps réel de la température, humidité et précipitations
-- Système d'alertes pour les conditions météo critiques
-- Recommandations agricoles basées sur les conditions
-- Indication de la fraîcheur des données
-- Mise à jour automatique toutes les 30 minutes
+## Composants Principaux
 
-#### Types de Données
-```typescript
-interface WeatherData {
-  timestamp: string;
-  temperature: number;
-  humidity: number;
-  precipitation: number;
-  wind_speed: number;
-  conditions: string;
-  uv_index: number;
-  cloud_cover: number;
-  cached_at?: string;
-  risks?: {
-    precipitation: WeatherRisk;
-    temperature: WeatherRisk;
-    level: RiskLevel;
-  };
-  recommendations?: string[];
-}
+### 1. Gestion des Parcelles
 
-type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+#### ParcellesList
+- Vue d'ensemble des parcelles
+- Filtrage et recherche
+- Indicateurs d'état
+- Actions rapides
 
-interface WeatherRisk {
-  level: RiskLevel;
-  message: string;
-}
-```
+#### ParcelleDetails
+- Informations détaillées
+- Historique cultural
+- Données météo associées
+- Capteurs IoT installés
 
-#### Intégration
-- Utilise le service weatherService pour les données
-- Intégré dans le tableau de bord principal
-- Communique avec l'API météo via le backend
+#### ParcelleForm
+- Création/édition de parcelle
+- Validation des données
+- Géolocalisation
+- Configuration initiale
 
-#### Tests
-- Tests unitaires complets
-- Tests d'intégration avec le service météo
-- Tests des différents états (chargement, erreur, données)
-- Validation des alertes et recommandations
+#### ParcelleMap
+- Visualisation cartographique
+- État des parcelles en temps réel
+- Données météo superposées
+- Emplacements des capteurs
+
+### 2. Gestion des Récoltes
+
+#### RecolteForm
+- Enregistrement des récoltes
+- Données quantitatives
+- Assignation des équipes
+- Conditions météo
+
+#### HarvestQualityForm
+- Contrôle qualité
+- Critères d'évaluation
+- Classification des produits
+- Rapports de qualité
+
+### 3. Planification
+
+#### ProductionCalendar
+- Planning cultural
+- Synchronisation météo
+- Gestion des équipes
+- Alertes et rappels
+
+#### ProductionDashboard
+- KPIs en temps réel
+- Alertes et notifications
+- Vue consolidée
+- Actions rapides
+
+### 4. Monitoring
+
+#### WeatherDashboard
+- Conditions actuelles
+- Prévisions à 3 jours
+- Alertes météo
+- Impact sur la production
+
+#### IoTDashboard
+- État des capteurs
+- Données en temps réel
+- Alertes sur seuils
+- Analyse des tendances
+
+#### Composants IoT
+- AddSensorDialog : Configuration des capteurs
+- SensorChartsDialog : Visualisation des données
+- Alertes automatiques
+- Maintenance prédictive
 
 ## Services
 
-### weatherService
-Service gérant les interactions avec l'API météo.
+### production_service
+- Gestion des parcelles
+- Suivi des récoltes
+- Planification culturale
+- Rapports de production
 
-#### Méthodes
-- getCurrentWeather(): Récupère les conditions actuelles
-- getForecast(days: number): Récupère les prévisions
-- getAgriculturalMetrics(): Récupère les métriques agricoles
+### weather_service
+- Données météo en temps réel
+- Prévisions et alertes
+- Impact sur la production
+- Historique météo
 
-#### Cache et Performance
-- Mise en cache des données pendant 30 minutes
-- Retry automatique en cas d'erreur (3 tentatives)
-- Fallback sur l'API externe si l'API locale est indisponible
+### iot_service
+- Gestion des capteurs
+- Collecte des données
+- Analyse et alertes
+- Maintenance des capteurs
 
-## Intégration avec Autres Modules
+## Modèles de Données
 
-### Production ↔ Météo
-- Influence sur la planification des activités
-- Alertes pour conditions défavorables
-- Recommandations pour les cycles de culture
+### Production
+```python
+class Parcelle(BaseModel):
+    id: UUID
+    code: str
+    surface: float
+    culture: CultureType
+    etat: ParcelleState
+    coordonnees: Dict[str, float]
+    date_creation: datetime
+    responsable_id: UUID
+```
 
-### Météo ↔ Dashboard
-- Widget météo dans le tableau de bord
-- Alertes visuelles pour risques élevés
-- Indicateurs de performance liés à la météo
+### IoT
+```python
+class IoTSensor(BaseModel):
+    id: UUID
+    type: SensorType
+    parcelle_id: UUID
+    config: Dict[str, Any]
+    seuils_alerte: Dict[str, float]
+    etat: SensorState
+```
 
-## Notes Techniques
+## Intégrations
 
-### Performance
-- Cache optimisé pour les données météo
-- Requêtes limitées à l'API externe
-- Gestion efficace des mises à jour
+### Avec Inventaire
+- Suivi des stocks d'intrants
+- Gestion des récoltes
+- Traçabilité des produits
 
-### Sécurité
-- Validation des données
-- Gestion sécurisée des clés API
-- Logs des accès aux données sensibles
+### Avec RH
+- Planning des équipes
+- Suivi des performances
+- Formation du personnel
 
-### Maintenance
-- Monitoring des appels API
-- Alertes en cas de problèmes de service
-- Documentation des changements
+### Avec Météo
+- Impact sur la planification
+- Alertes conditions critiques
+- Optimisation des interventions
+
+## Flux de Données
+
+### Production → Inventaire
+- Entrées de récolte
+- Sorties d'intrants
+- Mouvements de stock
+
+### Production → RH
+- Besoins en personnel
+- Évaluations de performance
+- Planification des formations
+
+### Production → Finance
+- Coûts de production
+- Valorisation des récoltes
+- Analyse de rentabilité
+
+## Sécurité
+
+### Authentification
+- JWT pour l'API
+- RBAC pour les permissions
+- Audit des actions
+
+### Données
+- Validation des entrées
+- Chiffrement sensible
+- Sauvegarde régulière
+
+## Performance
+
+### Optimisations
+- Cache Redis
+- Agrégation données
+- Pagination résultats
+
+### Monitoring
+- Temps de réponse
+- Utilisation ressources
+- Alertes performance
+
+## Tests
+
+### Unitaires
+- Services et modèles
+- Composants React
+- Validation données
+
+### Intégration
+- Flux complets
+- APIs externes
+- Synchronisation données
+
+### E2E
+- Parcours utilisateur
+- Scénarios métier
+- Validation finale
