@@ -12,11 +12,8 @@ import {
 import {
   Menu as MenuIcon,
   Notifications,
-  LightMode,
-  DarkMode,
+  AccountCircle,
 } from '@mui/icons-material';
-import { useThemeMode } from '../../hooks/useThemeMode';
-import UserMenu from './UserMenu';
 
 interface TopBarProps {
   onSidebarToggle: () => void;
@@ -28,7 +25,6 @@ const TopBar: React.FC<TopBarProps> = ({
   onNotificationsToggle,
 }) => {
   const theme = useTheme();
-  const { toggleThemeMode, mode } = useThemeMode();
 
   return (
     <AppBar
@@ -56,12 +52,6 @@ const TopBar: React.FC<TopBarProps> = ({
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Tooltip title="Changer le thème">
-            <IconButton color="inherit" onClick={toggleThemeMode}>
-              {mode === 'dark' ? <LightMode /> : <DarkMode />}
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title="Notifications">
             <IconButton color="inherit" onClick={onNotificationsToggle}>
               <Badge badgeContent={3} color="error">
@@ -70,7 +60,11 @@ const TopBar: React.FC<TopBarProps> = ({
             </IconButton>
           </Tooltip>
 
-          <UserMenu />
+          <Tooltip title="Profil">
+            <IconButton color="inherit">
+              <AccountCircle />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>

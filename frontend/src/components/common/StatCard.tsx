@@ -1,103 +1,95 @@
 import React from 'react';
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
-  Box, 
-  Chip, 
-  IconButton, 
-  Tooltip 
-} from '@mui/material';
-import { Variation } from '../../types/finance';
-import { Info } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box, Avatar, CircularProgress } from '@mui/material';
+import { TrendingUp, TrendingDown } from '@mui/icons-material';
 
 interface StatCardProps {
   title: string;
   value: number;
-  unit: string;
-  variation?: Variation;
+  unit?: string;
+  variation?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
   icon: React.ReactNode;
-  color?: 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
-  'data-testid'?: string;
+  color: 'primary' | 'success' | 'warning' | 'info';
+  loading?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
-  title, 
-  value, 
-  unit, 
-  variation, 
-  icon, 
-  color = 'primary',
-  'data-testid': dataTestId
+  title,
+  value,
+  unit,
+  variation,
+  icon,
+  color,
+  loading = false
 }) => {
-  const formatValue = (val: number) => 
-    new Intl.NumberFormat('fr-FR', {
-      style: 'currency', 
-      currency: 'XAF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(val);
+  const formaterValeur = (val: number): string => {
+    if (val >= 1000000) {
+      return `${(val / 1000000).toFixed(1)}M`;
+    }
+    if (val >= 1000) {
+      return `${(val / 1000).toFixed(1)}k`;
+    }
+    return val.toString();
+  };
 
   return (
-    <Card 
-      variant="outlined" 
-      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-      data-testid={dataTestId}
-    >
-      <CardContent sx={{ flex: 1 }}>
-        <Box 
-          display="flex" 
-          justifyContent="space-between" 
-          alignItems="center" 
-          mb={2}
-        >
-          <Typography variant="subtitle2" color="text.secondary">
-            {title}
-          </Typography>
-          <Tooltip title={`Informations sur ${title}`}>
-            <IconButton size="small">
-              <Info fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography variant="h5" component="div">
-              {formatValue(value)}
-            </Typography>
-            {variation && (
-              <Chip
-                size="small"
-                label={`${variation.value.toFixed(1)}%`}
-                color={
-                  variation.type === 'increase' 
-                    ? 'success' 
-                    : 'error'
-                }
-                sx={{ mt: 1 }}
-                data-testid={
-                  variation.type === 'increase' 
-                    ? 'increase-chip' 
-                    : 'decrease-chip'
-                }
-              />
-            )}
-          </Box>
-          
-          <Box 
-            sx={{ 
-              color: `${color}.main`, 
-              opacity: 0.7,
-              display: 'flex',
-              alignItems: 'center'
+    <Card>
+      <CardContent>
+        <Box display="flex" alignItems="center" mb={2}>
+          <Avatar
+            sx={{
+              bgcolor: `${color}.light`,
+              color: `${color}.main`,
+              mr: 2
             }}
           >
-            {React.cloneElement(icon as React.ReactElement, { 
-              fontSize: 'large' 
-            })}
-          </Box>
+            {icon}
+          </Avatar>
+          <Typography variant="h6" color="text.secondary">
+            {title}
+          </Typography>
         </Box>
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={2}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <>
+            <Typography variant="h4" component="div" gutterBottom>
+              {formaterValeur(value)}
+              {unit && (
+                <Typography
+                  component="span"
+                  variant="subtitle1"
+                  color="text.secondary"
+                  sx={{ ml: 1 }}
+                >
+                  {unit}
+                </Typography>
+              )}
+            </Typography>
+
+            {variation && (
+              <Box display="flex" alignItems="center">
+                {variation.type === 'hausse' ? (
+                  <TrendingUp color="success" />
+                ) : (
+                  <TrendingDown color="error" />
+                )}
+                <Typography
+                  variant="body2"
+                  color={variation.type === 'hausse' ? 'success.main' : 'error.main'}
+                  sx={{ ml: 1 }}
+                >
+                  {Math.abs(variation.valeur)}%
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );

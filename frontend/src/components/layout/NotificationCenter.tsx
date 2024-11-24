@@ -12,17 +12,30 @@ import {
   Divider,
 } from '@mui/material';
 import { Close, Notifications, CheckCircle, Warning, Info } from '@mui/icons-material';
-import { useQuery } from 'react-query';
-import { getNotifications } from '../../services/notifications';
 
 interface NotificationCenterProps {
   open: boolean;
   onClose: () => void;
 }
 
-const NotificationCenter: React.FC<NotificationCenterProps> = ({ open, onClose }) => {
-  const { data: notifications } = useQuery('notifications', getNotifications);
+const mockNotifications = [
+  {
+    id: 1,
+    title: 'Alerte Stock',
+    message: 'Le stock d\'engrais NPK est bas',
+    type: 'warning',
+    date: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    title: 'Récolte Terminée',
+    message: 'La récolte de la parcelle P001 est terminée',
+    type: 'success',
+    date: new Date().toISOString(),
+  },
+];
 
+const NotificationCenter: React.FC<NotificationCenterProps> = ({ open, onClose }) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'success':
@@ -60,7 +73,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ open, onClose }
         <Divider />
 
         <List>
-          {notifications?.map((notification: any) => (
+          {mockNotifications.map((notification) => (
             <React.Fragment key={notification.id}>
               <ListItem alignItems="flex-start">
                 <ListItemAvatar>

@@ -7,9 +7,6 @@ import {
   ListItemText,
   ListItemButton,
   Divider,
-  Box,
-  Typography,
-  Avatar,
 } from '@mui/material';
 import {
   Dashboard,
@@ -17,16 +14,15 @@ import {
   Inventory,
   People,
   AccountBalance,
+  Assignment,
   Settings,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const DRAWER_WIDTH = 240;
-
 interface SideBarProps {
   open: boolean;
   onClose: () => void;
-  user: any;
+  width: number;
 }
 
 const menuItems = [
@@ -35,10 +31,11 @@ const menuItems = [
   { text: 'Inventaire', icon: <Inventory />, path: '/inventaire' },
   { text: 'Employés', icon: <People />, path: '/employes' },
   { text: 'Finance', icon: <AccountBalance />, path: '/finance' },
-  { text: 'Paramètres', icon: <Settings />, path: '/parametrage/general' },
+  { text: 'Projets', icon: <Assignment />, path: '/projets' },
+  { text: 'Paramètres', icon: <Settings />, path: '/parametres' },
 ];
 
-const SideBar: React.FC<SideBarProps> = ({ open, onClose, user }) => {
+const SideBar: React.FC<SideBarProps> = ({ open, onClose, width }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -53,30 +50,15 @@ const SideBar: React.FC<SideBarProps> = ({ open, onClose, user }) => {
       anchor="left"
       open={open}
       sx={{
-        width: DRAWER_WIDTH,
+        width,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: DRAWER_WIDTH,
+          width,
           boxSizing: 'border-box',
           mt: 8,
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Avatar>{user?.prenom?.[0]}</Avatar>
-          <Box>
-            <Typography variant="subtitle1">
-              {user?.prenom} {user?.nom}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {user?.role?.nom}
-            </Typography>
-          </Box>
-        </Box>
-        <Divider />
-      </Box>
-
       <List>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
@@ -90,6 +72,7 @@ const SideBar: React.FC<SideBarProps> = ({ open, onClose, user }) => {
           </ListItem>
         ))}
       </List>
+      <Divider />
     </Drawer>
   );
 };
