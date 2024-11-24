@@ -1,135 +1,78 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  LinearProgress
-} from '@mui/material';
-import {
-  Inventory as InventoryIcon,
-  MonetizationOn as MoneyIcon,
-  Warning as WarningIcon,
-  Sync as SyncIcon,
-  TrendingUp as TrendingUpIcon
-} from '@mui/icons-material';
-import { getStatsInventaire } from '../../services/inventaire';
-import type { StatsInventaire as StatsInventaireType, Variation } from '../../types/inventaire';
+import { Grid } from '@mui/material';
 import StatCard from '../common/StatCard';
+import { Inventory, TrendingUp, Warning, LocalShipping } from '@mui/icons-material';
+import { useQuery } from 'react-query';
+import { getStatsInventaire, StatsInventaire as StatsInventaireService } from '../../services/inventaire';
 
-const formatVariation = (variation: Variation | undefined) => {
-  if (!variation) return undefined;
-  return {
-    value: Math.abs(variation.value),
-    type: variation.type
-  };
-};
+interface StatistiquesInventaire {
+  valeurTotale: number;
+  variationValeur: { valeur: number; type: 'hausse' | 'baisse' };
+  tauxRotation: number;
+  variationRotation: { valeur: number; type: 'hausse' | 'baisse' };
+  alertes: number;
+  variationAlertes: { valeur: number; type: 'hausse' | 'baisse' };
+  mouvements: number;
+  variationMouvements: { valeur: number; type: 'hausse' | 'baisse' };
+}
+
+const transformStatsInventaire = (stats: StatsInventaireService): StatistiquesInventaire => ({
+  valeurTotale: stats.valeur_totale,
+  variationValeur: stats.valeur_stock,
+  tauxRotation: stats.total_produits,
+  variationRotation: stats.rotation_stock,
+  alertes: stats.stock_faible,
+  variationAlertes: { valeur: 0, type: 'hausse' },
+  mouvements: stats.mouvements.entrees,
+  variationMouvements: { valeur: 0, type: 'hausse' }
+});
 
 const StatsInventaire: React.FC = () => {
-  const { data: stats, isLoading, error } = useQuery<StatsInventaireType>(
-    ['stats-inventaire'],
-    () => getStatsInventaire()
-  );
-
-  if (isLoading) {
-    return <LinearProgress />;
-  }
-
-  if (error || !stats) {
-    return (
-      <Typography color="error">
-        Erreur lors du chargement des statistiques
-      </Typography>
-    );
-  }
+  const { data: statsService } = useQuery<StatsInventaireService>('statistiques-inventaire', getStatsInventaire);
+  const stats = statsService ? transformStatsInventaire(statsService) : undefined;
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12} md={6} lg={3}>
+      <Grid item xs={12} sm={6} md={3}>
         <StatCard
           title="Valeur Totale"
-          value={stats.valeur_totale}
-          unit="XAF"
-          variation={formatVariation(stats.valueVariation)}
-          icon={<MoneyIcon />}
+          value={stats?.valeurTotale || 0}
+          unit="FCFA"
+          variation={stats?.variationValeur}
+          icon={<Inventory />}
           color="primary"
         />
       </Grid>
-      <Grid item xs={12} md={6} lg={3}>
+
+      <Grid item xs={12} sm={6} md={3}>
         <StatCard
-          title="Rotation Stock"
-          value={stats.turnoverRate || 0}
-          unit="jours"
-          variation={formatVariation(stats.turnoverVariation)}
-          icon={<TrendingUpIcon />}
+          title="Rotation de Stock"
+          value={stats?.tauxRotation || 0}
+          unit="produits"
+          variation={stats?.variationRotation}
+          icon={<TrendingUp />}
           color="success"
         />
       </Grid>
-      <Grid item xs={12} md={6} lg={3}>
+
+      <Grid item xs={12} sm={6} md={3}>
         <StatCard
-          title="Produits Sous Seuil"
-          value={stats.produits_sous_seuil}
-          unit="produits"
-          variation={formatVariation(stats.alertsVariation)}
-          icon={<WarningIcon />}
+          title="Alertes de Stock"
+          value={stats?.alertes || 0}
+          variation={stats?.variationAlertes}
+          icon={<Warning />}
           color="warning"
         />
       </Grid>
-      <Grid item xs={12} md={6} lg={3}>
+
+      <Grid item xs={12} sm={6} md={3}>
         <StatCard
-          title="Mouvements Récents"
-          value={stats.mouvements_recents}
-          unit="mouvements"
-          variation={formatVariation(stats.movementsVariation)}
-          icon={<SyncIcon />}
+          title="Mouvements"
+          value={stats?.mouvements || 0}
+          variation={stats?.variationMouvements}
+          icon={<LocalShipping />}
           color="info"
         />
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Répartition par Catégorie
-            </Typography>
-            {Object.entries(stats.repartition_categories).map(([categorie, nombre]) => (
-              <div key={categorie}>
-                <Typography variant="body2" color="textSecondary">
-                  {categorie}
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={(nombre / stats.total_produits) * 100}
-                  sx={{ mb: 1, height: 8, borderRadius: 4 }}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Évolution du Stock
-            </Typography>
-            {stats.evolution_stock.map((point, index) => (
-              <div key={index}>
-                <Typography variant="body2" color="textSecondary">
-                  {new Date(point.date).toLocaleDateString()}
-                </Typography>
-                <Typography variant="body1">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'XAF'
-                  }).format(point.valeur)}
-                </Typography>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </Grid>
     </Grid>
   );

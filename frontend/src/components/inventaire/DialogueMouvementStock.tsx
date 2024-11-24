@@ -1,21 +1,39 @@
 import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
+  Grid,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
-  Grid
+  Button
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createMouvement } from '../../services/inventaire';
-import { CreateMouvementStock } from '../../types/inventaire';
+import { useMutation, useQueryClient } from 'react-query';
+import { creerMouvement } from '../../services/inventaire';
+import { LoadingButton } from '@mui/lab';
+import { TypeMouvement } from '../../types/inventaire';
+
+interface MouvementData {
+  type_mouvement: TypeMouvement;
+  quantite: number;
+  reference_document: string;
+  cout_unitaire?: number;
+  notes?: string;
+}
+
+const schema = yup.object({
+  type_mouvement: yup.mixed<TypeMouvement>().oneOf(Object.values(TypeMouvement)).required('Le type de mouvement est requis'),
+  quantite: yup.number()
+    .required('La quantité est requise')
+    .positive('La quantité doit être positive'),
+  reference_document: yup.string().required('La référence est requise'),
+  cout_unitaire: yup.number().positive('Le coût unitaire doit être positif'),
+  notes: yup.string()
+}).required();
 
 interface DialogueMouvementStockProps {
   open: boolean;
@@ -23,71 +41,85 @@ interface DialogueMouvementStockProps {
   productId: string | null;
 }
 
-export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
+const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
   open,
   onClose,
   productId
 }) => {
   const queryClient = useQueryClient();
-  const { control, handleSubmit, reset } = useForm<CreateMouvementStock>();
 
-  const mutation = useMutation({
-    mutationFn: createMouvement,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['mouvements', productId]);
-      queryClient.invalidateQueries(['produit', productId]);
-      onClose();
-      reset();
+  const { control, handleSubmit, formState: { errors } } = useForm<MouvementData>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      type_mouvement: TypeMouvement.ENTREE,
+      quantite: 0,
+      reference_document: '',
+      cout_unitaire: undefined,
+      notes: ''
     }
   });
 
-  const onSubmit = (data: Partial<CreateMouvementStock>) => {
-    if (!productId) return;
-    
-    mutation.mutate({
-      ...data,
-      produit_id: productId,
-      quantite: data.quantite || 0,
-      type_mouvement: data.type_mouvement || 'ENTREE'
-    } as CreateMouvementStock);
+  const mutation = useMutation(creerMouvement, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('stocks');
+      queryClient.invalidateQueries('recent-movements');
+      queryClient.invalidateQueries(['product', productId]);
+      queryClient.invalidateQueries(['product-movements', productId]);
+      onClose();
+    }
+  });
+
+  const onSubmit = (data: MouvementData) => {
+    if (productId) {
+      mutation.mutate({
+        produit_id: productId,
+        ...data
+      });
+    }
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Nouveau Mouvement de Stock</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
+        <DialogTitle>Nouveau Mouvement de Stock</DialogTitle>
+        
         <DialogContent>
-          <Grid container spacing={2}>
+          <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Type de Mouvement</InputLabel>
-                <Controller
-                  name="type_mouvement"
-                  control={control}
-                  defaultValue="ENTREE"
-                  render={({ field }) => (
-                    <Select {...field} label="Type de Mouvement">
-                      <MenuItem value="ENTREE">Entrée</MenuItem>
-                      <MenuItem value="SORTIE">Sortie</MenuItem>
-                      <MenuItem value="TRANSFERT">Transfert</MenuItem>
-                    </Select>
-                  )}
-                />
-              </FormControl>
+              <Controller
+                name="type_mouvement"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    label="Type de Mouvement"
+                    fullWidth
+                    error={!!errors.type_mouvement}
+                    helperText={errors.type_mouvement?.message}
+                  >
+                    <MenuItem value={TypeMouvement.ENTREE}>Entrée</MenuItem>
+                    <MenuItem value={TypeMouvement.SORTIE}>Sortie</MenuItem>
+                    <MenuItem value={TypeMouvement.TRANSFERT}>Transfert</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
 
             <Grid item xs={12}>
               <Controller
                 name="quantite"
                 control={control}
-                defaultValue={0}
-                render={({ field }) => (
+                render={({ field: { onChange, value, ...field } }) => (
                   <TextField
                     {...field}
                     label="Quantité"
                     type="number"
                     fullWidth
-                    inputProps={{ min: 0, step: 0.01 }}
+                    value={value}
+                    onChange={(e) => onChange(Number(e.target.value))}
+                    error={!!errors.quantite}
+                    helperText={errors.quantite?.message}
                   />
                 )}
               />
@@ -97,13 +129,16 @@ export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
               <Controller
                 name="cout_unitaire"
                 control={control}
-                render={({ field }) => (
+                render={({ field: { onChange, value, ...field } }) => (
                   <TextField
                     {...field}
-                    label="Coût Unitaire"
+                    label="Coût Unitaire (XAF)"
                     type="number"
                     fullWidth
-                    inputProps={{ min: 0, step: 0.01 }}
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    error={!!errors.cout_unitaire}
+                    helperText={errors.cout_unitaire?.message}
                   />
                 )}
               />
@@ -116,8 +151,10 @@ export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Référence Document"
+                    label="Référence"
                     fullWidth
+                    error={!!errors.reference_document}
+                    helperText={errors.reference_document?.message}
                   />
                 )}
               />
@@ -131,25 +168,29 @@ export const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
                   <TextField
                     {...field}
                     label="Notes"
+                    fullWidth
                     multiline
                     rows={3}
-                    fullWidth
+                    error={!!errors.notes}
+                    helperText={errors.notes?.message}
                   />
                 )}
               />
             </Grid>
           </Grid>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={onClose}>Annuler</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={mutation.isLoading}
-          >
-            {mutation.isLoading ? 'Enregistrement...' : 'Enregistrer'}
+          <Button onClick={onClose}>
+            Annuler
           </Button>
+          <LoadingButton
+            variant="contained"
+            type="submit"
+            loading={mutation.isLoading}
+          >
+            Enregistrer
+          </LoadingButton>
         </DialogActions>
       </form>
     </Dialog>

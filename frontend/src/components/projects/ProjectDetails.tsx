@@ -6,9 +6,8 @@ import {
   Typography,
   Chip,
   Box,
-  LinearProgress,
-  CircularProgress,
-  Alert
+  Button,
+  Link
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -18,68 +17,32 @@ import { Edit } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import TaskList from './TaskList';
-import { ProjectStatus, Project } from '../../types/project';
 
 const ProjectDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { data: project } = useQuery(['project', id], () => getProject(id!));
 
-  const { data: project, isLoading, error } = useQuery<Project>({
-    queryKey: ['project', id],
-    queryFn: () => getProject(id!),
-    enabled: !!id
-  });
-
-  const getStatusColor = (statut: ProjectStatus): "success" | "warning" | "info" | "error" | "default" => {
-    switch (statut) {
-      case ProjectStatus.EN_COURS:
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'EN_COURS':
         return 'success';
-      case ProjectStatus.EN_PAUSE:
+      case 'EN_PAUSE':
         return 'warning';
-      case ProjectStatus.TERMINE:
+      case 'TERMINE':
         return 'info';
-      case ProjectStatus.ANNULE:
+      case 'ANNULE':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  const calculateProgress = () => {
-    if (!project?.taches?.length) return 0;
-    const completedTasks = project.taches.filter(t => t.statut === 'TERMINE').length;
-    return (completedTasks / project.taches.length) * 100;
-  };
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error">
-        {error instanceof Error ? error.message : "Erreur lors du chargement du projet"}
-      </Alert>
-    );
-  }
-
-  if (!project) {
-    return (
-      <Alert severity="info">
-        Projet non trouvé
-      </Alert>
-    );
-  }
-
   return (
     <>
       <PageHeader
-        title={`Projet ${project.code}`}
-        subtitle={project.nom}
+        title={`Projet ${project?.code}`}
+        subtitle={project?.nom}
         action={{
           label: "Modifier",
           onClick: () => navigate(`/projects/${id}/edit`),
@@ -101,8 +64,8 @@ const ProjectDetails: React.FC = () => {
                     Statut
                   </Typography>
                   <Chip
-                    label={project.statut}
-                    color={getStatusColor(project.statut)}
+                    label={project?.statut}
+                    color={getStatusColor(project?.statut || '')}
                   />
                 </Box>
 
@@ -114,7 +77,7 @@ const ProjectDetails: React.FC = () => {
                     {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'XAF'
-                    }).format(project.budget || 0)}
+                    }).format(project?.budget || 0)}
                   </Typography>
                 </Box>
 
@@ -123,48 +86,21 @@ const ProjectDetails: React.FC = () => {
                     Dates
                   </Typography>
                   <Typography variant="body2">
-                    Début: {project.date_debut &&
+                    Début: {project?.date_debut &&
                       format(new Date(project.date_debut), 'PP', { locale: fr })}
                   </Typography>
                   <Typography variant="body2">
-                    Fin prévue: {project.date_fin_prevue &&
+                    Fin prévue: {project?.date_fin_prevue &&
                       format(new Date(project.date_fin_prevue), 'PP', { locale: fr })}
                   </Typography>
                 </Box>
-
-                <Box>
-                  <Typography color="text.secondary" gutterBottom>
-                    Progression
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={calculateProgress()}
-                      sx={{ flexGrow: 1 }}
-                    />
-                    <Typography variant="body2">
-                      {Math.round(calculateProgress())}%
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {project.description && (
-                  <Box>
-                    <Typography color="text.secondary" gutterBottom>
-                      Description
-                    </Typography>
-                    <Typography variant="body2">
-                      {project.description}
-                    </Typography>
-                  </Box>
-                )}
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} md={8}>
-          {id && <TaskList projectId={id} />}
+          <TaskList projectId={id!} />
         </Grid>
       </Grid>
     </>

@@ -14,51 +14,48 @@ import {
   TableRow
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getProduit, getMouvementsProduit } from '../../services/inventaire';
+import { useQuery } from 'react-query';
+import { getProduit, getProductMovements } from '../../services/inventaire';
 import PageHeader from '../layout/PageHeader';
 import { Edit } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import DialogueMouvementStock from './DialogueMouvementStock';
+import { CategoryProduit, TypeMouvement } from '../../types/inventaire';
 
 const DetailsProduit: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [dialogueMouvementOuvert, setDialogueMouvementOuvert] = useState(false);
+  const [movementDialogOpen, setMovementDialogOpen] = useState(false);
 
-  const { data: produit } = useQuery(
-    ['produit', id],
-    () => getProduit(id!)
-  );
-
-  const { data: mouvements } = useQuery(
-    ['mouvements-produit', id],
-    () => getMouvementsProduit(id!)
-  );
-
-  const getNiveauStock = (actuel: number, seuil: number) => {
-    const ratio = actuel / seuil;
-    if (ratio <= 0.25) return 'error';
-    if (ratio <= 0.5) return 'warning';
-    return 'success';
-  };
-
-  const formatResponsable = (mouvement: any) => {
-    if (!mouvement.responsable) {
-      return mouvement.responsable_id;
+  const { data: product, isLoading: isLoadingProduct } = useQuery(
+    ['product', id],
+    () => id ? getProduit(id) : Promise.reject('No ID provided'),
+    {
+      enabled: !!id
     }
-    return `${mouvement.responsable.nom} ${mouvement.responsable.prenom}`;
-  };
+  );
+
+  const { data: movements, isLoading: isLoadingMovements } = useQuery(
+    ['product-movements', id],
+    () => id ? getProductMovements(id) : Promise.reject('No ID provided'),
+    {
+      enabled: !!id
+    }
+  );
+
+  if (isLoadingProduct || isLoadingMovements || !product) {
+    return null; // TODO: Add loading spinner
+  }
 
   return (
     <>
       <PageHeader
-        title={`Produit ${produit?.code}`}
+        title={`Produit ${product.code}`}
         subtitle="Détails et mouvements"
         action={{
           label: "Modifier",
-          onClick: () => navigate(`/inventaire/produits/${id}/modifier`),
+          onClick: () => navigate(`/inventaire/produits/${id}/edit`),
           icon: <Edit />
         }}
       />
@@ -77,7 +74,7 @@ const DetailsProduit: React.FC = () => {
                     Catégorie
                   </Typography>
                   <Chip
-                    label={produit?.categorie}
+                    label={CategoryProduit[product.categorie]}
                     color="primary"
                   />
                 </Box>
@@ -87,7 +84,7 @@ const DetailsProduit: React.FC = () => {
                     Unité de Mesure
                   </Typography>
                   <Typography variant="body1">
-                    {produit?.unite_mesure}
+                    {product.unite_mesure}
                   </Typography>
                 </Box>
 
@@ -99,7 +96,7 @@ const DetailsProduit: React.FC = () => {
                     {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'XAF'
-                    }).format(produit?.prix_unitaire || 0)}
+                    }).format(product.prix_unitaire)}
                   </Typography>
                 </Box>
 
@@ -108,7 +105,7 @@ const DetailsProduit: React.FC = () => {
                     Seuil d'Alerte
                   </Typography>
                   <Typography variant="body1">
-                    {produit?.seuil_alerte} {produit?.unite_mesure}
+                    {product.seuil_alerte} {product.unite_mesure}
                   </Typography>
                 </Box>
               </Box>
@@ -116,7 +113,7 @@ const DetailsProduit: React.FC = () => {
               <Button
                 variant="contained"
                 fullWidth
-                onClick={() => setDialogueMouvementOuvert(true)}
+                onClick={() => setMovementDialogOpen(true)}
               >
                 Nouveau Mouvement
               </Button>
@@ -142,24 +139,24 @@ const DetailsProduit: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {mouvements?.map((mouvement) => (
-                    <TableRow key={mouvement.id}>
+                  {movements?.map(movement => (
+                    <TableRow key={movement.id}>
                       <TableCell>
-                        {format(new Date(mouvement.date_mouvement), 'Pp', { locale: fr })}
+                        {format(new Date(movement.date_mouvement), 'Pp', { locale: fr })}
                       </TableCell>
                       <TableCell>
                         <Chip
                           size="small"
-                          label={mouvement.type_mouvement}
-                          color={mouvement.type_mouvement === 'ENTREE' ? 'success' : 'error'}
+                          label={movement.type_mouvement}
+                          color={movement.type_mouvement === TypeMouvement.ENTREE ? 'success' : 'error'}
                         />
                       </TableCell>
                       <TableCell align="right">
-                        {mouvement.quantite} {produit?.unite_mesure}
+                        {movement.quantite} {product.unite_mesure}
                       </TableCell>
-                      <TableCell>{mouvement.reference_document}</TableCell>
+                      <TableCell>{movement.reference_document}</TableCell>
                       <TableCell>
-                        {formatResponsable(mouvement)}
+                        {movement.responsable.nom} {movement.responsable.prenom}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -171,8 +168,8 @@ const DetailsProduit: React.FC = () => {
       </Grid>
 
       <DialogueMouvementStock
-        open={dialogueMouvementOuvert}
-        onClose={() => setDialogueMouvementOuvert(false)}
+        open={movementDialogOpen}
+        onClose={() => setMovementDialogOpen(false)}
         productId={id || null}
       />
     </>

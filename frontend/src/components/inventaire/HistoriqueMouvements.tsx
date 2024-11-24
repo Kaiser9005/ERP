@@ -1,116 +1,89 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
+  Card,
+  CardContent,
   Typography,
-  LinearProgress
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  Chip,
+  Box
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import { getMouvements } from '../../services/inventaire';
-import type { MouvementStock } from '../../types/inventaire';
-import { format } from 'date-fns';
+import { Add, Remove, SwapHoriz } from '@mui/icons-material';
+import { useQuery } from 'react-query';
+import { getMouvements, MouvementStock } from '../../services/inventaire';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const HistoriqueMouvements: React.FC = () => {
-  const [typeFilter, setTypeFilter] = useState<string>('TOUS');
+  const { data: mouvements = [] } = useQuery<MouvementStock[]>('recent-movements', getMouvements);
 
-  const { data: mouvements, isLoading, error } = useQuery(
-    ['mouvements', typeFilter],
-    () => getMouvements({
-      type: typeFilter === 'TOUS' ? undefined : typeFilter as 'ENTREE' | 'SORTIE'
-    })
-  );
+  const getMovementIcon = (type: string) => {
+    switch (type) {
+      case 'ENTREE':
+        return <Add />;
+      case 'SORTIE':
+        return <Remove />;
+      default:
+        return <SwapHoriz />;
+    }
+  };
 
-  if (isLoading) {
-    return <LinearProgress />;
-  }
-
-  if (error) {
-    return (
-      <Typography color="error">
-        Erreur lors du chargement de l'historique des mouvements
-      </Typography>
-    );
-  }
-
-  const filteredMouvements = mouvements || [];
+  const getMovementColor = (type: string) => {
+    switch (type) {
+      case 'ENTREE':
+        return 'success';
+      case 'SORTIE':
+        return 'error';
+      default:
+        return 'info';
+    }
+  };
 
   return (
-    <>
-      <Box mb={3} display="flex" gap={2}>
-        <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Type de Mouvement</InputLabel>
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as string)}
-            label="Type de Mouvement"
-          >
-            <MenuItem value="TOUS">Tous les mouvements</MenuItem>
-            <MenuItem value="ENTREE">Entrées</MenuItem>
-            <MenuItem value="SORTIE">Sorties</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          Derniers Mouvements
+        </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Produit</TableCell>
-              <TableCell align="right">Quantité</TableCell>
-              <TableCell align="right">Coût Unitaire</TableCell>
-              <TableCell>Référence</TableCell>
-              <TableCell>Responsable</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredMouvements.map((mouvement) => (
-              <TableRow key={mouvement.id}>
-                <TableCell>
-                  {format(new Date(mouvement.date_mouvement), 'Pp', { locale: fr })}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={mouvement.type_mouvement}
-                    color={mouvement.type_mouvement === 'ENTREE' ? 'success' : 'error'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{mouvement.produit.nom}</TableCell>
-                <TableCell align="right">
-                  {mouvement.quantite} {mouvement.produit.unite_mesure}
-                </TableCell>
-                <TableCell align="right">
-                  {mouvement.cout_unitaire
-                    ? new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'XAF'
-                      }).format(mouvement.cout_unitaire)
-                    : '-'}
-                </TableCell>
-                <TableCell>{mouvement.reference_document || '-'}</TableCell>
-                <TableCell>
-                  {mouvement.responsable.prenom} {mouvement.responsable.nom}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+        <List>
+          {mouvements.map((mouvement) => (
+            <ListItem key={mouvement.id} divider>
+              <ListItemAvatar>
+                <Avatar sx={{ bgcolor: `${getMovementColor(mouvement.type_mouvement)}.light` }}>
+                  {getMovementIcon(mouvement.type_mouvement)}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {mouvement.produit_id}
+                    <Chip
+                      size="small"
+                      label={mouvement.type_mouvement}
+                      color={getMovementColor(mouvement.type_mouvement)}
+                    />
+                  </Box>
+                }
+                secondary={
+                  <>
+                    {mouvement.quantite} - {mouvement.reference_document || 'Sans référence'}
+                    <br />
+                    {formatDistanceToNow(new Date(mouvement.date_mouvement), {
+                      addSuffix: true,
+                      locale: fr
+                    })}
+                  </>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </CardContent>
+    </Card>
   );
 };
 
