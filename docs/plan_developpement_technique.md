@@ -122,27 +122,44 @@
    - Guides d'utilisation
 
 3. Tests :
-   - Tests unitaires (>80%)
-   - Tests d'intégration
+   - Architecture modulaire
+   - Tests spécialisés par domaine
+   - Tests ML dédiés
+   - Tests intégration
    - Tests E2E
-   - Tests de performance
-   - Tests de sécurité
 
-4. Tests React Query :
-   ```typescript
-   describe('MonComposant', () => {
-     it('gère le chargement', () => {
-       // Test état de chargement
-     });
+4. Architecture Tests ML :
+   ```python
+   # Structure modulaire des tests
+   tests/
+     projects_ml/
+       test_base.py       # Tests ML de base
+       test_optimization.py # Tests optimisation
+       test_analysis.py   # Tests analyse
+       test_weather.py    # Tests météo
+       test_integration.py # Tests intégration
+       README.md         # Documentation
+   ```
 
-     it('gère les erreurs', () => {
-       // Test gestion erreurs
-     });
+5. Standards Tests ML :
+   ```python
+   def test_prediction_base():
+       """Test prédiction ML de base"""
+       model = MLModel()
+       result = model.predict(data)
+       assert result.accuracy > 0.95
 
-     it('affiche les données', () => {
-       // Test affichage données
-     });
-   });
+   def test_optimization():
+       """Test optimisation ressources"""
+       optimizer = ResourceOptimizer()
+       result = optimizer.optimize(resources)
+       assert result.efficiency > 0.90
+
+   def test_weather_impact():
+       """Test impact météo sur ML"""
+       analyzer = WeatherAnalyzer()
+       impact = analyzer.analyze(weather_data)
+       assert impact.correlation > 0.80
    ```
 
 ### B. Base de Données
@@ -191,6 +208,13 @@
    - Cypress pour E2E
    - MSW pour mocks
    - Storybook tests
+
+3. Tests ML :
+   - Tests unitaires spécialisés
+   - Tests intégration ML
+   - Tests performance ML
+   - Validation modèles
+   - Monitoring ML
 
 ### B. Monitoring
 1. Performance :
@@ -255,6 +279,13 @@
    - Monitoring setup
    - Backup/restore
    - Disaster recovery
+
+3. Tests :
+   - Architecture tests
+   - Standards tests
+   - Guides tests ML
+   - Monitoring tests
+   - Maintenance tests
 
 ### B. Utilisateur
 1. Guides :

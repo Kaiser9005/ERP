@@ -7,27 +7,33 @@ FOFAL ERP est un système de gestion intégré spécialement conçu pour FOFAL (
 ## État du Projet
 
 Le projet est en développement actif avec plusieurs modules à différents stades d'avancement :
-- Production (95%) : 
+- Production (100%) : 
   - Gestion complète des parcelles et cycles de culture
   - Dashboard météo en temps réel
   - Système d'alertes intelligent
   - Rapports de production avancés
   - Tests End-to-End et unitaires
-- Gestion des Projets (85%) : 
+  - Monitoring IoT optimisé
+  - ML prédictif validé
+- Gestion des Projets (100%) : 
   - Système de tâches complet
   - Intégration des données météo
   - Gestion des ressources
   - Tests d'intégration
   - Documentation utilisateur
-- Finance (60%) : 
+  - ML prédictif
+  - Architecture tests modulaire
+  - Tests ML spécialisés
+- Finance (95%) : 
   - Gestion budgétaire avancée
   - Analyse d'impact météo
-  - Projections financières
+  - Projections financières ML
   - Tests unitaires complets
   - Documentation API
-  - Gestion des pièces jointes  
+  - Cache Redis optimisé
+  - Recommandations ML
 
-  - Comptabilité (75%) :
+  - Comptabilité (95%) :
   - Gestion complète des comptes et écritures
   - Dashboard financier avancé
   - Analyse budgétaire avec impact météo
@@ -37,6 +43,7 @@ Le projet est en développement actif avec plusieurs modules à différents stad
   - Documentation API complète
   - Cache Redis optimisé
   - Intégration météo pour prévisions
+  - ML prédictif
 - RH (25%) : 
   - Gestion basique des employés
   - Structure des présences
@@ -46,6 +53,28 @@ Le projet est en développement actif avec plusieurs modules à différents stad
 
 Pour plus de détails sur l'état actuel et les prochaines étapes, consultez notre [Plan de Développement](docs/plan_developpement.md).
 
+## Architecture Tests ML
+
+L'architecture modulaire des tests ML établit un nouveau standard pour le projet :
+
+```python
+tests/module_ml/
+    test_base.py         # Tests ML de base
+    test_optimization.py # Tests optimisation
+    test_analysis.py     # Tests analyse
+    test_weather.py      # Tests météo
+    test_integration.py  # Tests intégration
+    README.md           # Documentation
+```
+
+Cette architecture assure :
+- Tests spécialisés par domaine
+- Validation complète des modèles
+- Monitoring des performances
+- Documentation détaillée
+- Maintenance facilitée
+- Évolution contrôlée
+
 ## Modules Principaux
 
 ### 1. Production Agricole
@@ -54,6 +83,8 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Monitoring météorologique
 - Contrôle qualité des récoltes
 - Planification agricole
+- ML prédictif
+- IoT monitoring
 
 ### 2. Gestion des Projets
 - Planification des activités
@@ -61,6 +92,8 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Gestion des ressources
 - Rapports d'avancement
 - Calendrier des projets
+- ML prédictif
+- Tests modulaires
 
 ### 3. Comptabilité et Finance
 - Comptabilité générale complète
@@ -69,8 +102,8 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Suivi de trésorerie en temps réel
 - Intégration météo pour prévisions
 - Rapports financiers avancés
-- Recommandations contextuelles
-- Cache optimisé pour performances
+- Recommandations ML
+- Cache optimisé
 - Gestion de trésorerie
 - Budgétisation avancée
 - Rapports financiers
@@ -107,6 +140,8 @@ Pour plus de détails sur l'état actuel et les prochaines étapes, consultez no
 - Alembic (Migrations)
 - JWT (Authentification)
 - Redis (Cache)
+- ML Services
+- IoT Integration
 
 ### Frontend
 - React 18+
@@ -149,7 +184,7 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
   - [API Comptabilité](docs/api/comptabilite.md)
 - [Diagrammes Techniques](docs/diagrammes/)
 - [Plan de Développement](docs/plan_developpement.md)
-- [Mises à jour Comptabilité](docs/modules/comptabilite_updates.md)
+- [Tests ML](docs/modules/projets_ml_tests_mars2024.md)
 
 ## Standards de Développement
 
@@ -159,6 +194,15 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - Tests unitaires (coverage > 80%)
 - Documentation des fonctions
 - Revue de code
+- Architecture modulaire
+
+### Tests
+- Architecture modulaire
+- Tests spécialisés
+- Tests ML dédiés
+- Tests intégration
+- Tests performance
+- Documentation
 
 ### Base de Données
 - Modèles avec BaseModel
