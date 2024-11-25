@@ -1,8 +1,16 @@
 # Améliorations Tests ML Projets - Mars 2024
 
-## Vue d'Ensemble
+## Nouvelle Architecture Modulaire
 
-Implémentation complète des tests ML et intégration pour le module Projets, améliorant la fiabilité et la résilience du système.
+### 1. Structure des Tests
+- `test_projects_ml_service.py` - Interface publique principale
+- `tests/projects_ml/`
+  * `test_base.py` - Tests ML de base
+  * `test_optimization.py` - Tests d'optimisation
+  * `test_analysis.py` - Tests d'analyse
+  * `test_weather.py` - Tests météo
+  * `test_integration.py` - Tests d'intégration
+  * `README.md` - Documentation de l'approche
 
 ## Tests Implémentés
 
@@ -98,52 +106,24 @@ interface TestsPerformance {
 - Métriques claires
 - Feedback continu
 
-## Prochaines Étapes
-
-### 1. Court Terme
-- Monitoring ML temps réel
-- Alertes dégradation modèles
-- Optimisation cache avancée
-
-### 2. Moyen Terme
-- Tests E2E complets
-- Automatisation retraining
-- Analytics avancés
-
-### 3. Long Terme
-- IA explicable
-- Auto-adaptation
-- Optimisation continue
-
-## Points d'Attention
-
-### 1. Performance
-- Surveiller temps réponse
-- Optimiser utilisation cache
-- Gérer volumétrie données
-
-### 2. Résilience
-- Monitorer erreurs services
-- Affiner timeouts
-- Valider données ML
-
-### 3. Qualité
-- Maintenir couverture tests
-- Documenter cas limites
-- Suivre métriques ML
-
 ## Documentation
 
 ### 1. Tests Unitaires
 ```bash
-# Exécution tests unitaires
+# Tests interface publique
 pytest tests/test_projects_ml_service.py
+
+# Tests modules spécialisés
+pytest tests/projects_ml/test_base.py
+pytest tests/projects_ml/test_optimization.py
+pytest tests/projects_ml/test_analysis.py
+pytest tests/projects_ml/test_weather.py
 ```
 
 ### 2. Tests Intégration
 ```bash
-# Exécution tests intégration
-pytest tests/integration/test_projects_ml_integration.py
+# Tests intégration
+pytest tests/projects_ml/test_integration.py
 ```
 
 ### 3. Monitoring
@@ -193,3 +173,20 @@ monitoring_config = {
 - [x] Métriques
 - [x] Alertes
 - [x] Dashboards
+
+## Prochaines Étapes
+
+### 1. Court Terme
+- Monitoring ML temps réel
+- Alertes dégradation modèles
+- Optimisation cache avancée
+
+### 2. Moyen Terme
+- Tests E2E complets
+- Automatisation retraining
+- Analytics avancés
+
+### 3. Long Terme
+- IA explicable
+- Auto-adaptation
+- Optimisation continue
