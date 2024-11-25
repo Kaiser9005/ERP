@@ -3,12 +3,15 @@
 ## Vue d'Ensemble
 Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie et les statistiques associées pour l'exploitation agricole FOFAL.
 
-## État d'Avancement : 35%
+## État d'Avancement : 65%
 - Interface utilisateur de base ✅
 - Gestion des stocks ✅
 - Mouvements de stock ✅
 - Statistiques de base ✅
-- Système d'alertes ⏳
+- Système d'alertes ✅
+- Traçabilité avancée ✅
+- Intégration IoT ✅
+- Contrôle qualité ✅
 - Prévisions et optimisations ⏳
 - Tests complets ⏳
 
@@ -22,6 +25,8 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Mouvements récents
 - Répartition par catégorie
 - Évolution du stock
+- Alertes conditions stockage
+- État des capteurs IoT
 
 ### 2. ListeStock
 - Liste complète des produits en stock
@@ -29,22 +34,28 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Filtrage par niveau de stock
 - Affichage des seuils d'alerte
 - Statut des stocks
+- Conditions de stockage en temps réel
+- Certifications et traçabilité
 
 ### 3. HistoriqueMouvements
 - Suivi des entrées/sorties
 - Filtrage par type de mouvement
 - Détails des mouvements
 - Traçabilité des opérations
+- Conditions pendant transport
+- Résultats contrôles qualité
 
 ### 4. DialogueMouvementStock
 - Saisie des mouvements de stock
 - Validation des données
 - Gestion des coûts unitaires
 - Références des documents
+- Saisie contrôle qualité
+- Conditions de transport
 
 ## Types de Données
 
-### Product
+### Produit
 ```typescript
 {
   id: string;
@@ -55,15 +66,53 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
   unite_mesure: string;
   prix_unitaire: number;
   seuil_alerte: number;
+  conditions_stockage: {
+    temperature_min: number;
+    temperature_max: number;
+    humidite_min: number;
+    humidite_max: number;
+    luminosite_max?: number;
+    ventilation_requise: boolean;
+  };
 }
 ```
 
-### StockMovement
+### Stock
+```typescript
+{
+  id: string;
+  produit_id: string;
+  entrepot_id: string;
+  quantite: number;
+  valeur_unitaire?: number;
+  emplacement?: string;
+  lot?: string;
+  date_peremption?: string;
+  origine?: string;
+  certifications?: Array<{
+    nom: string;
+    organisme: string;
+    date_obtention: string;
+    date_expiration: string;
+    specifications: any;
+  }>;
+  conditions_actuelles?: {
+    temperature: number;
+    humidite: number;
+    luminosite?: number;
+    qualite_air?: number;
+    derniere_maj: string;
+  };
+  capteurs_id?: string[];
+}
+```
+
+### MouvementStock
 ```typescript
 {
   id: string;
   date_mouvement: string;
-  type_mouvement: 'ENTREE' | 'SORTIE';
+  type_mouvement: 'ENTREE' | 'SORTIE' | 'TRANSFERT';
   quantite: number;
   reference_document?: string;
   responsable: {
@@ -73,6 +122,17 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
   };
   produit_id: string;
   cout_unitaire?: number;
+  conditions_transport?: {
+    temperature: number;
+    humidite: number;
+  };
+  controle_qualite?: {
+    date_controle: string;
+    responsable_id: string;
+    resultats: any;
+    conforme: boolean;
+    actions_requises?: string;
+  };
 }
 ```
 
@@ -94,24 +154,31 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - GET /api/v1/inventaire/stats - Statistiques globales
 - GET /api/v1/inventaire/produits/:id/stock - Niveau de stock d'un produit
 
+### Conditions & Qualité
+- GET /api/v1/inventaire/stocks/:id/conditions - Conditions actuelles
+- POST /api/v1/inventaire/stocks/:id/capteurs - Association capteurs IoT
+- POST /api/v1/inventaire/stocks/:id/certifications - Ajout certification
+- POST /api/v1/inventaire/controles - Création contrôle qualité
+
 ## Sécurité
 - Protection des routes avec ProtectedRoute
 - Permissions requises :
   - INVENTAIRE_READ : Lecture des stocks
   - INVENTAIRE_WRITE : Modification des stocks
   - INVENTAIRE_ADMIN : Administration complète
+  - INVENTAIRE_QUALITY : Gestion qualité
 
 ## Prochaines Étapes (T2 2024)
 
 ### 1. Interface
-- Gestion des emplacements de stockage
-- Traçabilité par lot
-- Rapports d'inventaire
+- Visualisation conditions stockage
+- Tableaux de bord IoT
+- Rapports qualité
 
 ### 2. Fonctionnalités
-- Système d'alertes de stock
 - Prévisions de consommation
 - Optimisation des niveaux de stock
+- Machine learning pour prédictions
 
 ### 3. Tests
 - Tests unitaires
@@ -121,4 +188,4 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 ### 4. Documentation
 - Guide utilisateur
 - Documentation technique
-- Procédures d'inventaire
+- Procédures qualité

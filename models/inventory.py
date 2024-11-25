@@ -38,6 +38,7 @@ class Produit(Base):
     prix_unitaire = Column(Float)
     seuil_alerte = Column(Float)
     specifications = Column(JSON)
+    conditions_stockage = Column(JSON)  # Ajout des conditions requises
     date_derniere_maj = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     stocks = relationship("Stock", back_populates="produit", cascade="all, delete-orphan")
@@ -53,6 +54,11 @@ class Stock(Base):
     valeur_unitaire = Column(Float)
     emplacement = Column(String)
     lot = Column(String)
+    date_peremption = Column(DateTime)  # Ajout date péremption
+    origine = Column(String)  # Ajout traçabilité origine
+    certifications = Column(JSON)  # Ajout certifications
+    conditions_actuelles = Column(JSON)  # Ajout conditions actuelles
+    capteurs_id = Column(JSON)  # Ajout IDs des capteurs IoT
     date_derniere_maj = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     produit = relationship("Produit", back_populates="stocks")
@@ -71,6 +77,8 @@ class MouvementStock(Base):
     reference_document = Column(String)
     notes = Column(String)
     cout_unitaire = Column(Float)
+    conditions_transport = Column(JSON)  # Ajout conditions pendant transport
+    controle_qualite = Column(JSON)  # Ajout contrôle qualité
 
     produit = relationship("Produit", back_populates="mouvements")
     responsable = relationship("Utilisateur")
@@ -92,5 +100,7 @@ class MouvementStock(Base):
             } if self.responsable else None,
             "reference_document": self.reference_document,
             "notes": self.notes,
-            "cout_unitaire": self.cout_unitaire
+            "cout_unitaire": self.cout_unitaire,
+            "conditions_transport": self.conditions_transport,
+            "controle_qualite": self.controle_qualite
         }
