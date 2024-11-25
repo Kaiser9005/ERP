@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from .hr_agricole import TypePersonnel
 
 class DepartementType(str, enum.Enum):
     """Types de départements possibles"""
@@ -51,6 +52,7 @@ class Employe(Base):
     date_depart = Column(Date)
     statut = Column(Enum(StatutEmploye), default=StatutEmploye.ACTIF)
     type_contrat = Column(Enum(TypeContrat))
+    type_personnel = Column(Enum(TypePersonnel))  # Nouveau: type de personnel agricole
     poste = Column(String(100))
     departement = Column(Enum(DepartementType))
     niveau_acces = Column(Enum(NiveauAcces), default=NiveauAcces.UTILISATEUR)
@@ -81,6 +83,11 @@ class Employe(Base):
     formations = relationship("Formation", back_populates="employe")
     evaluations = relationship("Evaluation", back_populates="employe")
     documents_rh = relationship("DocumentRH", back_populates="employe")
+
+    # Relations RH Agricole
+    competences_agricoles = relationship("CompetenceAgricole", back_populates="employe")
+    affectations_parcelles = relationship("AffectationParcelle", back_populates="employe")
+    conditions_travail = relationship("ConditionTravailAgricole", back_populates="employe")
 
 class TypePresence(str, enum.Enum):
     """Types de présence possibles"""
@@ -179,6 +186,7 @@ class Formation(Base):
 
     # Relations
     employe = relationship("Employe", back_populates="formations")
+    details_agricoles = relationship("FormationAgricole", back_populates="formation")
 
 class TypeEvaluation(str, enum.Enum):
     """Types d'évaluations possibles"""
@@ -206,6 +214,7 @@ class Evaluation(Base):
     # Relations
     employe = relationship("Employe", back_populates="evaluations", foreign_keys=[employe_id])
     evaluateur = relationship("Employe", foreign_keys=[evaluateur_id])
+    details_agricoles = relationship("EvaluationAgricole", back_populates="evaluation")
 
 class TypeDocumentRH(str, enum.Enum):
     """Types de documents RH"""
