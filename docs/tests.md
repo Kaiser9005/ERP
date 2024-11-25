@@ -8,6 +8,7 @@ Le système de tests de FOFAL ERP utilise plusieurs niveaux de tests :
 - Tests d'intégration (Integration tests)
 - Tests end-to-end (E2E tests)
 - Tests de services (Service tests)
+- Tests ML (Machine Learning tests)
 
 ## Configuration
 
@@ -30,23 +31,29 @@ pytest tests/test_dashboard.py
 
 # Tests E2E
 pytest tests/e2e/
+
+# Tests ML
+pytest tests/test_projects_ml_service.py
+pytest tests/integration/test_projects_ml_integration.py
 ```
 
 ## Structure des Tests
 
 ```
 tests/
-├── conftest.py              # Fixtures partagées globales
-├── test_dashboard.py        # Tests du tableau de bord
-├── test_weather.py          # Tests du service météo
-├── test_activities.py       # Tests des activités
-├── e2e/                     # Tests end-to-end
-│   ├── conftest.py         # Fixtures E2E
+├── conftest.py                           # Fixtures partagées globales
+├── test_dashboard.py                     # Tests du tableau de bord
+├── test_weather.py                       # Tests du service météo
+├── test_activities.py                    # Tests des activités
+├── test_projects_ml_service.py          # Tests unitaires ML projets
+├── e2e/                                  # Tests end-to-end
+│   ├── conftest.py                      # Fixtures E2E
 │   ├── test_task_management.py
 │   └── test_tableau_meteo.py
-└── integration/            # Tests d'intégration
+└── integration/                         # Tests d'intégration
     ├── test_task_integration.py
-    └── test_comptabilite_integration.py
+    ├── test_comptabilite_integration.py
+    └── test_projects_ml_integration.py  # Tests intégration ML projets
 ```
 
 ## Tests React avec React Query
@@ -75,19 +82,45 @@ describe('MonComposant', () => {
   });
 
   it('affiche le chargement', () => {
-    // Test de l'état de chargement
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MonComposant />
+      </QueryClientProvider>
+    );
+    expect(screen.getByTestId('loading')).toBeInTheDocument();
   });
 
   it('affiche les données', async () => {
-    // Test du rendu avec données
+    const mockData = { id: 1, name: 'Test' };
+    server.use(
+      rest.get('/api/data', (req, res, ctx) => {
+        return res(ctx.json(mockData));
+      })
+    );
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MonComposant />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Test')).toBeInTheDocument();
   });
 
   it('affiche une erreur', async () => {
-    // Test de la gestion d'erreur
-  });
+    server.use(
+      rest.get('/api/data', (req, res, ctx) => {
+        return res(ctx.status(500));
+      })
+    );
 
-  it('utilise la bonne configuration', () => {
-    // Test de la configuration react-query
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MonComposant />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByTestId('error')).toBeInTheDocument();
   });
 });
 ```
@@ -100,6 +133,80 @@ describe('MonComposant', () => {
 5. Tester la configuration des requêtes (staleTime, etc.)
 6. Vérifier la gestion des erreurs
 7. Tester les cas sans données
+
+## Tests ML
+
+### Structure des Tests ML
+Les tests ML doivent vérifier :
+- La qualité des prédictions
+- La performance des modèles
+- La gestion des erreurs
+- La résilience du système
+- L'intégration avec les services externes
+
+Exemple de structure :
+```typescript
+describe('MLService', () => {
+  let mlService: MLService;
+  let mockWeatherService: MockWeatherService;
+  let mockIoTService: MockIoTService;
+  let mockCache: MockCacheService;
+
+  beforeEach(() => {
+    mockWeatherService = new MockWeatherService();
+    mockIoTService = new MockIoTService();
+    mockCache = new MockCacheService();
+    
+    mlService = new MLService({
+      weatherService: mockWeatherService,
+      iotService: mockIoTService,
+      cache: mockCache
+    });
+  });
+
+  it('prédit avec succès', async () => {
+    const prediction = await mlService.predict({
+      projectId: 'P001',
+      date: new Date()
+    });
+
+    expect(prediction.probability).toBeGreaterThan(0);
+    expect(prediction.factors).toHaveLength(3);
+    expect(prediction.recommendations).toHaveLength(2);
+  });
+
+  it('gère les erreurs services', async () => {
+    mockWeatherService.getWeather.mockRejectedValue(new Error());
+    
+    const prediction = await mlService.predict({
+      projectId: 'P001',
+      date: new Date()
+    });
+
+    expect(prediction.error).toBeDefined();
+    expect(prediction.fallbackUsed).toBe(true);
+  });
+
+  it('utilise le cache correctement', async () => {
+    await mlService.predict({
+      projectId: 'P001',
+      date: new Date()
+    });
+
+    expect(mockCache.get).toHaveBeenCalled();
+    expect(mockCache.set).toHaveBeenCalled();
+  });
+});
+```
+
+### Standards de Test ML
+1. Toujours mocker les services externes
+2. Valider la qualité des prédictions
+3. Tester la gestion des erreurs
+4. Vérifier la performance
+5. Tester l'utilisation du cache
+6. Valider la résilience
+7. Tester les cas limites
 
 ## Tests E2E
 
@@ -117,7 +224,6 @@ Les tests E2E nécessitent :
 Les composants React utilisent des data-testid pour faciliter la sélection dans les tests :
 
 ```typescript
-// Exemple de composant avec data-testid
 <TextField
   data-testid="task-title-input"
   label="Titre"
@@ -171,7 +277,13 @@ Des helpers sont disponibles pour faciliter les tests :
    - Gérer l'état initial
    - Nettoyer après les tests
 
-3. Général
+3. Tests ML
+   - Valider la qualité des prédictions
+   - Tester la résilience
+   - Vérifier la performance
+   - Documenter les cas limites
+
+4. Général
    - Maintenir une couverture > 80%
    - Documenter les cas complexes
    - Tests indépendants
@@ -183,6 +295,13 @@ Des helpers sont disponibles pour faciliter les tests :
 - Vérifier régulièrement la couverture
 - Maintenir la documentation des tests à jour
 - Revoir et optimiser les tests lents
+
+## Documentation Détaillée
+
+Pour plus de détails sur les tests spécifiques :
+- Tests ML des projets : [Projets ML Tests - Mars 2024](modules/projets_ml_tests_mars2024.md)
+- Tests React Query : [Guide React Query](guides/typage.md)
+- Tests E2E : [Guide E2E](guides/developpement.md)
 
 ## Support
 

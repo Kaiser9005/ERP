@@ -160,6 +160,77 @@ Retourne:
 }
 ```
 
+## Tests
+
+Le module ML est couvert par plusieurs niveaux de tests:
+
+### 1. Tests Unitaires
+```bash
+# Exécution des tests unitaires
+pytest tests/test_projects_ml_service.py
+```
+
+Les tests unitaires couvrent:
+- Prédiction de succès
+- Optimisation des ressources
+- Analyse de performance
+- Impact météo
+- Calcul des features
+- Génération des recommandations
+
+### 2. Tests d'Intégration
+```bash
+# Exécution des tests d'intégration
+pytest tests/integration/test_projects_ml_integration.py
+```
+
+Les tests d'intégration vérifient:
+- Intégration avec le service météo
+- Intégration avec le service IoT
+- Intégration avec le cache Redis
+- Gestion des erreurs
+- Timeouts et résilience
+- Performance et charge
+- Accès concurrents
+- Cohérence des données
+
+### 3. Gestion des Erreurs
+
+Le service gère plusieurs types d'erreurs:
+- Erreurs de service (météo, IoT)
+- Erreurs de cache
+- Timeouts
+- Données invalides
+- Erreurs de validation ML
+
+Exemple de gestion d'erreur:
+```python
+try:
+    impact = await ml_service.predict_weather_impact(
+        project_id="P001",
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=7)
+    )
+except Exception as e:
+    # Valeurs par défaut en cas d'erreur
+    impact = {
+        "impact_score": 0.5,
+        "affected_tasks": [],
+        "risk_periods": [],
+        "alternatives": [],
+        "error_handled": str(e)
+    }
+```
+
+### 4. Performance
+
+Le service est optimisé pour:
+- Temps de réponse < 1s
+- Support de charge élevée
+- Utilisation efficace du cache
+- Gestion de la mémoire
+- Accès concurrents
+
 ## Intégration
 
 Le service ML est intégré au service projets principal via plusieurs points:
