@@ -3,7 +3,7 @@
 ## Vue d'Ensemble
 Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie et les statistiques associées pour l'exploitation agricole FOFAL.
 
-## État d'Avancement : 85%
+## État d'Avancement : 95%
 - Interface utilisateur de base ✅
 - Gestion des stocks ✅
 - Mouvements de stock ✅
@@ -13,7 +13,8 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Intégration IoT ✅
 - Contrôle qualité ✅
 - Tests d'intégration ✅
-- Prévisions et optimisations ⏳
+- Prévisions et optimisations ✅
+- Machine Learning ✅
 
 ## Composants
 
@@ -27,6 +28,7 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Évolution du stock
 - Alertes conditions stockage
 - État des capteurs IoT
+- Prédictions ML
 
 ### 2. ListeStock
 - Liste complète des produits en stock
@@ -36,6 +38,7 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Statut des stocks
 - Conditions de stockage en temps réel
 - Certifications et traçabilité
+- Niveaux optimaux ML
 
 ### 3. HistoriqueMouvements
 - Suivi des entrées/sorties
@@ -44,6 +47,7 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Traçabilité des opérations
 - Conditions pendant transport
 - Résultats contrôles qualité
+- Analyse patterns ML
 
 ### 4. DialogueMouvementStock
 - Saisie des mouvements de stock
@@ -52,6 +56,7 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Références des documents
 - Saisie contrôle qualité
 - Conditions de transport
+- Recommandations ML
 
 ## Types de Données
 
@@ -73,6 +78,11 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
     humidite_max: number;
     luminosite_max?: number;
     ventilation_requise: boolean;
+  };
+  ml_config?: {
+    modele_prediction: string;
+    parametres_optimisation: any;
+    seuils_qualite: any;
   };
 }
 ```
@@ -104,6 +114,12 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
     derniere_maj: string;
   };
   capteurs_id?: string[];
+  ml_insights?: {
+    niveau_optimal: number;
+    risque_qualite: string;
+    recommendations: string[];
+    derniere_prediction: string;
+  };
 }
 ```
 
@@ -133,6 +149,11 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
     conforme: boolean;
     actions_requises?: string;
   };
+  ml_analyse?: {
+    pattern_type: string;
+    anomalie: boolean;
+    impact_qualite: string;
+  };
 }
 ```
 
@@ -160,10 +181,99 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - POST /api/v1/inventaire/stocks/:id/certifications - Ajout certification
 - POST /api/v1/inventaire/controles - Création contrôle qualité
 
+### Machine Learning
+- GET /api/v1/inventaire/stocks/:id/predictions - Prédictions ML
+- GET /api/v1/inventaire/stocks/:id/optimisation - Niveaux optimaux
+- GET /api/v1/inventaire/stocks/:id/qualite/risques - Risques qualité
+- GET /api/v1/inventaire/stocks/:id/patterns - Analyse patterns
+- POST /api/v1/inventaire/ml/train - Entraînement modèles
+
+## Machine Learning
+
+### Architecture ML
+```python
+services/inventory_ml/
+├── __init__.py
+├── base.py           # Modèle ML de base
+├── optimization.py   # Optimisation des stocks
+├── analysis.py      # Analyse des patterns
+└── quality.py       # Prédiction qualité
+```
+
+### Fonctionnalités ML
+
+#### 1. Prédiction Stock
+```python
+def predict_stock_optimal(stock: Stock, mouvements: List[MouvementStock]) -> Dict:
+    """
+    Prédit le niveau optimal de stock
+    Returns:
+        Dict contenant:
+        - niveau_optimal: float
+        - confiance: float
+        - date_prediction: str
+    """
+```
+
+#### 2. Optimisation Dynamique
+```python
+def optimize_stock_levels(
+    stock: Stock,
+    mouvements: List[MouvementStock],
+    weather_data: Dict
+) -> Dict:
+    """
+    Optimise les niveaux de stock
+    Returns:
+        Dict contenant:
+        - niveau_optimal: float
+        - niveau_min: float
+        - niveau_max: float
+        - ajustements: Dict
+        - confiance: float
+    """
+```
+
+#### 3. Analyse Patterns
+```python
+def analyze_stock_patterns(
+    stock: Stock,
+    mouvements: List[MouvementStock]
+) -> Dict:
+    """
+    Analyse les patterns de stock
+    Returns:
+        Dict contenant:
+        - tendance: str
+        - force_tendance: float
+        - saisonnalite: Dict
+        - anomalies: List[Dict]
+        - recommendations: List[str]
+    """
+```
+
+#### 4. Prédiction Qualité
+```python
+def predict_quality_risk(
+    stock: Stock,
+    conditions_actuelles: Dict,
+    historique_conditions: List[Dict]
+) -> Dict:
+    """
+    Prédit les risques qualité
+    Returns:
+        Dict contenant:
+        - niveau_risque: str
+        - probabilite: float
+        - facteurs_risque: List[Dict]
+        - recommendations: List[str]
+    """
+```
+
 ## Tests
 
 ### Tests d'Intégration
-Le module dispose maintenant d'une suite complète de tests d'intégration :
+Le module dispose d'une suite complète de tests d'intégration :
 
 #### Production-Inventaire
 ```python
@@ -191,10 +301,12 @@ Le module dispose maintenant d'une suite complète de tests d'intégration :
 
 #### ML-Inventaire
 ```python
-# tests/integration/test_inventory_ml_integration.py
-- Test prédictions consommation
-- Test optimisation niveaux stocks
-- Test détection anomalies
+# tests/inventory_ml/
+test_base.py          # Tests modèle base
+test_optimization.py  # Tests optimisation
+test_analysis.py      # Tests analyse patterns
+test_quality.py       # Tests prédiction qualité
+test_integration.py   # Tests intégration ML
 ```
 
 #### Qualité-Inventaire
@@ -220,25 +332,27 @@ Le module dispose maintenant d'une suite complète de tests d'intégration :
   - INVENTAIRE_WRITE : Modification des stocks
   - INVENTAIRE_ADMIN : Administration complète
   - INVENTAIRE_QUALITY : Gestion qualité
+  - INVENTAIRE_ML : Gestion ML
 
 ## Prochaines Étapes (T2 2024)
 
-### 1. Interface
-- Visualisation conditions stockage
-- Tableaux de bord IoT
-- Rapports qualité
+### 1. ML Avancé
+- Apprentissage continu
+- Détection anomalies avancée
+- Prédictions multi-variables
+- Auto-optimisation modèles
 
-### 2. Fonctionnalités
-- Prévisions de consommation
-- Optimisation des niveaux de stock
-- Machine learning pour prédictions
+### 2. Interface
+- Visualisation ML insights
+- Tableaux de bord prédictifs
+- Rapports ML personnalisés
 
 ### 3. Tests
-- Tests de performance
-- Tests de charge
-- Tests de résilience
+- Tests ML robustesse
+- Tests ML performance
+- Tests ML dérive
 
 ### 4. Documentation
-- Guide utilisateur
-- Documentation technique
-- Procédures qualité
+- Guide ML utilisateur
+- Documentation ML technique
+- Procédures ML maintenance
