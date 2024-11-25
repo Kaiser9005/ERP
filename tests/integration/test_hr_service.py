@@ -1,3 +1,5 @@
+"""Tests d'intégration pour le service RH."""
+
 import pytest
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -5,7 +7,8 @@ from services.hr_service import HRService
 from models.hr import Employe, Contrat, Conge, Presence
 from models.hr import DepartementType, StatutEmploye, TypeContrat, TypeConge, StatutConge, TypePresence
 
-def test_get_employee_stats(db: Session):
+@pytest.mark.asyncio
+async def test_get_employee_stats(db: Session):
     """Test de récupération des statistiques RH"""
     service = HRService(db)
     
@@ -32,7 +35,8 @@ def test_get_employee_stats(db: Session):
     assert stats["actifs"] == 3
     assert stats["en_conge"] == 2
 
-def test_create_employee(db: Session):
+@pytest.mark.asyncio
+async def test_create_employee(db: Session):
     """Test de création d'un employé"""
     service = HRService(db)
     
@@ -53,7 +57,8 @@ def test_create_employee(db: Session):
     assert employe.matricule == "EMP006"
     assert employe.statut == StatutEmploye.ACTIF
 
-def test_create_leave_request(db: Session, test_user: dict):
+@pytest.mark.asyncio
+async def test_create_leave_request(db: Session, test_user: dict):
     """Test de création d'une demande de congé"""
     service = HRService(db)
     
@@ -87,7 +92,8 @@ def test_create_leave_request(db: Session, test_user: dict):
     assert conge.nb_jours == 15
     assert conge.statut == StatutConge.EN_ATTENTE
 
-def test_track_attendance(db: Session, test_user: dict):
+@pytest.mark.asyncio
+async def test_track_attendance(db: Session, test_user: dict):
     """Test du suivi des présences"""
     service = HRService(db)
     
@@ -120,7 +126,8 @@ def test_track_attendance(db: Session, test_user: dict):
     assert presence.type_presence == TypePresence.PRESENT
     assert presence.heures_travaillees == 9
 
-def test_approve_leave_request(db: Session, test_user: dict):
+@pytest.mark.asyncio
+async def test_approve_leave_request(db: Session, test_user: dict):
     """Test d'approbation d'une demande de congé"""
     service = HRService(db)
     
