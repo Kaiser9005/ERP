@@ -1,6 +1,10 @@
-# Guide des Tests FOFAL ERP
+# Documentation des Tests FOFAL ERP
 
 ## Vue d'ensemble
+
+La documentation des tests de FOFAL ERP a été réorganisée pour une meilleure maintenabilité et lisibilité. Cette page sert de point d'entrée vers la documentation détaillée.
+
+## Types de Tests
 
 Le système de tests de FOFAL ERP utilise plusieurs niveaux de tests :
 
@@ -10,16 +14,42 @@ Le système de tests de FOFAL ERP utilise plusieurs niveaux de tests :
 - Tests de services (Service tests)
 - Tests ML (Machine Learning tests)
 
-## Configuration
+## Documentation Détaillée
 
-### Prérequis
-```bash
-# Installation des dépendances de test
-pip install -r requirements.txt
+La documentation complète est maintenant organisée dans le dossier `/docs/tests/` :
+
+### Guides Principaux
+- [Configuration et Prérequis](tests/guides/configuration.md)
+- [Tests React et React Query](tests/guides/react.md)
+- [Tests Machine Learning](tests/guides/ml.md)
+- [Tests End-to-End](tests/guides/e2e.md)
+- [Bonnes Pratiques](tests/guides/best_practices.md)
+- [Maintenance](tests/guides/maintenance.md)
+
+### Documentation Spécifique
+- Tests ML des projets : [Projets ML Tests - Mars 2024](modules/projets_ml_tests_mars2024.md)
+- Tests React Query : [Guide React Query](guides/typage.md)
+- Tests E2E : [Guide E2E](guides/developpement.md)
+
+## Structure des Tests
+
+```
+tests/
+├── conftest.py                           # Fixtures partagées globales
+├── test_*.py                            # Tests unitaires
+├── e2e/                                 # Tests end-to-end
+│   ├── conftest.py                     # Fixtures E2E
+│   └── test_*.py                       # Tests E2E spécifiques
+└── integration/                        # Tests d'intégration
+    └── test_*_integration.py           # Tests d'intégration spécifiques
 ```
 
-### Exécution des tests
+## Commandes Principales
+
 ```bash
+# Installation des dépendances
+pip install -r requirements.txt
+
 # Tous les tests
 pytest
 
@@ -35,277 +65,37 @@ pytest tests/e2e/
 # Tests ML
 pytest tests/test_projects_ml_service.py
 pytest tests/integration/test_projects_ml_integration.py
+
+# Tests Inventaire
+pytest tests/integration/test_inventory_*.py
 ```
 
-## Structure des Tests
+## Standards Globaux
 
-```
-tests/
-├── conftest.py                           # Fixtures partagées globales
-├── test_dashboard.py                     # Tests du tableau de bord
-├── test_weather.py                       # Tests du service météo
-├── test_activities.py                    # Tests des activités
-├── test_projects_ml_service.py          # Tests unitaires ML projets
-├── e2e/                                  # Tests end-to-end
-│   ├── conftest.py                      # Fixtures E2E
-│   ├── test_task_management.py
-│   └── test_tableau_meteo.py
-└── integration/                         # Tests d'intégration
-    ├── test_task_integration.py
-    ├── test_comptabilite_integration.py
-    └── test_projects_ml_integration.py  # Tests intégration ML projets
-```
+1. Nommage des Tests
+   - Tests unitaires : `test_*.py`
+   - Tests d'intégration : `test_*_integration.py`
+   - Tests E2E : `test_*_e2e.py`
 
-## Tests React avec React Query
+2. Organisation
+   - Un fichier de test par module/composant
+   - Fixtures partagées dans `conftest.py`
+   - Tests groupés par fonctionnalité
 
-### Structure des Tests React Query
-Les tests des composants utilisant react-query doivent vérifier :
-- L'état de chargement initial
-- Le rendu avec les données
-- La gestion des erreurs
-- Les états sans données
-- La configuration correcte des requêtes
-
-Exemple de structure :
-```typescript
-describe('MonComposant', () => {
-  let queryClient: QueryClient;
-
-  beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false
-        }
-      }
-    });
-  });
-
-  it('affiche le chargement', () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MonComposant />
-      </QueryClientProvider>
-    );
-    expect(screen.getByTestId('loading')).toBeInTheDocument();
-  });
-
-  it('affiche les données', async () => {
-    const mockData = { id: 1, name: 'Test' };
-    server.use(
-      rest.get('/api/data', (req, res, ctx) => {
-        return res(ctx.json(mockData));
-      })
-    );
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MonComposant />
-      </QueryClientProvider>
-    );
-
-    expect(await screen.findByText('Test')).toBeInTheDocument();
-  });
-
-  it('affiche une erreur', async () => {
-    server.use(
-      rest.get('/api/data', (req, res, ctx) => {
-        return res(ctx.status(500));
-      })
-    );
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MonComposant />
-      </QueryClientProvider>
-    );
-
-    expect(await screen.findByTestId('error')).toBeInTheDocument();
-  });
-});
-```
-
-### Standards de Test React Query
-1. Toujours wrapper les composants avec QueryClientProvider
-2. Désactiver les retry en test
-3. Mocker les fonctions de service
-4. Vérifier les états de chargement
-5. Tester la configuration des requêtes (staleTime, etc.)
-6. Vérifier la gestion des erreurs
-7. Tester les cas sans données
-
-## Tests ML
-
-### Structure des Tests ML
-Les tests ML doivent vérifier :
-- La qualité des prédictions
-- La performance des modèles
-- La gestion des erreurs
-- La résilience du système
-- L'intégration avec les services externes
-
-Exemple de structure :
-```typescript
-describe('MLService', () => {
-  let mlService: MLService;
-  let mockWeatherService: MockWeatherService;
-  let mockIoTService: MockIoTService;
-  let mockCache: MockCacheService;
-
-  beforeEach(() => {
-    mockWeatherService = new MockWeatherService();
-    mockIoTService = new MockIoTService();
-    mockCache = new MockCacheService();
-    
-    mlService = new MLService({
-      weatherService: mockWeatherService,
-      iotService: mockIoTService,
-      cache: mockCache
-    });
-  });
-
-  it('prédit avec succès', async () => {
-    const prediction = await mlService.predict({
-      projectId: 'P001',
-      date: new Date()
-    });
-
-    expect(prediction.probability).toBeGreaterThan(0);
-    expect(prediction.factors).toHaveLength(3);
-    expect(prediction.recommendations).toHaveLength(2);
-  });
-
-  it('gère les erreurs services', async () => {
-    mockWeatherService.getWeather.mockRejectedValue(new Error());
-    
-    const prediction = await mlService.predict({
-      projectId: 'P001',
-      date: new Date()
-    });
-
-    expect(prediction.error).toBeDefined();
-    expect(prediction.fallbackUsed).toBe(true);
-  });
-
-  it('utilise le cache correctement', async () => {
-    await mlService.predict({
-      projectId: 'P001',
-      date: new Date()
-    });
-
-    expect(mockCache.get).toHaveBeenCalled();
-    expect(mockCache.set).toHaveBeenCalled();
-  });
-});
-```
-
-### Standards de Test ML
-1. Toujours mocker les services externes
-2. Valider la qualité des prédictions
-3. Tester la gestion des erreurs
-4. Vérifier la performance
-5. Tester l'utilisation du cache
-6. Valider la résilience
-7. Tester les cas limites
-
-## Tests E2E
-
-Les tests E2E utilisent Playwright pour tester l'application dans un vrai navigateur.
-
-### Configuration E2E
-
-Les tests E2E nécessitent :
-- Playwright
-- Un serveur de développement en cours d'exécution
-- Une base de données de test
-
-### Data-testid
-
-Les composants React utilisent des data-testid pour faciliter la sélection dans les tests :
-
-```typescript
-<TextField
-  data-testid="task-title-input"
-  label="Titre"
-/>
-```
-
-Liste des data-testid principaux :
-- `page-title` : Titre de la page
-- `error-message` : Messages d'erreur
-- `task-form` : Formulaire de tâche
-- `task-title-input` : Champ titre de tâche
-- `task-description-input` : Champ description
-- `task-status-select` : Sélecteur de statut
-- `task-priority-select` : Sélecteur de priorité
-- `task-category-select` : Sélecteur de catégorie
-- `start-date-input` : Champ date de début
-- `due-date-input` : Champ date de fin
-- `weather-dependent-checkbox` : Case à cocher météo
-- `submit-button` : Bouton de soumission
-- `cancel-button` : Bouton d'annulation
-
-### Fixtures E2E
-
-Les fixtures E2E sont définies dans `tests/e2e/conftest.py` :
-- `auth_token` : Token JWT pour l'authentification
-- `browser_context_args` : Configuration du navigateur
-- `test_page` : Page de test avec helpers
-- `authenticated_page` : Page authentifiée
-- `task_page` : Page spécifique aux tâches
-
-### Helpers E2E
-
-Des helpers sont disponibles pour faciliter les tests :
-- `fill_task_form` : Remplissage du formulaire de tâche
-- `assert_task_in_list` : Vérification de présence d'une tâche
-- `assert_task_not_in_list` : Vérification d'absence d'une tâche
-- `assert_toast_message` : Vérification des messages toast
-- `assert_validation_error` : Vérification des erreurs de validation
-
-## Bonnes Pratiques
-
-1. Tests Unitaires
-   - Un test par fonction/comportement
-   - Utiliser les fixtures pour la configuration
-   - Mocker les dépendances externes
-   - Nommer clairement les tests
-
-2. Tests E2E
-   - Utiliser les data-testid pour la sélection
-   - Tester les flux complets
-   - Gérer l'état initial
-   - Nettoyer après les tests
-
-3. Tests ML
-   - Valider la qualité des prédictions
-   - Tester la résilience
-   - Vérifier la performance
-   - Documenter les cas limites
-
-4. Général
-   - Maintenir une couverture > 80%
-   - Documenter les cas complexes
-   - Tests indépendants
-   - Utiliser les fixtures appropriées
-
-## Maintenance
-
-- Mettre à jour les tests lors des changements de fonctionnalités
-- Vérifier régulièrement la couverture
-- Maintenir la documentation des tests à jour
-- Revoir et optimiser les tests lents
-
-## Documentation Détaillée
-
-Pour plus de détails sur les tests spécifiques :
-- Tests ML des projets : [Projets ML Tests - Mars 2024](modules/projets_ml_tests_mars2024.md)
-- Tests React Query : [Guide React Query](guides/typage.md)
-- Tests E2E : [Guide E2E](guides/developpement.md)
+3. Documentation
+   - Chaque test doit avoir une description claire
+   - Les cas complexes doivent être documentés
+   - Les fixtures doivent être documentées
 
 ## Support
 
 Pour toute question sur les tests :
-- Consulter la documentation dans `/docs/tests/`
-- Voir les exemples dans les fichiers de test
-- Contacter l'équipe de développement
+1. Consulter la documentation appropriée dans `/docs/tests/`
+2. Voir les exemples dans le dossier `docs/tests/examples/`
+3. Contacter l'équipe de développement
+
+## Migration
+
+Cette documentation est en cours de migration vers une structure plus modulaire. Les anciens guides sont progressivement déplacés vers la nouvelle structure dans `/docs/tests/`.
+
+Pour plus de détails sur la nouvelle structure et les dernières mises à jour, consultez le [README de la documentation des tests](tests/README.md).

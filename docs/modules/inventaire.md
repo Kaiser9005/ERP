@@ -3,7 +3,7 @@
 ## Vue d'Ensemble
 Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie et les statistiques associées pour l'exploitation agricole FOFAL.
 
-## État d'Avancement : 65%
+## État d'Avancement : 85%
 - Interface utilisateur de base ✅
 - Gestion des stocks ✅
 - Mouvements de stock ✅
@@ -12,8 +12,8 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Traçabilité avancée ✅
 - Intégration IoT ✅
 - Contrôle qualité ✅
+- Tests d'intégration ✅
 - Prévisions et optimisations ⏳
-- Tests complets ⏳
 
 ## Composants
 
@@ -160,6 +160,59 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - POST /api/v1/inventaire/stocks/:id/certifications - Ajout certification
 - POST /api/v1/inventaire/controles - Création contrôle qualité
 
+## Tests
+
+### Tests d'Intégration
+Le module dispose maintenant d'une suite complète de tests d'intégration :
+
+#### Production-Inventaire
+```python
+# tests/integration/test_production_inventory_integration.py
+- Test synchronisation production-stocks
+- Test mise à jour automatique des niveaux
+- Test alertes de réapprovisionnement
+```
+
+#### IoT-Inventaire
+```python
+# tests/integration/test_iot_inventory_integration.py
+- Test monitoring conditions stockage
+- Test alertes dépassement seuils
+- Test historique conditions
+```
+
+#### Finance-Inventaire
+```python
+# tests/integration/test_inventory_finance_integration.py
+- Test valorisation des stocks
+- Test impact mouvements sur comptabilité
+- Test calcul coûts stockage
+```
+
+#### ML-Inventaire
+```python
+# tests/integration/test_inventory_ml_integration.py
+- Test prédictions consommation
+- Test optimisation niveaux stocks
+- Test détection anomalies
+```
+
+#### Qualité-Inventaire
+```python
+# tests/integration/test_inventory_quality_integration.py
+- Test workflow contrôle qualité
+- Test traçabilité lots
+- Test gestion non-conformités
+```
+
+### Tests E2E
+```python
+# tests/e2e/test_iot_inventory_dashboard.py
+- Test tableau de bord IoT
+- Test interactions utilisateur
+- Test alertes temps réel
+```
+
 ## Sécurité
 - Protection des routes avec ProtectedRoute
 - Permissions requises :
@@ -181,9 +234,9 @@ Le module Inventaire gère le suivi des stocks, les mouvements d'entrée/sortie 
 - Machine learning pour prédictions
 
 ### 3. Tests
-- Tests unitaires
-- Tests d'intégration
-- Tests E2E
+- Tests de performance
+- Tests de charge
+- Tests de résilience
 
 ### 4. Documentation
 - Guide utilisateur
