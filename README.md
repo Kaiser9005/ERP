@@ -44,12 +44,25 @@ Le projet est en développement actif avec plusieurs modules à différents stad
   - Cache Redis optimisé
   - Intégration météo pour prévisions
   - ML prédictif
-- RH (25%) : 
+- RH (45%) : 
   - Gestion basique des employés
   - Structure des présences
-- Inventaire (35%) : 
+  - Gestion des compétences agricoles
+  - Gestion des contrats
+  - Système de paie (backend)
+    - Modèle de données ✓
+    - Service métier ✓
+    - API REST ✓
+    - Tests unitaires et intégration ✓
+    - Documentation API ✓
+- Inventaire (100%) : 
   - Modèles de stocks
   - Mouvements de base
+  - Traçabilité avancée
+  - Intégration IoT
+  - ML prédictif
+  - Tests ML
+  - Documentation ML
 
 Pour plus de détails sur l'état actuel et les prochaines étapes, consultez notre [Plan de Développement](docs/plan_developpement.md).
 
@@ -113,7 +126,14 @@ Cette architecture assure :
 ### 4. Ressources Humaines
 - Gestion du personnel
 - Système de paie
+  - Calcul automatisé des salaires
+  - Gestion des cotisations
+  - Intégration contrats
+  - Validation multi-niveaux
+  - Documentation complète
 - Gestion des présences
+- Gestion des compétences agricoles
+- Gestion des contrats
 - Évaluation des performances
 - Formation et développement
 
@@ -123,6 +143,9 @@ Cette architecture assure :
 - Gestion des mouvements
 - Alertes de stock
 - Optimisation des niveaux
+- ML prédictif
+- Intégration IoT
+- Tests ML
 
 ### 6. Paramétrage
 - Configuration système
@@ -182,6 +205,7 @@ La documentation complète est disponible dans le dossier [docs](docs/README.md)
 - [Guide de Développement](docs/guides/developpement.md)
 - [Documentation API](docs/api/)
   - [API Comptabilité](docs/api/comptabilite.md)
+  - [API Paie](docs/api/payroll.md)
 - [Diagrammes Techniques](docs/diagrammes/)
 - [Plan de Développement](docs/plan_developpement.md)
 - [Tests ML](docs/modules/projets_ml_tests_mars2024.md)
