@@ -21,6 +21,7 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - [Module Inventaire](api/inventaire.md)
 - [Module Finance](api/finance.md)
 - [Module RH](api/hr.md)
+- [Module Contrats](api/contracts.md)
 - [Paramétrage](api/parametrage.md)
 - [Documents](api/documents.md)
 - [Dashboard](api/dashboard.md)
@@ -74,6 +75,11 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 
 ### 4. Ressources Humaines
 - Gestion des employés
+- Gestion des contrats
+  - Création et suivi des contrats (CDI, CDD, Saisonnier)
+  - Gestion des modifications de contrat
+  - Alertes sur les contrats arrivant à expiration
+  - Statistiques sur les contrats
 - Système de paie
 - Présences et congés
 - Évaluations
