@@ -32,8 +32,7 @@ Le projet est en développement actif avec plusieurs modules à différents stad
   - Documentation API
   - Cache Redis optimisé
   - Recommandations ML
-
-  - Comptabilité (95%) :
+- Comptabilité (95%) :
   - Gestion complète des comptes et écritures
   - Dashboard financier avancé
   - Analyse budgétaire avec impact météo
@@ -200,15 +199,101 @@ npm run dev
 
 ## Documentation
 
-La documentation complète est disponible dans le dossier [docs](docs/README.md) :
+La documentation complète est organisée comme suit :
+
+### Guides Développeurs
 - [Guide d'Installation](docs/guides/installation.md)
 - [Guide de Développement](docs/guides/developpement.md)
-- [Documentation API](docs/api/)
-  - [API Comptabilité](docs/api/comptabilite.md)
-  - [API Paie](docs/api/payroll.md)
-- [Diagrammes Techniques](docs/diagrammes/)
+- [Guide de Typage](docs/guides/typage.md)
+- [Gestion des Tâches](docs/guides/task_management.md)
+
+### Documentation API
+#### Core
+- [Authentification](docs/api/auth.md)
+- [Paramétrage](docs/api/parametrage.md)
+- [Documents](docs/api/documents.md)
+- [Dashboard](docs/api/dashboard.md)
+- [Activités](docs/api/activities.md)
+
+#### Production & Inventaire
+- [Production](docs/api/production.md)
+- [Rapports de Production](docs/api/production_reports.md)
+- [Inventaire](docs/api/inventaire.md)
+- [IoT Monitoring](docs/api/iot_monitoring.md)
+- [Météo](docs/api/weather.md)
+
+#### Finance & Comptabilité
+- [Finance](docs/api/finance.md)
+- [Comptabilité](docs/api/comptabilite.md)
+
+#### RH & Projets
+- [RH](docs/api/hr.md)
+- [RH Agricole](docs/api/hr_agricole.md)
+- [Contrats](docs/api/contracts.md)
+- [Paie](docs/api/payroll.md)
+- [Projets](docs/api/projects.md)
+- [Tâches](docs/api/tasks.md)
+
+### Documentation Modules
+#### Finance & Comptabilité
+- [Finance - Vue d'ensemble](docs/modules/finance_index.md)
+- [Finance - Partie 1](docs/modules/finance_part1.md)
+- [Finance - Partie 2](docs/modules/finance_part2.md)
+- [Finance - API](docs/modules/finance_part3_api_endpoints.md)
+- [Finance - Modèles](docs/modules/finance_part3_models.md)
+- [Finance - Support](docs/modules/finance_part3_support.md)
+- [Finance - Évolutions](docs/modules/finance_part3_evolutions.md)
+- [Comptabilité - Vue d'ensemble](docs/modules/comptabilite_index.md)
+- [Comptabilité - Partie 1](docs/modules/comptabilite_part1.md)
+- [Comptabilité - Partie 2](docs/modules/comptabilite_part2.md)
+- [Comptabilité - API](docs/modules/comptabilite_part3_api.md)
+- [Comptabilité - Mises à jour](docs/modules/comptabilite_updates.md)
+- [Intégration Finance-Comptabilité](docs/modules/finance_comptabilite_integration.md)
+
+#### Production & Inventaire
+- [Production](docs/modules/production_module.md)
+- [Production ML](docs/modules/production_ml.md)
+- [Inventaire](docs/modules/inventaire/index.md)
+- [Inventaire ML](docs/modules/inventaire/ml/index.md)
+  - [Modèles](docs/modules/inventaire/ml/models.md)
+  - [Intégrations](docs/modules/inventaire/ml/integrations.md)
+  - [Optimisation](docs/modules/inventaire/ml/optimization.md)
+  - [Monitoring](docs/modules/inventaire/ml/monitoring.md)
+  - [Tests](docs/modules/inventaire/ml/tests.md)
+
+#### RH & Projets
+- [RH Agricole](docs/modules/hr_agricole/index.md)
+  - [Composants](docs/modules/hr_agricole/composants.md)
+  - [Types](docs/modules/hr_agricole/types.md)
+  - [Méthodes](docs/modules/hr_agricole/methodes.md)
+  - [Exemples](docs/modules/hr_agricole/exemples.md)
+- [Contrats RH](docs/modules/hr_contract.md)
+- [Projets ML](docs/modules/projects_ml.md)
+- [Tests Projets ML](docs/modules/projets_ml_tests_mars2024.md)
+
+### Documentation Technique
 - [Plan de Développement](docs/plan_developpement.md)
-- [Tests ML](docs/modules/projets_ml_tests_mars2024.md)
+- [Plan Technique](docs/plan_developpement_technique.md)
+- [Développement Futur](docs/developpement_futur.md)
+
+### Diagrammes
+- [Vue d'ensemble](docs/diagrammes/README.md)
+- [Composants](docs/diagrammes/composants.md)
+- [Infrastructure](docs/diagrammes/infrastructure.md)
+- [Flux Production](docs/diagrammes/flux_production.md)
+- [Flux Projets](docs/diagrammes/flux_projets.md)
+- [Schéma Base de Données](docs/diagrammes/db_schema.md)
+
+### Tests
+- [Documentation des Tests](docs/tests.md)
+- [Vue d'ensemble](docs/tests/README.md)
+- [Configuration](docs/tests/guides/configuration.md)
+- [React](docs/tests/guides/react.md)
+- [Machine Learning](docs/tests/guides/ml.md)
+- [ML Inventaire](docs/tests/guides/ml_inventory.md)
+- [Tests E2E](docs/tests/guides/e2e.md)
+- [Bonnes Pratiques](docs/tests/guides/best_practices.md)
+- [Maintenance](docs/tests/guides/maintenance.md)
 
 ## Standards de Développement
 
