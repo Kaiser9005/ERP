@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { TaskStatus, TaskPriority, TaskCategory, Task } from '../../types/task';
+import { TaskStatus, TaskPriority, TaskCategory } from '../../types/task';
 import * as taskService from '../../services/tasks';
 
 interface TaskListProps {
@@ -71,7 +71,7 @@ const TaskList: React.FC<TaskListProps> = ({ projectId }) => {
     setPage(1);
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_: unknown, value: number) => {
     setPage(value);
   };
 
