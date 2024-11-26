@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import Column, String, Date, Float, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
@@ -22,6 +22,7 @@ class Contract(Base):
     
     # Relations
     employee = relationship("Employee", back_populates="contracts")
+    payrolls = relationship("Payroll", back_populates="contract")
     
     # Métadonnées
     created_at = Column(Date, nullable=False, default=date.today)
