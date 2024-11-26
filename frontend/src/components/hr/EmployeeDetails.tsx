@@ -17,14 +17,13 @@ import {
   Work,
   Business,
   Today,
-  Person,
-  AttachMoney
+  Person
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEmployee } from '../../services/hr';
 import { queryKeys } from '../../config/queryClient';
-import { Employee, EmployeeStatus } from '../../types/hr';
+import { EmployeeStatus } from '../../types/hr';
 import InfoItem from './components/InfoItem';
 
 const getStatutColor = (statut: EmployeeStatus): 'success' | 'error' | 'warning' | 'info' | 'default' => {
