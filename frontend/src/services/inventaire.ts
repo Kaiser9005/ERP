@@ -16,6 +16,15 @@ export const getProduit = async (id: string): Promise<Produit> => {
   return data;
 };
 
+export const verifierCodeUnique = async (code: string): Promise<boolean> => {
+  try {
+    const { data } = await api.get<{ exists: boolean }>(`/api/inventaire/produits/verifier-code/${code}`);
+    return !data.exists;
+  } catch (error) {
+    return false;
+  }
+};
+
 export const creerProduit = async (produitData: Partial<Produit>): Promise<Produit> => {
   const { data } = await api.post<Produit>('/api/inventaire/produits', produitData);
   return data;
@@ -46,7 +55,7 @@ export const getStatsInventaire = async (): Promise<StatsInventaire> => {
   return data;
 };
 
-export const getStocks = async (): Promise<Stock[]> => {
-  const { data } = await api.get<Stock[]>('/api/inventaire/stocks');
+export const getStocks = async (): Promise<(Stock & { produit: Produit })[]> => {
+  const { data } = await api.get<(Stock & { produit: Produit })[]>('/api/inventaire/stocks');
   return data;
 };

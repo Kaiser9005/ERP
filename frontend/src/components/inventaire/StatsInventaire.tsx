@@ -3,7 +3,8 @@ import { Grid } from '@mui/material';
 import StatCard from '../common/StatCard';
 import { Inventory, TrendingUp, Warning, LocalShipping } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getStatsInventaire, StatsInventaire as StatsInventaireService } from '../../services/inventaire';
+import { getStatsInventaire } from '../../services/inventaire';
+import { StatsInventaire as StatsInventaireType } from '../../types/inventaire';
 
 interface StatistiquesInventaire {
   valeurTotale: number;
@@ -16,7 +17,7 @@ interface StatistiquesInventaire {
   variationMouvements: { valeur: number; type: 'hausse' | 'baisse' };
 }
 
-const transformStatsInventaire = (stats: StatsInventaireService): StatistiquesInventaire => ({
+const transformStatsInventaire = (stats: StatsInventaireType): StatistiquesInventaire => ({
   valeurTotale: stats.valeur_totale,
   variationValeur: stats.valeur_stock,
   tauxRotation: stats.total_produits,
@@ -28,7 +29,7 @@ const transformStatsInventaire = (stats: StatsInventaireService): StatistiquesIn
 });
 
 const StatsInventaire: React.FC = () => {
-  const { data: statsService } = useQuery<StatsInventaireService>('statistiques-inventaire', getStatsInventaire);
+  const { data: statsService } = useQuery<StatsInventaireType>('statistiques-inventaire', getStatsInventaire);
   const stats = statsService ? transformStatsInventaire(statsService) : undefined;
 
   return (
