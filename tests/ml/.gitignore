@@ -1,0 +1,30 @@
+# Dossiers de cache et données
+cache/*
+data/*
+models/*
+
+# Garder les dossiers vides avec .gitkeep
+!cache/.gitkeep
+!data/.gitkeep
+!models/.gitkeep
+
+# Fichiers Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers de test temporaires
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Fichiers de logs
+*.log
+
+# Fichiers de données de test
+*.csv
+*.json
+*.pkl
+*.h5
+*.joblib
+*.npz
