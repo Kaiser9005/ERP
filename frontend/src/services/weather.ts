@@ -7,7 +7,14 @@ import type {
   WeatherResponse,
   IoTData,
   WeatherImpact,
-  IoTReading
+  IoTReading,
+  WeatherHRMetrics,
+  WeatherScheduleAdjustment,
+  WeatherSafetyEquipment,
+  WeatherTrainingRequirement,
+  WeatherComplianceRecord,
+  WeatherPolicyConfig,
+  WeatherRiskAssessment
 } from '../types/weather';
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
@@ -18,6 +25,35 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000;
 
 class WeatherService {
+  private policyConfig: WeatherPolicyConfig = {
+    temperature_thresholds: {
+      max_work: 35,
+      reduced_activity: 30,
+      normal_activity: 25
+    },
+    wind_thresholds: {
+      stop_work: 50,
+      restricted_work: 30,
+      normal_work: 20
+    },
+    precipitation_thresholds: {
+      stop_work: 30,
+      indoor_only: 20,
+      normal_work: 10
+    },
+    break_schedule: {
+      high_temp_frequency: 30,
+      high_temp_duration: 15,
+      normal_frequency: 120,
+      normal_duration: 10
+    },
+    ppe_requirements: {
+      'high_temperature': ['chapeau', 'protection_solaire', 'eau'],
+      'rain': ['imperméable', 'bottes'],
+      'wind': ['lunettes_protection', 'masque']
+    }
+  };
+
   private async fetchWithRetry<T>(
     url: string,
     retryCount = 0,
@@ -134,7 +170,7 @@ class WeatherService {
         risks: {
           precipitation: precipitationRisk,
           temperature: temperatureRisk,
-          level: this.getHighestRiskLevel(precipitationRisk, temperatureRisk)
+          level: this.getHighestRiskLevel([precipitationRisk, temperatureRisk])
         },
         recommendations: this.generateRecommendations(precipitationRisk, temperatureRisk)
       };
@@ -195,6 +231,90 @@ class WeatherService {
     );
   }
 
+  // Nouvelles méthodes pour l'intégration RH-météo
+
+  async getHRWeatherMetrics(): Promise<WeatherHRMetrics> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/hr/metrics`);
+      return response.data;
+    } catch (error) {
+      // Fallback sur le calcul local
+      const weather = await this.getCurrentWeather();
+      const forecast = await this.getForecast(3);
+      
+      const forecastCondition: WeatherCondition = {
+        date: forecast.days[0].date,
+        temperature: forecast.days[0].temp_max,
+        humidity: forecast.days[0].humidity,
+        precipitation: forecast.days[0].precipitation,
+        wind_speed: 0, // Assuming wind_speed is not available in WeatherForecastDay
+        conditions: forecast.days[0].conditions,
+        uv_index: 0, // Assuming uv_index is not available in WeatherForecastDay
+        cloud_cover: 0 // Assuming cloud_cover is not available in WeatherForecastDay
+      };
+      return this.calculateHRMetrics(weather, forecastCondition);
+    }
+  }
+
+  async getScheduleAdjustments(date: string): Promise<WeatherScheduleAdjustment[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/hr/schedule-adjustments`, {
+        params: { date }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de la récupération des ajustements d'horaires:", error);
+      throw error;
+    }
+  }
+
+  async proposeScheduleAdjustment(
+    adjustment: Omit<WeatherScheduleAdjustment, 'status'>
+  ): Promise<WeatherScheduleAdjustment> {
+    const response = await axios.post(`${API_BASE_URL}/hr/schedule-adjustments`, adjustment);
+    return response.data;
+  }
+
+  async getSafetyEquipment(conditions: string[]): Promise<WeatherSafetyEquipment[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/hr/safety-equipment`, {
+        params: { conditions: conditions.join(',') }
+      });
+      return response.data;
+    } catch (error) {
+      // Fallback sur les règles locales
+      return conditions.map(condition => ({
+        weather_condition: condition,
+        required_equipment: this.policyConfig.ppe_requirements[condition] || [],
+        optional_equipment: [],
+        instructions: `Équipement requis pour conditions: ${condition}`
+      }));
+    }
+  }
+
+  async getTrainingRequirements(weatherTypes: string[]): Promise<WeatherTrainingRequirement[]> {
+    const response = await axios.get(`${API_BASE_URL}/hr/training-requirements`, {
+      params: { weather_types: weatherTypes.join(',') }
+    });
+    return response.data;
+  }
+
+  async submitComplianceRecord(record: WeatherComplianceRecord): Promise<void> {
+    await axios.post(`${API_BASE_URL}/hr/compliance-records`, record);
+  }
+
+  async getRiskAssessment(location: string): Promise<WeatherRiskAssessment> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/hr/risk-assessment`, {
+        params: { location }
+      });
+      return response.data;
+    } catch (error) {
+      const weather = await this.getCurrentWeather();
+      return this.generateRiskAssessment(weather, location);
+    }
+  }
+
   private analyzePrecipitationRisk(current: number, forecast: number[]): WeatherRisk {
     const avgForecast = forecast.reduce((a, b) => a + b, 0) / forecast.length;
 
@@ -221,7 +341,7 @@ class WeatherService {
     if (maxTemp > 35) {
       return {
         level: 'HIGH',
-        message: "Risque de stress thermique pour les cultures"
+        message: "Risque de stress thermique - Protection nécessaire"
       };
     } else if (maxTemp > 30) {
       return {
@@ -235,16 +355,37 @@ class WeatherService {
     };
   }
 
-  private getHighestRiskLevel(
-    risk1: WeatherRisk,
-    risk2: WeatherRisk
-  ): 'LOW' | 'MEDIUM' | 'HIGH' {
-    const levels: Record<'LOW' | 'MEDIUM' | 'HIGH', number> = {
-      LOW: 0,
-      MEDIUM: 1,
-      HIGH: 2
+  private analyzeWindRisk(windSpeed: number): WeatherRisk {
+    const { wind_thresholds } = this.policyConfig;
+    
+    if (windSpeed >= wind_thresholds.stop_work) {
+      return {
+        level: 'HIGH',
+        message: 'Vents violents - Arrêt des activités extérieures'
+      };
+    } else if (windSpeed >= wind_thresholds.restricted_work) {
+      return {
+        level: 'MEDIUM',
+        message: 'Vents forts - Activités extérieures restreintes'
+      };
+    }
+    return {
+      level: 'LOW',
+      message: 'Conditions de vent acceptables'
     };
-    return levels[risk1.level] > levels[risk2.level] ? risk1.level : risk2.level;
+  }
+
+  private getHighestRiskLevel(risks: WeatherRisk[]): 'LOW' | 'MEDIUM' | 'HIGH' {
+    const levels = {
+      'HIGH': 2,
+      'MEDIUM': 1,
+      'LOW': 0
+    };
+    
+    const maxLevel = Math.max(...risks.map(risk => levels[risk.level]));
+    return Object.keys(levels).find(
+      key => levels[key as keyof typeof levels] === maxLevel
+    ) as 'LOW' | 'MEDIUM' | 'HIGH';
   }
 
   private generateRecommendations(
@@ -282,6 +423,174 @@ class WeatherService {
       : ["Conditions favorables pour les activités agricoles normales"];
   }
 
+  private calculateHRMetrics(
+    current: WeatherCondition,
+    forecast: WeatherCondition
+  ): WeatherHRMetrics {
+    const temperatureRisk = this.analyzeTemperatureRisk(current.temperature, [forecast.temperature]);
+    const precipitationRisk = this.analyzePrecipitationRisk(current.precipitation, [forecast.precipitation]);
+    const windRisk = this.analyzeWindRisk(current.wind_speed);
+
+    return {
+      current_conditions: current,
+      risks: {
+        temperature: temperatureRisk,
+        precipitation: precipitationRisk,
+        wind: windRisk,
+        level: this.getHighestRiskLevel([temperatureRisk, precipitationRisk, windRisk])
+      },
+      schedule_adjustments: this.generateScheduleAdjustments(current),
+      safety_requirements: this.generateSafetyRequirements(current),
+      training_needs: this.generateTrainingNeeds(current),
+      compliance: [],
+      alerts: this.generateAlerts(temperatureRisk, precipitationRisk, windRisk)
+    };
+  }
+
+  private generateScheduleAdjustments(
+    weather: WeatherCondition
+  ): WeatherScheduleAdjustment[] {
+    const adjustments: WeatherScheduleAdjustment[] = [];
+    const { temperature_thresholds } = this.policyConfig;
+
+    if (weather.temperature >= temperature_thresholds.max_work) {
+      adjustments.push({
+        date: weather.date,
+        original_schedule: { start: '09:00', end: '17:00' },
+        adjusted_schedule: { start: '06:00', end: '14:00' },
+        reason: 'Températures excessives - Horaires matinaux',
+        affected_employees: [],
+        status: 'PROPOSED'
+      });
+    } else if (weather.temperature >= temperature_thresholds.reduced_activity) {
+      adjustments.push({
+        date: weather.date,
+        original_schedule: { start: '09:00', end: '17:00' },
+        adjusted_schedule: { start: '07:00', end: '15:00' },
+        reason: 'Températures élevées - Horaires adaptés',
+        affected_employees: [],
+        status: 'PROPOSED'
+      });
+    }
+
+    return adjustments;
+  }
+
+  private generateSafetyRequirements(
+    weather: WeatherCondition
+  ): WeatherSafetyEquipment[] {
+    const requirements: WeatherSafetyEquipment[] = [];
+    const { temperature_thresholds } = this.policyConfig;
+
+    if (weather.temperature >= temperature_thresholds.reduced_activity) {
+      requirements.push({
+        weather_condition: 'high_temperature',
+        required_equipment: this.policyConfig.ppe_requirements.high_temperature,
+        optional_equipment: [],
+        instructions: 'Port obligatoire des équipements de protection contre la chaleur'
+      });
+    }
+
+    return requirements;
+  }
+
+  private generateTrainingNeeds(
+    weather: WeatherCondition
+  ): WeatherTrainingRequirement[] {
+    const needs: WeatherTrainingRequirement[] = [];
+    const { temperature_thresholds } = this.policyConfig;
+
+    if (weather.temperature >= temperature_thresholds.reduced_activity) {
+      needs.push({
+        weather_type: 'high_temperature',
+        required_training: 'Prévention des risques liés à la chaleur',
+        validity_period: 12,
+        refresher_frequency: 12,
+        priority: 'HIGH'
+      });
+    }
+
+    return needs;
+  }
+
+  private generateAlerts(
+    tempRisk: WeatherRisk,
+    precipRisk: WeatherRisk,
+    windRisk: WeatherRisk
+  ): { type: 'SCHEDULE' | 'SAFETY' | 'EQUIPMENT' | 'TRAINING'; level: 'CRITICAL' | 'WARNING' | 'INFO'; message: string; affected_roles: string[]; }[] {
+    const alerts: { type: 'SCHEDULE' | 'SAFETY' | 'EQUIPMENT' | 'TRAINING'; level: 'CRITICAL' | 'WARNING' | 'INFO'; message: string; affected_roles: string[]; }[] = [];
+
+    if (tempRisk.level === 'HIGH') {
+      alerts.push({
+        type: 'SCHEDULE',
+        level: 'CRITICAL',
+        message: tempRisk.message,
+        affected_roles: ['outdoor_workers', 'field_supervisors']
+      });
+    }
+
+    if (precipRisk.level === 'HIGH') {
+      alerts.push({
+        type: 'SAFETY',
+        level: 'WARNING',
+        message: precipRisk.message,
+        affected_roles: ['all_outdoor_staff']
+      });
+    }
+
+    if (windRisk.level === 'HIGH') {
+      alerts.push({
+        type: 'SAFETY',
+        level: 'CRITICAL',
+        message: windRisk.message,
+        affected_roles: ['all_staff']
+      });
+    }
+
+    return alerts;
+  }
+
+  private generateRiskAssessment(
+    weather: WeatherCondition,
+    location: string
+  ): WeatherRiskAssessment {
+    const tempRisk = this.analyzeTemperatureRisk(weather.temperature, []);
+    const precipRisk = this.analyzePrecipitationRisk(weather.precipitation, []);
+    const windRisk = this.analyzeWindRisk(weather.wind_speed);
+
+    const risks = [tempRisk, precipRisk, windRisk].filter(risk => risk.level !== 'LOW');
+    
+    return {
+      date: weather.date,
+      location,
+      assessor: 'SYSTEM',
+      conditions: weather,
+      identified_risks: risks,
+      control_measures: this.generateControlMeasures(risks),
+      residual_risk_level: this.getHighestRiskLevel(risks),
+      review_date: new Date(new Date(weather.date).getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      approval_status: 'PENDING'
+    };
+  }
+
+  private generateControlMeasures(risks: WeatherRisk[]): string[] {
+    const measures = new Set<string>();
+
+    risks.forEach(risk => {
+      if (risk.level === 'HIGH') {
+        measures.add('Suspension des activités extérieures');
+        measures.add('Mise en place d\'activités alternatives en intérieur');
+      }
+      if (risk.level === 'MEDIUM') {
+        measures.add('Rotation accrue des équipes');
+        measures.add('Pauses plus fréquentes');
+        measures.add('Surveillance renforcée');
+      }
+    });
+
+    return Array.from(measures);
+  }
+
   isCacheValid(cachedAt?: string): boolean {
     if (!cachedAt) return false;
     
@@ -309,14 +618,17 @@ class WeatherService {
     return risk.level === 'HIGH';
   }
 
-  getWarningMessage(metrics: AgriculturalMetrics): string | null {
+  getWarningMessage(metrics: AgriculturalMetrics | WeatherHRMetrics): string | null {
     const warnings: string[] = [];
     
-    if (this.shouldShowWarning(metrics.risks.precipitation)) {
+    if ('precipitation' in metrics.risks && this.shouldShowWarning(metrics.risks.precipitation)) {
       warnings.push(metrics.risks.precipitation.message);
     }
     if (this.shouldShowWarning(metrics.risks.temperature)) {
       warnings.push(metrics.risks.temperature.message);
+    }
+    if ('wind' in metrics.risks && this.shouldShowWarning(metrics.risks.wind)) {
+      warnings.push(metrics.risks.wind.message);
     }
     
     return warnings.length > 0 

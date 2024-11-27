@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { HRAnalyticsDashboard } from '../components/hr/analytics/HRAnalyticsDashboard';
+import  HRAnalyticsDashboard  from '../components/hr/analytics/HRAnalyticsDashboard';
 import { PayrollPage } from '../components/hr/payroll/PayrollPage';
 import EmployeesList from '../components/hr/EmployeesList';
 import { ContractsPage } from '../components/hr/ContractsPage';
@@ -8,6 +8,7 @@ import LeaveRequests from '../components/hr/LeaveRequests';
 import AttendanceOverview from '../components/hr/AttendanceOverview';
 import CompetencesAgricoles from '../components/hr/agricole/CompetencesAgricoles';
 import { FormationPage } from '../components/hr/formation/FormationPage';
+import WeatherDashboard from '../components/hr/weather/WeatherDashboard';
 
 const HRRoutes: React.FC = () => {
   return (
@@ -20,6 +21,7 @@ const HRRoutes: React.FC = () => {
       <Route path="/competences" element={<CompetencesAgricoles employeId="current" />} />
       <Route path="/paie" element={<PayrollPage />} />
       <Route path="/formations" element={<FormationPage />} />
+      <Route path="/meteo" element={<WeatherDashboard />} />
     </Routes>
   );
 };
