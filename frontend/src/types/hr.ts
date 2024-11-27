@@ -13,6 +13,30 @@ export interface EmployeeStats {
   trainingVariation: number;
 }
 
+// Types pour les statistiques de formation
+export interface FormationStats {
+  totalFormations: number;
+  completionRate: number;
+  formationsByType: Record<string, number>;
+  successRateByFormation: Record<string, number>;
+}
+
+// Types pour les statistiques de contrat
+export interface ContractStats {
+  activeContracts: number;
+  renewalRate: number;
+  contractsByType: Record<ContractType, number>;
+  averageDuration: number;
+}
+
+// Types pour les statistiques de paie
+export interface PayrollStats {
+  totalPayroll: number;
+  averageSalary: number;
+  payrollVariation: number;
+  salaryDistribution: Record<string, number>;
+}
+
 export type ContractType = 'cdi' | 'cdd' | 'stage' | 'temporaire';
 
 // Type principal pour les employés
@@ -93,4 +117,10 @@ export type TrainingStatus = 'planifie' | 'en_cours' | 'termine' | 'annule';
 export interface TrainingEvaluation {
   note: number;
   commentaires: string;
+}
+
+// Type pour les variations de statistiques
+export interface StatVariation {
+  valeur: number;
+  type: 'hausse' | 'baisse';
 }

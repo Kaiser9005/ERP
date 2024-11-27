@@ -4,19 +4,44 @@ import {
   CardContent,
   Typography,
   Box,
-  LinearProgress
+  Chip,
+  useTheme
 } from '@mui/material';
+import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { StatVariation } from '../../../types/hr';
 
 interface StatCardProps {
   title: string;
   value: number;
-  total: number;
   icon: React.ReactNode;
   color: 'primary' | 'success' | 'warning' | 'error' | 'info';
+  variation?: StatVariation;
+  format?: 'number' | 'currency' | 'percentage';
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, total, icon, color }) => {
-  const percentage = (value / total) * 100;
+const formatValue = (value: number, format?: string): string => {
+  switch (format) {
+    case 'currency':
+      return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR'
+      }).format(value);
+    case 'percentage':
+      return `${value.toFixed(1)}%`;
+    default:
+      return new Intl.NumberFormat('fr-FR').format(value);
+  }
+};
+
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  icon,
+  color,
+  variation,
+  format = 'number'
+}) => {
+  const theme = useTheme();
 
   return (
     <Card>
@@ -24,7 +49,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, total, icon, color })
         <Box display="flex" alignItems="center" mb={2}>
           <Box
             sx={{
-              backgroundColor: `${color}.light`,
+              backgroundColor: theme.palette[color].light,
               borderRadius: '50%',
               p: 1,
               mr: 2,
@@ -40,29 +65,27 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, total, icon, color })
           </Typography>
         </Box>
 
-        <Typography variant="h4" gutterBottom>
-          {value}
-          <Typography
-            component="span"
-            variant="subtitle1"
-            color="text.secondary"
-            sx={{ ml: 1 }}
-          >
-            / {total}
+        <Box display="flex" alignItems="baseline" mb={1}>
+          <Typography variant="h4" component="span">
+            {formatValue(value, format)}
           </Typography>
-        </Typography>
-
-        <Box>
-          <LinearProgress
-            variant="determinate"
-            value={percentage}
-            sx={{ mb: 1, backgroundColor: `${color}.lighter` }}
-            color={color}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {percentage.toFixed(1)}% du total
-          </Typography>
+          
+          {variation && (
+            <Chip
+              icon={variation.type === 'hausse' ? <TrendingUp /> : <TrendingDown />}
+              label={`${variation.valeur.toFixed(1)}%`}
+              size="small"
+              color={variation.type === 'hausse' ? 'success' : 'error'}
+              sx={{ ml: 1 }}
+            />
+          )}
         </Box>
+
+        {variation && (
+          <Typography variant="body2" color="text.secondary">
+            {variation.type === 'hausse' ? 'Augmentation' : 'Diminution'} par rapport à la période précédente
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );

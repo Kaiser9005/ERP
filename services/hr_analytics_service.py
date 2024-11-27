@@ -5,34 +5,60 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
+from datetime import timedelta
 
 from db.database import get_db
 from models.hr import Employee
 from models.hr_formation import Formation, Participation
 from models.hr_contract import Contract
 from models.hr_payroll import Payroll
+from services.cache_service import CacheService
 
 class HRAnalyticsService:
     def __init__(self, db: Session = Depends(get_db)):
         self.db = db
         self._scaler = StandardScaler()
         self._model = RandomForestRegressor(n_estimators=100)
+        self._cache = CacheService()
+        
+        # Configuration des durées de cache
+        self.STATS_CACHE_DURATION = timedelta(minutes=15)
+        self.ANALYTICS_CACHE_DURATION = timedelta(minutes=30)
+        self.PREDICTION_CACHE_DURATION = timedelta(hours=1)
 
     async def get_employee_stats(self) -> Dict[str, Any]:
-        """Calcule les statistiques globales des employés"""
+        """Calcule les statistiques globales des employés avec cache"""
+        cache_key = "employee_stats"
+        
+        # Tentative de récupération depuis le cache
+        cached_stats = await self._cache.get(cache_key)
+        if cached_stats is not None:
+            return cached_stats
+            
+        # Calcul des statistiques si non présentes dans le cache
         total_employees = self.db.query(Employee).count()
         active_contracts = self.db.query(Contract).filter(Contract.status == 'active').count()
         formations_completed = self.db.query(Participation).filter(Participation.status == 'completed').count()
         
-        return {
+        stats = {
             "total_employees": total_employees,
             "active_contracts": active_contracts,
             "formations_completed": formations_completed,
             "formation_completion_rate": formations_completed / total_employees if total_employees > 0 else 0
         }
+        
+        # Mise en cache des résultats
+        await self._cache.set(cache_key, stats, self.STATS_CACHE_DURATION)
+        return stats
 
     async def get_formation_analytics(self) -> Dict[str, Any]:
-        """Analyse les données de formation"""
+        """Analyse les données de formation avec cache"""
+        cache_key = "formation_analytics"
+        
+        cached_analytics = await self._cache.get(cache_key)
+        if cached_analytics is not None:
+            return cached_analytics
+            
         formations = self.db.query(Formation).all()
         participations = self.db.query(Participation).all()
         
@@ -44,10 +70,17 @@ class HRAnalyticsService:
             "success_rate_by_formation": self._get_success_rate_by_formation(participations)
         }
         
+        await self._cache.set(cache_key, formation_stats, self.ANALYTICS_CACHE_DURATION)
         return formation_stats
 
     async def get_contract_analytics(self) -> Dict[str, Any]:
-        """Analyse les données des contrats"""
+        """Analyse les données des contrats avec cache"""
+        cache_key = "contract_analytics"
+        
+        cached_analytics = await self._cache.get(cache_key)
+        if cached_analytics is not None:
+            return cached_analytics
+            
         contracts = self.db.query(Contract).all()
         
         contract_stats = {
@@ -57,10 +90,17 @@ class HRAnalyticsService:
             "contract_renewal_rate": self._calculate_renewal_rate(contracts)
         }
         
+        await self._cache.set(cache_key, contract_stats, self.ANALYTICS_CACHE_DURATION)
         return contract_stats
 
     async def get_payroll_analytics(self) -> Dict[str, Any]:
-        """Analyse les données de paie"""
+        """Analyse les données de paie avec cache"""
+        cache_key = "payroll_analytics"
+        
+        cached_analytics = await self._cache.get(cache_key)
+        if cached_analytics is not None:
+            return cached_analytics
+            
         payrolls = self.db.query(Payroll).all()
         
         payroll_stats = {
@@ -70,10 +110,17 @@ class HRAnalyticsService:
             "payroll_trends": self._get_payroll_trends(payrolls)
         }
         
+        await self._cache.set(cache_key, payroll_stats, self.ANALYTICS_CACHE_DURATION)
         return payroll_stats
 
     async def predict_employee_performance(self, employee_id: int) -> Dict[str, float]:
-        """Prédit la performance d'un employé basée sur l'historique"""
+        """Prédit la performance d'un employé avec cache"""
+        cache_key = f"employee_performance_{employee_id}"
+        
+        cached_prediction = await self._cache.get(cache_key)
+        if cached_prediction is not None:
+            return cached_prediction
+            
         employee_data = self._get_employee_historical_data(employee_id)
         if not employee_data:
             return {"error": "Données insuffisantes pour la prédiction"}
@@ -81,10 +128,23 @@ class HRAnalyticsService:
         features = self._prepare_features(employee_data)
         prediction = self._model.predict(features)
         
-        return {
+        result = {
             "predicted_performance": float(prediction[0]),
             "confidence": float(self._model.score(features, employee_data['performance']))
         }
+        
+        await self._cache.set(cache_key, result, self.PREDICTION_CACHE_DURATION)
+        return result
+
+    async def invalidate_employee_cache(self, employee_id: int = None):
+        """Invalide le cache pour un employé spécifique ou tous les employés"""
+        if employee_id:
+            await self._cache.invalidate(f"employee_performance_{employee_id}")
+        else:
+            await self._cache.invalidate("employee_stats")
+            await self._cache.invalidate("formation_analytics")
+            await self._cache.invalidate("contract_analytics")
+            await self._cache.invalidate("payroll_analytics")
 
     def _get_formations_by_type(self, formations: List[Formation]) -> Dict[str, int]:
         """Groupe les formations par type"""

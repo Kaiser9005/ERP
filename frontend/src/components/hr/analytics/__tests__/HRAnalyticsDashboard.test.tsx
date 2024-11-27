@@ -1,153 +1,126 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { HRAnalyticsDashboard } from '../HRAnalyticsDashboard';
-import { getHRAnalytics } from '../../../../services/hr_analytics';
+import { render, screen } from '@testing-library/react';
+import { useHRAnalytics } from '../../../../services/hr_analytics';
+import HRAnalyticsDashboard from '../HRAnalyticsDashboard';
 
-// Mock du service
+// Mock des hooks
 jest.mock('../../../../services/hr_analytics');
 
-// Données de test
 const mockAnalytics = {
   employee_stats: {
     total_employees: 100,
-    active_contracts: 80,
-    formations_completed: 150,
+    active_contracts: 85,
+    formations_completed: 15,
     formation_completion_rate: 0.75
   },
   formation_analytics: {
     total_formations: 20,
     total_participations: 150,
-    completion_rate: 0.8,
+    completion_rate: 0.85,
     formations_by_type: {
       technique: 10,
-      securite: 5,
-      management: 5
+      management: 5,
+      securite: 5
     },
     success_rate_by_formation: {
-      '1': 0.9,
-      '2': 0.85
+      technique: 0.9,
+      management: 0.85,
+      securite: 0.95
     }
   },
   contract_analytics: {
-    total_contracts: 100,
+    total_contracts: 90,
     contracts_by_type: {
-      CDI: 60,
-      CDD: 30,
-      Stage: 10
+      cdi: 70,
+      cdd: 15,
+      stage: 5
     },
     contract_duration_stats: {
-      average: 365,
+      average: 730,
       min: 90,
-      max: 730
+      max: 3650
     },
-    contract_renewal_rate: 0.7
+    contract_renewal_rate: 0.75
   },
   payroll_analytics: {
-    total_payroll: 500000,
+    total_payroll: 350000,
     average_salary: 3500,
     salary_distribution: {
-      Q1: 25,
-      Q2: 25,
-      Q3: 25,
-      Q4: 25
+      junior: 2500,
+      intermediaire: 3500,
+      senior: 4500
     },
     payroll_trends: {
-      '2024-01': 480000,
-      '2024-02': 485000,
-      '2024-03': 500000
+      '2024-03': 5.2
     }
   }
-};
-
-// Configuration du client React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false
-    }
-  }
-});
-
-const renderWithQueryClient = (component: React.ReactElement) => {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {component}
-    </QueryClientProvider>
-  );
 };
 
 describe('HRAnalyticsDashboard', () => {
   beforeEach(() => {
-    (getHRAnalytics as jest.Mock).mockResolvedValue(mockAnalytics);
+    (useHRAnalytics as jest.Mock).mockReturnValue({
+      data: mockAnalytics,
+      isLoading: false,
+      error: null
+    });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('affiche le titre du tableau de bord', () => {
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText('Tableau de Bord RH')).toBeInTheDocument();
   });
 
   it('affiche un loader pendant le chargement', () => {
-    renderWithQueryClient(<HRAnalyticsDashboard />);
+    (useHRAnalytics as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: true,
+      error: null
+    });
+
+    render(<HRAnalyticsDashboard />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('affiche les statistiques générales', async () => {
-    renderWithQueryClient(<HRAnalyticsDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Employés Total')).toBeInTheDocument();
-      expect(screen.getByText('100')).toBeInTheDocument();
-      expect(screen.getByText('Contrats Actifs')).toBeInTheDocument();
-      expect(screen.getByText('80')).toBeInTheDocument();
-      expect(screen.getByText('Formations Complétées')).toBeInTheDocument();
-      expect(screen.getByText('150')).toBeInTheDocument();
-      expect(screen.getByText('Taux de Complétion')).toBeInTheDocument();
-      expect(screen.getByText('75')).toBeInTheDocument();
+  it('affiche une erreur en cas d\'échec', () => {
+    (useHRAnalytics as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: new Error('Erreur de chargement')
     });
+
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText(/Une erreur est survenue/)).toBeInTheDocument();
   });
 
-  it('affiche les statistiques des formations', async () => {
-    renderWithQueryClient(<HRAnalyticsDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Types de Formation')).toBeInTheDocument();
-      expect(screen.getByText('Total Formations')).toBeInTheDocument();
-      expect(screen.getByText('20')).toBeInTheDocument();
-      expect(screen.getByText('Total Participations')).toBeInTheDocument();
-      expect(screen.getByText('150')).toBeInTheDocument();
-    });
+  it('affiche les statistiques des formations', () => {
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText('Formations')).toBeInTheDocument();
+    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText('85%')).toBeInTheDocument();
   });
 
-  it('affiche les statistiques des contrats', async () => {
-    renderWithQueryClient(<HRAnalyticsDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Types de Contrat')).toBeInTheDocument();
-      expect(screen.getByText('Total Contrats')).toBeInTheDocument();
-      expect(screen.getByText('100')).toBeInTheDocument();
-      expect(screen.getByText('Taux de Renouvellement')).toBeInTheDocument();
-      expect(screen.getByText('70')).toBeInTheDocument();
-    });
+  it('affiche les statistiques des contrats', () => {
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText('Contrats')).toBeInTheDocument();
+    expect(screen.getByText('90')).toBeInTheDocument();
+    expect(screen.getByText('75%')).toBeInTheDocument();
   });
 
-  it('affiche les statistiques des salaires', async () => {
-    renderWithQueryClient(<HRAnalyticsDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Évolution des Salaires')).toBeInTheDocument();
-      expect(screen.getByText('Total Masse Salariale')).toBeInTheDocument();
-      expect(screen.getByText('500 000,00 €')).toBeInTheDocument();
-      expect(screen.getByText('Salaire Moyen')).toBeInTheDocument();
-      expect(screen.getByText('3 500,00 €')).toBeInTheDocument();
-    });
+  it('affiche les statistiques de la masse salariale', () => {
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText('Masse Salariale')).toBeInTheDocument();
+    expect(screen.getByText('350 000,00 €')).toBeInTheDocument();
+    expect(screen.getByText('5,2%')).toBeInTheDocument();
   });
 
-  it('affiche une erreur en cas d\'échec de chargement', async () => {
-    (getHRAnalytics as jest.Mock).mockRejectedValue(new Error('Erreur de chargement'));
-    renderWithQueryClient(<HRAnalyticsDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Une erreur est survenue lors du chargement des analytics')).toBeInTheDocument();
+  it('affiche un message si aucune donnée n\'est disponible', () => {
+    (useHRAnalytics as jest.Mock).mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null
     });
+
+    render(<HRAnalyticsDashboard />);
+    expect(screen.getByText('Aucune donnée disponible')).toBeInTheDocument();
   });
 });
