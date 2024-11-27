@@ -6,6 +6,7 @@ import { ContractsPage } from '../components/hr/ContractsPage';
 import LeaveRequests from '../components/hr/LeaveRequests';
 import AttendanceOverview from '../components/hr/AttendanceOverview';
 import CompetencesAgricoles from '../components/hr/agricole/CompetencesAgricoles';
+import { FormationPage } from '../components/hr/formation/FormationPage';
 
 const HRRoutes: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const HRRoutes: React.FC = () => {
       <Route path="/presences" element={<AttendanceOverview />} />
       <Route path="/competences" element={<CompetencesAgricoles employeId="current" />} />
       <Route path="/paie" element={<PayrollPage />} />
+      <Route path="/formations" element={<FormationPage />} />
     </Routes>
   );
 };
