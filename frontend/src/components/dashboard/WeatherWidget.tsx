@@ -4,12 +4,12 @@ import { WbSunny, Opacity, Speed } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { weatherService } from '../../services/weather';
 import { queryKeys } from '../../config/queryClient';
-import type { WeatherData } from '../../types/production';
+import type { AgriculturalMetrics } from '../../types/weather';
 
 const WeatherWidget: React.FC = () => {
-  const { data: weatherData, isLoading } = useQuery<WeatherData>({
+  const { data: weatherData, isLoading } = useQuery({
     queryKey: queryKeys.weather.current(),
-    queryFn: () => weatherService.getCurrentWeather(),
+    queryFn: () => weatherService.getAgriculturalMetrics(),
     staleTime: 1000 * 60 * 30, // 30 minutes
     refetchInterval: 1000 * 60 * 30, // Rafraîchir toutes les 30 minutes
     retry: 3
@@ -40,14 +40,16 @@ const WeatherWidget: React.FC = () => {
     );
   }
 
+  const { current_conditions: conditions } = weatherData;
+
   return (
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Conditions Météorologiques
-          {weatherData.cached_at && (
+          {conditions.cached_at && (
             <Typography variant="caption" color="textSecondary" component="span" sx={{ ml: 1 }}>
-              (Mis à jour {new Date(weatherData.cached_at).toLocaleTimeString()})
+              (Mis à jour {new Date(conditions.cached_at).toLocaleTimeString()})
             </Typography>
           )}
         </Typography>
@@ -59,7 +61,7 @@ const WeatherWidget: React.FC = () => {
                 Température
               </Typography>
               <Typography variant="h6">
-                {weatherData.temperature}°C
+                {conditions.temperature}°C
               </Typography>
             </Box>
           </Grid>
@@ -70,7 +72,7 @@ const WeatherWidget: React.FC = () => {
                 Humidité
               </Typography>
               <Typography variant="h6">
-                {weatherData.humidity}%
+                {conditions.humidity}%
               </Typography>
             </Box>
           </Grid>
@@ -81,12 +83,12 @@ const WeatherWidget: React.FC = () => {
                 Précipitations
               </Typography>
               <Typography variant="h6">
-                {weatherData.precipitation}mm
+                {conditions.precipitation}mm
               </Typography>
             </Box>
           </Grid>
         </Grid>
-        {weatherData.risks?.level === 'HIGH' && (
+        {weatherData.risks.level === 'HIGH' && (
           <Box mt={2} p={1} bgcolor="error.light" borderRadius={1}>
             <Typography color="error.dark" variant="body2">
               {weatherData.risks.precipitation.level === 'HIGH' && weatherData.risks.precipitation.message}

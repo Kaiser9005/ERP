@@ -1,4 +1,14 @@
 import axios, { AxiosError } from 'axios';
+import type {
+  WeatherCondition,
+  WeatherForecast,
+  WeatherRisk,
+  AgriculturalMetrics,
+  WeatherResponse,
+  IoTData,
+  WeatherImpact,
+  IoTReading
+} from '../types/weather';
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const WEATHER_LOCATION = import.meta.env.VITE_WEATHER_LOCATION;
@@ -6,70 +16,6 @@ const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/r
 const API_BASE_URL = '/api/v1/weather';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000;
-
-interface WeatherConditions {
-  timestamp: string;
-  temperature: number;
-  humidity: number;
-  precipitation: number;
-  wind_speed: number;
-  conditions: string;
-  uv_index: number;
-  cloud_cover: number;
-  cached_at?: string;
-}
-
-interface WeatherForecastDay {
-  date: string;
-  temp_max: number;
-  temp_min: number;
-  precipitation: number;
-  humidity: number;
-  conditions: string;
-  description: string;
-}
-
-interface WeatherForecast {
-  location: string;
-  days: WeatherForecastDay[];
-}
-
-interface WeatherRisk {
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
-  message: string;
-}
-
-interface AgriculturalMetrics {
-  current_conditions: WeatherConditions;
-  risks: {
-    precipitation: WeatherRisk;
-    temperature: WeatherRisk;
-    level: 'LOW' | 'MEDIUM' | 'HIGH';
-  };
-  recommendations: string[];
-}
-
-interface WeatherResponse {
-  currentConditions: {
-    temp: number;
-    humidity: number;
-    precip: number;
-    windspeed: number;
-    conditions: string;
-    uvindex: number;
-    cloudcover: number;
-  };
-  days: Array<{
-    datetime: string;
-    tempmax: number;
-    tempmin: number;
-    precip: number;
-    humidity: number;
-    conditions: string;
-    description: string;
-  }>;
-  resolvedAddress: string;
-}
 
 class WeatherService {
   private async fetchWithRetry<T>(
@@ -104,10 +50,10 @@ class WeatherService {
     }
   }
 
-  async getCurrentWeather(): Promise<WeatherConditions> {
+  async getCurrentWeather(): Promise<WeatherCondition> {
     try {
       // Essayer d'abord l'API locale avec cache
-      const data = await this.fetchWithRetry<WeatherConditions>(
+      const data = await this.fetchWithRetry<WeatherCondition>(
         `${API_BASE_URL}/current`
       );
       return data;
@@ -120,7 +66,7 @@ class WeatherService {
 
       const current = data.currentConditions;
       return {
-        timestamp: new Date().toISOString(),
+        date: new Date().toISOString(),
         temperature: current.temp,
         humidity: current.humidity,
         precipitation: current.precip,
@@ -193,6 +139,54 @@ class WeatherService {
         recommendations: this.generateRecommendations(precipitationRisk, temperatureRisk)
       };
     }
+  }
+
+  async getWeatherImpact(
+    projectId?: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<WeatherImpact> {
+    const params = new URLSearchParams();
+    if (projectId) {
+      params.append('project_id', projectId);
+    }
+    if (startDate) {
+      params.append('start_date', startDate.toISOString().split('T')[0]);
+    }
+    if (endDate) {
+      params.append('end_date', endDate.toISOString().split('T')[0]);
+    }
+
+    return this.fetchWithRetry<WeatherImpact>(
+      `${API_BASE_URL}/impact?${params.toString()}`
+    );
+  }
+
+  async getIoTData(projectId?: string): Promise<IoTData> {
+    const params = new URLSearchParams();
+    if (projectId) {
+      params.append('project_id', projectId);
+    }
+
+    return this.fetchWithRetry<IoTData>(
+      `${API_BASE_URL}/iot-data?${params.toString()}`
+    );
+  }
+
+  async getHistoricalData(
+    startDate: Date,
+    endDate: Date,
+    metrics: string[] = ['temperature', 'humidity', 'precipitation']
+  ): Promise<IoTReading[]> {
+    const params = new URLSearchParams({
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      metrics: metrics.join(',')
+    });
+
+    return this.fetchWithRetry<IoTReading[]>(
+      `${API_BASE_URL}/historical?${params.toString()}`
+    );
   }
 
   async refreshWeatherData(): Promise<AgriculturalMetrics> {
