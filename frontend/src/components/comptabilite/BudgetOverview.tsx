@@ -19,7 +19,7 @@ import * as comptabiliteService from '../../services/comptabilite';
 import type { BudgetAnalysis } from '../../types/comptabilite';
 
 const BudgetOverview: React.FC = () => {
-  const { data: budgetData, isLoading } = useQuery({
+  const { data: budgetData, isLoading } = useQuery<BudgetAnalysis>({
     queryKey: queryKeys.comptabilite.budgetAnalysis('current'),
     queryFn: () => comptabiliteService.getBudgetAnalysis('current'),
   });
@@ -100,25 +100,25 @@ const BudgetOverview: React.FC = () => {
             <Typography variant="subtitle1" sx={{ mb: 2 }}>
               Principales catégories
             </Typography>
-            {Object.entries(budgetData.categories).map(([categorie, data]) => (
-              <Box key={categorie} sx={{ mb: 2 }}>
+            {budgetData.categories.map((categorie) => (
+              <Box key={categorie.code} sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2">{categorie}</Typography>
+                  <Typography variant="body2">{categorie.libelle}</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body2">
-                      {formatCurrency(data.realise)} / {formatCurrency(data.prevu)}
+                      {formatCurrency(categorie.realise)} / {formatCurrency(categorie.prevu)}
                     </Typography>
                     <Chip
                       size="small"
-                      icon={data.ecart_percentage >= 0 ? <TrendingUp /> : <TrendingDown />}
-                      label={`${Math.abs(data.ecart_percentage).toFixed(1)}%`}
-                      color={data.ecart_percentage >= 0 ? 'success' : 'error'}
+                      icon={categorie.ecart_percentage >= 0 ? <TrendingUp /> : <TrendingDown />}
+                      label={`${Math.abs(categorie.ecart_percentage).toFixed(1)}%`}
+                      color={categorie.ecart_percentage >= 0 ? 'success' : 'error'}
                     />
                   </Box>
                 </Box>
                 <LinearProgress
                   variant="determinate"
-                  value={Math.min((data.realise / data.prevu) * 100, 100)}
+                  value={Math.min((categorie.realise / categorie.prevu) * 100, 100)}
                   sx={{
                     height: 4,
                     borderRadius: 2,
@@ -149,7 +149,7 @@ const BudgetOverview: React.FC = () => {
           )}
 
           {/* Recommandations */}
-          {budgetData.recommendations.length > 0 && (
+          {budgetData.recommendations && budgetData.recommendations.length > 0 && (
             <Grid item xs={12}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Recommandations

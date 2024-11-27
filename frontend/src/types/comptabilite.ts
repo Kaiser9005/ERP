@@ -106,26 +106,22 @@ export interface BudgetAnalysis {
     debut: string;
     fin: string;
   };
+  total_prevu: number;
+  total_realise: number;
   categories: Array<{
     code: string;
     libelle: string;
-    budget_prevu: number;
+    prevu: number;
     realise: number;
     ecart: number;
-    pourcentage: number;
+    ecart_percentage: number;
   }>;
-  totaux: {
-    budget_prevu: number;
-    realise: number;
-    ecart: number;
-    pourcentage: number;
-  };
   weather_impact: {
     score: number;
     factors: string[];
     projections: Record<string, number>;
-    recommendations: string[];
   };
+  recommendations: string[];
   metadata?: Record<string, any>;
 }
 
@@ -180,5 +176,28 @@ export interface CloturePeriode {
       ecriture?: string;
     }>;
   };
+  metadata?: Record<string, any>;
+}
+
+export interface CashFlowData {
+  periode: {
+    debut: string;
+    fin: string;
+  };
+  entrees: Array<{
+    date: string;
+    montant: number;
+    categorie: string;
+    description: string;
+  }>;
+  sorties: Array<{
+    date: string;
+    montant: number;
+    categorie: string;
+    description: string;
+  }>;
+  solde_initial: number;
+  solde_final: number;
+  variation: number;
   metadata?: Record<string, any>;
 }
