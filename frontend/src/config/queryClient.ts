@@ -104,6 +104,12 @@ export const queryKeys = {
     current: () => [...queryKeys.weather.all, 'current'] as const,
     forecast: () => [...queryKeys.weather.all, 'forecast'] as const,
     alerts: () => [...queryKeys.weather.all, 'alerts'] as const,
-    agricultural: () => [...queryKeys.weather.all, 'agricultural'] as const
+    agricultural: () => [...queryKeys.weather.all, 'agricultural'] as const,
+    impact: (projectId?: string, startDate?: Date, endDate?: Date) => 
+      [...queryKeys.weather.all, 'impact', projectId, startDate?.toISOString(), endDate?.toISOString()] as const,
+    iot: (projectId?: string) => 
+      [...queryKeys.weather.all, 'iot', projectId] as const,
+    historical: (startDate: Date, endDate: Date) => 
+      [...queryKeys.weather.all, 'historical', startDate.toISOString(), endDate.toISOString()] as const
   }
 } as const;
