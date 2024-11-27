@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Grid, Container, Typography, Box, CircularProgress } from '@mui/material';
 import { ModuleCard } from './ModuleCard';
 import { AlertsPanel } from './AlertsPanel';
-import { ModuleStats, ModuleType, Alert } from '../../types/dashboard';
+import { ModuleStats, ModuleType } from '../../types/dashboard';
 import DashboardService from '../../services/dashboard';
 
 // Import des composants spécifiques à chaque module
