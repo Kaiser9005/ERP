@@ -96,6 +96,26 @@ En cas de questions ou problèmes :
 - Le cache est conservé pendant 30 minutes
 - La date/heure de dernière mise à jour est visible en bas du tableau de bord
 
+## Performance et Capacité
+
+Le système Analytics RH est conçu pour gérer efficacement de grandes quantités de données :
+
+### Capacité
+- Support jusqu'à 10 000 employés
+- Traitement simultané de 50 utilisateurs
+- Cache optimisé pour 1000 appels simultanés
+
+### Performances
+- Temps de réponse moyen < 2 secondes
+- Rafraîchissement des données en temps réel
+- Optimisation automatique des requêtes volumineuses
+
+### Monitoring Système
+- Surveillance continue de l'utilisation CPU
+- Monitoring de la consommation mémoire
+- Alertes automatiques en cas de dépassement des seuils
+- Optimisation dynamique des performances
+
 ## Sécurité et Confidentialité
 
 - L'accès aux données est restreint selon les droits utilisateur
@@ -126,3 +146,25 @@ Le module Analytics RH s'intègre avec :
    - Vérifiez vos permissions
    - Réduisez la période sélectionnée
    - Réessayez dans quelques minutes
+
+4. **Performance dégradée**
+   - Réduisez la plage de données sélectionnée
+   - Évitez les exports volumineux aux heures de pointe
+   - Utilisez les filtres pour cibler les données nécessaires
+
+## Bonnes Pratiques de Performance
+
+1. **Optimisation des requêtes**
+   - Limitez les périodes de données à 12 mois maximum
+   - Utilisez les filtres disponibles
+   - Évitez les exports complets aux heures de pointe
+
+2. **Utilisation du cache**
+   - Le cache est automatiquement géré
+   - Les données sont conservées 30 minutes
+   - Le rafraîchissement manuel est possible si nécessaire
+
+3. **Gestion des ressources**
+   - Fermez les onglets inutilisés
+   - Limitez le nombre d'exports simultanés
+   - Planifiez les rapports volumineux hors heures de pointe
