@@ -12,22 +12,33 @@ Le module inventaire intègre des capacités ML avancées pour :
 
 ### Structure
 ```
-services/inventory_ml/
-├── __init__.py
-├── base.py           # Modèle ML de base
-├── optimization.py   # Optimisation des stocks
-├── analysis.py      # Analyse des patterns
-└── quality.py       # Prédiction qualité
+services/ml/
+├── core/
+│   ├── __init__.py
+│   ├── base.py      # Classes de base communes
+│   ├── types.py     # Types communs
+│   └── config.py    # Configuration centralisée
+└── inventaire/
+    ├── __init__.py
+    ├── base.py      # Modèle ML de base
+    ├── optimization.py  # Optimisation des stocks
+    ├── analysis.py     # Analyse des patterns
+    └── quality.py      # Prédiction qualité
 ```
 
 ### Tests
 ```
-tests/inventory_ml/
-├── test_base.py         # Tests modèle base
-├── test_optimization.py # Tests optimisation
-├── test_analysis.py     # Tests analyse
-├── test_quality.py      # Tests qualité
-└── test_integration.py  # Tests intégration
+tests/ml/
+├── core/
+│   ├── test_base.py
+│   └── test_config.py
+└── inventaire/
+    ├── test_base.py         # Tests modèle base
+    ├── test_optimization.py # Tests optimisation
+    ├── test_analysis.py     # Tests analyse
+    ├── test_quality.py      # Tests qualité
+    ├── test_performance.py  # Tests performance
+    └── test_integration.py  # Tests intégration
 ```
 
 ## Modèles ML
@@ -186,13 +197,13 @@ def test_base_model():
     """Test modèle ML base"""
     model = BaseMLModel()
     results = model.train(test_data)
-    assert results['accuracy'] > 0.90
+    assert results['accuracy'] > 0.95  # Seuil augmenté à 95%
 
 def test_optimization():
     """Test optimisation stocks"""
     optimizer = StockOptimizer()
     results = optimizer.optimize(test_stock)
-    assert results['efficiency'] > 0.85
+    assert results['efficiency'] > 0.90  # Seuil augmenté à 90%
 ```
 
 ### 2. Tests Intégration
@@ -209,10 +220,89 @@ def test_ml_pipeline():
 def test_prediction_latency():
     """Test latence prédictions"""
     predictor = QualityPredictor()
+    
+    # Test CPU
     start = time.time()
     results = predictor.predict(test_data)
-    latency = time.time() - start
-    assert latency < 0.2  # 200ms max
+    cpu_latency = time.time() - start
+    assert cpu_latency < 0.2  # 200ms max
+    
+    # Test GPU si disponible
+    if torch.cuda.is_available():
+        predictor.to('cuda')
+        start = time.time()
+        results = predictor.predict(test_data)
+        gpu_latency = time.time() - start
+        assert gpu_latency < 0.1  # 100ms max
+
+def test_batch_processing():
+    """Test traitement par lots"""
+    model = BaseMLModel()
+    batch_size = 200
+    total_samples = 10000
+    
+    start_time = time.time()
+    for i in range(0, total_samples, batch_size):
+        batch = generate_test_batch(batch_size)
+        predictions = model.predict(batch)
+        assert len(predictions) == len(batch)
+    
+    total_time = time.time() - start_time
+    batches_per_second = total_samples / batch_size / total_time
+    assert batches_per_second > 200  # Min 200 lots/seconde
+
+def test_concurrent_processing():
+    """Test traitement concurrent"""
+    model = BaseMLModel()
+    n_workers = 50
+    n_samples = 1000
+    
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = [
+            executor.submit(model.predict, generate_test_data(n_samples))
+            for _ in range(n_workers)
+        ]
+        results = [f.result() for f in futures]
+    
+    assert len(results) == n_workers
+    assert all(len(r) == n_samples for r in results)
+
+def test_memory_usage():
+    """Test utilisation mémoire"""
+    model = BaseMLModel()
+    
+    # Mesure utilisation mémoire initiale
+    initial_memory = get_memory_usage()
+    
+    # Charge données test
+    test_data = generate_large_dataset()
+    model.load_data(test_data)
+    
+    # Vérifie augmentation mémoire
+    peak_memory = get_peak_memory_usage()
+    memory_increase = peak_memory - initial_memory
+    assert memory_increase < 1024 * 1024 * 1024  # Max 1GB
+
+def test_gpu_memory():
+    """Test mémoire GPU"""
+    if not torch.cuda.is_available():
+        pytest.skip("GPU non disponible")
+    
+    model = BaseMLModel().to('cuda')
+    
+    # Mesure utilisation GPU initiale
+    initial_gpu_memory = torch.cuda.memory_allocated()
+    
+    # Charge données test
+    test_data = generate_large_dataset().to('cuda')
+    predictions = model.predict(test_data)
+    
+    # Vérifie utilisation GPU
+    peak_gpu_memory = torch.cuda.max_memory_allocated()
+    memory_increase = peak_gpu_memory - initial_gpu_memory
+    total_memory = torch.cuda.get_device_properties(0).total_memory
+    
+    assert memory_increase / total_memory < 0.8  # Max 80% GPU
 ```
 
 ## Optimisation Performance
@@ -257,6 +347,31 @@ class MLMonitor:
     - Dérive données
     """
 ```
+
+## Standards de Performance
+
+### Latence
+- API: < 200ms
+- Prédictions CPU: < 200ms
+- Prédictions GPU: < 100ms
+- Batch processing: > 200 lots/sec
+
+### Précision
+- Modèle base: > 95%
+- Optimisation: > 90%
+- Analyse patterns: > 85%
+- Prédiction qualité: > 95%
+
+### Ressources
+- Mémoire RAM: < 80%
+- Mémoire GPU: < 80%
+- Cache hit ratio: > 80%
+- Disponibilité: 99.9%
+
+### Concurrence
+- 50+ workers simultanés
+- Pas de dégradation jusqu'à 100 req/sec
+- Temps réponse stable sous charge
 
 ## Maintenance
 
