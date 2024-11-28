@@ -18,6 +18,37 @@ export enum TypeMouvement {
   TRANSFERT = 'TRANSFERT'
 }
 
+export enum PeriodeInventaire {
+  JOUR = 'jour',
+  SEMAINE = 'semaine',
+  MOIS = 'mois',
+  ANNEE = 'annee',
+  PERSONNALISE = 'personnalise'
+}
+
+export enum SeuilStock {
+  BAS = 'bas',
+  NORMAL = 'normal',
+  ELEVE = 'eleve'
+}
+
+export interface FiltresInventaire {
+  periode?: PeriodeInventaire;
+  categorie?: CategoryProduit;
+  dateDebut?: string;
+  dateFin?: string;
+  fournisseur?: string;
+  seuilStock?: SeuilStock;
+}
+
+export interface PrevisionStock {
+  date: string;
+  valeur_reelle: number;
+  valeur_prevue: number;
+  categorie?: CategoryProduit;
+  produit_id?: string;
+}
+
 export interface Produit {
   id: string;
   code: string;

@@ -100,3 +100,20 @@ export const truncate = (text: string, length: number = 50): string => {
   if (!text || text.length <= length) return text;
   return `${text.substring(0, length)}...`;
 };
+
+export const formatQueryParams = (params: Record<string, any>): string => {
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      if (value instanceof Date) {
+        searchParams.append(key, formatDateForAPI(value));
+      } else {
+        searchParams.append(key, String(value));
+      }
+    }
+  });
+
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+};

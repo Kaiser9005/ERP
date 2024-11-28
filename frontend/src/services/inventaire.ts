@@ -3,8 +3,11 @@ import {
   Produit,
   MouvementStock,
   Stock,
-  StatsInventaire
+  StatsInventaire,
+  FiltresInventaire,
+  PrevisionStock
 } from '../types/inventaire';
+import { formatQueryParams } from '../utils/format';
 
 export const getProduits = async (): Promise<Produit[]> => {
   const { data } = await api.get<Produit[]>('/api/inventaire/produits');
@@ -35,13 +38,15 @@ export const modifierProduit = async (id: string, produitData: Partial<Produit>)
   return data;
 };
 
-export const getMouvements = async (): Promise<MouvementStock[]> => {
-  const { data } = await api.get<MouvementStock[]>('/api/inventaire/mouvements');
+export const getMouvements = async (filtres?: FiltresInventaire): Promise<MouvementStock[]> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<MouvementStock[]>(`/api/inventaire/mouvements${params}`);
   return data;
 };
 
-export const getProductMovements = async (productId: string): Promise<MouvementStock[]> => {
-  const { data } = await api.get<MouvementStock[]>(`/api/inventaire/produits/${productId}/mouvements`);
+export const getProductMovements = async (productId: string, filtres?: FiltresInventaire): Promise<MouvementStock[]> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<MouvementStock[]>(`/api/inventaire/produits/${productId}/mouvements${params}`);
   return data;
 };
 
@@ -50,12 +55,39 @@ export const creerMouvement = async (mouvementData: Partial<MouvementStock>): Pr
   return data;
 };
 
-export const getStatsInventaire = async (): Promise<StatsInventaire> => {
-  const { data } = await api.get<StatsInventaire>('/api/inventaire/stats');
+export const getStatsInventaire = async (filtres?: FiltresInventaire): Promise<StatsInventaire> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<StatsInventaire>(`/api/inventaire/stats${params}`);
   return data;
 };
 
-export const getStocks = async (): Promise<(Stock & { produit: Produit })[]> => {
-  const { data } = await api.get<(Stock & { produit: Produit })[]>('/api/inventaire/stocks');
+export const getStocks = async (filtres?: FiltresInventaire): Promise<(Stock & { produit: Produit })[]> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<(Stock & { produit: Produit })[]>(`/api/inventaire/stocks${params}`);
+  return data;
+};
+
+export const getFournisseurs = async (): Promise<string[]> => {
+  const { data } = await api.get<string[]>('/api/inventaire/fournisseurs');
+  return data;
+};
+
+export const getPrevisions = async (filtres?: FiltresInventaire): Promise<PrevisionStock[]> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<PrevisionStock[]>(`/api/inventaire/previsions${params}`);
+  return data;
+};
+
+export const getTendances = async (filtres?: FiltresInventaire): Promise<{
+  date: string;
+  entrees: number;
+  sorties: number;
+}[]> => {
+  const params = filtres ? formatQueryParams(filtres) : '';
+  const { data } = await api.get<{
+    date: string;
+    entrees: number;
+    sorties: number;
+  }[]>(`/api/inventaire/tendances${params}`);
   return data;
 };

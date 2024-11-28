@@ -1,104 +1,146 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import StatsInventaire from '../StatsInventaire';
-import { getStatsInventaire } from '../../../services/inventaire';
-import { vi } from 'vitest';
-import type { StatsInventaire as StatsInventaireType } from '../../../types/inventaire';
+import { getStatsInventaire, getMouvements, getStocks } from '../../../services/inventaire';
 
-vi.mock('../../../services/inventaire');
+// Mock des services
+jest.mock('../../../services/inventaire');
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { changeLanguage: jest.fn() }
+  })
+}));
 
-const mockStats: StatsInventaireType = {
+const mockStatsInventaire = {
   total_produits: 150,
-  stock_faible: 3,
-  valeur_totale: 1500000,
+  stock_faible: 5,
+  valeur_totale: 1000000,
   mouvements: {
-    entrees: 25,
-    sorties: 15
+    entrees: 50,
+    sorties: 30
   },
   valeur_stock: {
-    valeur: 15,
-    type: 'hausse'
+    valeur: 10,
+    type: 'hausse' as const
   },
   rotation_stock: {
     valeur: 5,
-    type: 'hausse'
+    type: 'hausse' as const
   }
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
+const mockMouvements = [
+  {
+    id: '1',
+    produit_id: '1',
+    type_mouvement: 'ENTREE',
+    quantite: 10,
+    date_mouvement: '2024-03-15',
+    responsable: {
+      id: '1',
+      nom: 'Doe',
+      prenom: 'John'
+    }
+  }
+];
 
-const renderWithProviders = (component: React.ReactElement) => {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {component}
-    </QueryClientProvider>
-  );
-};
+const mockStocks = [
+  {
+    id: '1',
+    produit_id: '1',
+    quantite: 100,
+    valeur_unitaire: 1000,
+    date_derniere_maj: '2024-03-15',
+    produit: {
+      id: '1',
+      code: 'PROD1',
+      nom: 'Produit 1',
+      categorie: 'INTRANT',
+      unite_mesure: 'KG',
+      seuil_alerte: 10,
+      prix_unitaire: 1000
+    }
+  }
+];
 
 describe('StatsInventaire', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    (getStatsInventaire as any).mockResolvedValue(mockStats);
-  });
-
-  it('affiche les statistiques d\'inventaire', async () => {
-    renderWithProviders(<StatsInventaire />);
-    
-    expect(await screen.findByText('Valeur Totale')).toBeInTheDocument();
-    expect(await screen.findByText('Rotation de Stock')).toBeInTheDocument();
-    expect(await screen.findByText('Alertes de Stock')).toBeInTheDocument();
-    expect(await screen.findByText('Mouvements')).toBeInTheDocument();
-  });
-
-  it('affiche les valeurs correctes', async () => {
-    renderWithProviders(<StatsInventaire />);
-    
-    // Valeur totale
-    const valeurTotale = await screen.findByText(/1500000/);
-    expect(valeurTotale).toBeInTheDocument();
-    
-    // Rotation de stock
-    const rotation = await screen.findByText(/150/);
-    expect(rotation).toBeInTheDocument();
-    
-    // Alertes
-    const alertes = await screen.findByText(/3/);
-    expect(alertes).toBeInTheDocument();
-    
-    // Mouvements
-    const mouvements = await screen.findByText(/25/);
-    expect(mouvements).toBeInTheDocument();
-  });
-
-  it('affiche les variations', async () => {
-    renderWithProviders(<StatsInventaire />);
-    
-    // Variation valeur stock
-    const variationValeur = await screen.findByText(/15/);
-    expect(variationValeur).toBeInTheDocument();
-    
-    // Variation rotation
-    const variationRotation = await screen.findByText(/5/);
-    expect(variationRotation).toBeInTheDocument();
-  });
-
-  it('gère le cas où les données sont absentes', () => {
-    (getStatsInventaire as any).mockResolvedValue(null);
-    renderWithProviders(<StatsInventaire />);
-    
-    const cards = screen.getAllByRole('article');
-    expect(cards).toHaveLength(4);
-    
-    cards.forEach(card => {
-      expect(card).toHaveTextContent('0');
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
     });
+
+    (getStatsInventaire as jest.Mock).mockResolvedValue(mockStatsInventaire);
+    (getMouvements as jest.Mock).mockResolvedValue(mockMouvements);
+    (getStocks as jest.Mock).mockResolvedValue(mockStocks);
+  });
+
+  const renderComponent = () => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <StatsInventaire />
+      </QueryClientProvider>
+    );
+  };
+
+  it('affiche les statistiques principales', async () => {
+    renderComponent();
+
+    expect(await screen.findByText('inventaire.valeurTotale')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.tauxRotation')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.alertes')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.mouvements')).toBeInTheDocument();
+  });
+
+  it('permet de changer la période', async () => {
+    renderComponent();
+
+    const periodeSelect = await screen.findByLabelText('commun.periode');
+    fireEvent.mouseDown(periodeSelect);
+    
+    const optionSemaine = await screen.findByText('commun.periodes.semaine');
+    fireEvent.click(optionSemaine);
+    
+    expect(periodeSelect).toHaveValue('semaine');
+  });
+
+  it('permet de changer la catégorie', async () => {
+    renderComponent();
+
+    const categorieSelect = await screen.findByLabelText('inventaire.categorie');
+    fireEvent.mouseDown(categorieSelect);
+    
+    const optionIntrant = await screen.findByText('inventaire.categories.intrant');
+    fireEvent.click(optionIntrant);
+    
+    expect(categorieSelect).toHaveValue('INTRANT');
+  });
+
+  it('affiche le bouton d\'export', async () => {
+    renderComponent();
+    
+    expect(await screen.findByText('commun.exporter')).toBeInTheDocument();
+  });
+
+  it('affiche les graphiques', async () => {
+    renderComponent();
+
+    expect(await screen.findByText('inventaire.graphiques.mouvements')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.graphiques.stocksParCategorie')).toBeInTheDocument();
+  });
+
+  it('est accessible', async () => {
+    renderComponent();
+
+    // Vérifie la présence des attributs ARIA
+    expect(screen.getByRole('region')).toHaveAttribute('aria-label', 'inventaire.statistiques');
+    expect(screen.getAllByRole('img')).toHaveLength(2);
   });
 });
