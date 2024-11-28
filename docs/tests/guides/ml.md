@@ -20,6 +20,9 @@ Ce guide détaille les bonnes pratiques et standards pour les tests des composan
 - Temps d'inférence
 - Utilisation mémoire
 - Scalabilité
+- Tests GPU/CPU
+- Tests de charge
+- Tests de concurrence
 
 ### 4. Tests de Qualité
 - Métriques de performance
@@ -176,27 +179,90 @@ def test_inference_time():
     inference_time = time.time() - start_time
     
     # Vérification du temps d'inférence
-    assert inference_time < 0.1  # 100ms max
+    assert inference_time < 0.2  # 200ms max
     
     # Vérification de la mémoire
     memory_usage = get_model_memory_usage(model)
-    assert memory_usage < 100  # 100MB max
+    assert memory_usage < 80  # 80% max
 
 def test_model_scalability():
     """Test de la scalabilité du modèle."""
     model = MLModel()
     
     # Test avec différentes tailles de données
-    for size in [100, 1000, 10000]:
+    sizes = [1000, 10000, 100000]
+    times = []
+    
+    for size in sizes:
         X = generate_test_data(size)
         
         # Mesure du temps d'entraînement
         start_time = time.time()
         model.fit(X)
-        training_time = time.time() - start_time
+        times.append(time.time() - start_time)
         
         # Vérification de la scalabilité linéaire
-        assert training_time < size * 0.001  # 1ms par exemple
+        if len(times) > 1:
+            ratio = times[-1] / times[-2]
+            expected_ratio = sizes[-1] / sizes[-2]
+            assert ratio < expected_ratio * 1.2  # Max 20% de dégradation
+
+def test_gpu_performance():
+    """Test des performances GPU."""
+    if not torch.cuda.is_available():
+        pytest.skip("GPU non disponible")
+        
+    model = MLModel(device="cuda")
+    X = generate_large_dataset()
+    
+    # Test de latence GPU
+    start_time = time.time()
+    predictions = model.predict(X)
+    gpu_time = time.time() - start_time
+    assert gpu_time < 0.1  # 100ms max
+    
+    # Test d'utilisation mémoire GPU
+    memory_used = torch.cuda.memory_allocated()
+    total_memory = torch.cuda.get_device_properties(0).total_memory
+    assert memory_used / total_memory < 0.8  # Max 80% utilisation
+
+def test_concurrent_processing():
+    """Test du traitement concurrent."""
+    model = MLModel()
+    n_workers = 50
+    n_samples = 1000
+    
+    # Génération des données
+    data_chunks = [generate_test_data(n_samples) for _ in range(n_workers)]
+    
+    # Test avec workers parallèles
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = [executor.submit(model.predict, chunk) for chunk in data_chunks]
+        results = [f.result() for f in futures]
+    
+    # Vérification des résultats
+    assert len(results) == n_workers
+    assert all(len(r) == n_samples for r in results)
+
+def test_batch_processing():
+    """Test du traitement par lots."""
+    model = MLModel()
+    batch_size = 200
+    total_samples = 10000
+    
+    # Génération des données
+    data = generate_test_data(total_samples)
+    
+    # Test de traitement par lots
+    start_time = time.time()
+    for i in range(0, total_samples, batch_size):
+        batch = data[i:i+batch_size]
+        predictions = model.predict(batch)
+        assert len(predictions) == len(batch)
+    
+    total_time = time.time() - start_time
+    batches_per_second = total_samples / batch_size / total_time
+    assert batches_per_second > 200  # Min 200 lots/seconde
 ```
 
 ### 3. Tests de Robustesse
@@ -258,3 +324,23 @@ def test_model_robustness():
 - Optimisation des hyperparamètres
 - Réduction de la complexité
 - Amélioration du pipeline
+
+### Seuils de Performance Spécifiques
+
+#### Inventaire ML
+- Temps réponse API < 200ms
+- Précision ML > 95%
+- Cache hit ratio > 80%
+- Disponibilité 99.9%
+- Latence GPU < 100ms
+- Utilisation mémoire < 80%
+- Batch processing > 200/s
+
+#### Autres Modules ML
+- Temps réponse < 500ms
+- Précision > 90%
+- Cache hit ratio > 70%
+- Disponibilité 99%
+- Latence GPU < 200ms
+- Utilisation mémoire < 90%
+- Batch processing > 100/s
