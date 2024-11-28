@@ -2,30 +2,38 @@
 
 ## Situation Actuelle
 
-### Services ML Dispersés
-1. Dans services/ml/tableau_bord/ :
-- alertes.py
-- predictions.py
-- unification.py
+### Services ML Réorganisés
 
-2. Dans services/inventory_ml/ :
-- base.py
-- optimization.py
-- analysis.py
-- quality.py
-- config.py
+1. Module Projets ML ✅
+   - Services migrés vers services/ml/projets/
+   - Tests migrés vers tests/ml/projets/
+   - Structure validée et cohérente avec core/
+   - Tests de non-régression passés
 
-3. Dans services/projects_ml/ :
-- base.py
-- optimization.py
-- analysis.py
-- weather.py
+2. Module Inventaire ML ✅
+   - Services migrés vers services/ml/inventaire/
+   - Tests migrés vers tests/ml/inventaire/
+   - Structure validée et cohérente avec core/
+   - Tests de non-régression passés
 
-4. Dans services/finance_comptabilite/ (composants ML) :
-- analyse.py (contient _analyze_with_ml, _prepare_ml_features, etc.)
-- couts.py (contient analyse ML)
-- iot.py (contient analyse ML)
-- cloture.py (contient analyse ML)
+3. Module Finance/Comptabilité ML ✅
+   - Tests migrés vers tests/ml/finance_comptabilite/
+   - Structure validée et cohérente avec core/
+   - Tests de non-régression passés
+   - Documentation mise à jour
+
+### Services ML à Réorganiser
+
+1. Module Production ML
+   - Déplacer services/production_ml_service.py vers services/ml/production/
+   - Créer la structure modulaire (base.py, analysis.py, etc.)
+   - Migrer les tests vers tests/ml/production/
+   - Valider l'intégration avec core/
+
+2. Module Tableau de Bord ML
+   - Réorganiser services/ml/tableau_bord/
+   - Migrer les tests correspondants
+   - Standardiser l'architecture
 
 ## Plan d'Action
 
@@ -39,24 +47,30 @@ services/ml/
 │   ├── base.py (classes de base communes)
 │   ├── config.py (configuration centralisée)
 │   └── types.py (types communs)
-├── inventory/
+├── inventory/ ✅
 │   ├── __init__.py
 │   ├── base.py
 │   ├── optimization.py
 │   ├── analysis.py
 │   └── quality.py
-├── projects/
+├── projects/ ✅
 │   ├── __init__.py
 │   ├── base.py
 │   ├── optimization.py
 │   ├── analysis.py
 │   └── weather.py
-├── finance/
+├── finance/ ✅
 │   ├── __init__.py
 │   ├── analysis.py
 │   ├── costs.py
 │   ├── iot.py
 │   └── closure.py
+├── production/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── analysis.py
+│   ├── optimization.py
+│   └── quality.py
 └── dashboard/
     ├── __init__.py
     ├── alerts.py
@@ -75,64 +89,35 @@ services/ml/
    - Centraliser la config ML dans core/config.py
    - Utiliser des paramètres cohérents
 
-### 3. Migration des Services
-1. Inventory ML :
-   - Déplacer les fichiers vers services/ml/inventory/
+### 3. Migration des Services Restants
+
+1. Production ML :
+   - Créer la structure dans services/ml/production/
+   - Migrer le code existant
    - Adapter les imports
    - Implémenter les interfaces communes
 
-2. Projects ML :
-   - Déplacer les fichiers vers services/ml/projects/
-   - Adapter les imports
-   - Implémenter les interfaces communes
-
-3. Finance ML :
-   - Extraire la logique ML de finance_comptabilite/
-   - Créer des services dédiés dans services/ml/finance/
-   - Adapter les imports
-
-4. Dashboard ML :
-   - Déplacer les fichiers de tableau_bord/ vers services/ml/dashboard/
+2. Dashboard ML :
+   - Réorganiser services/ml/tableau_bord/
+   - Standardiser l'architecture
    - Adapter les imports
    - Implémenter les interfaces communes
 
 ### 4. Mise à Jour des Tests
-1. Réorganiser les tests ML :
+1. Structure des tests ML :
 ```
 tests/ml/
-├── core/
-├── inventory/
-├── projects/
-├── finance/
+├── core/ ✅
+├── inventory/ ✅
+├── projects/ ✅
+├── finance_comptabilite/ ✅
+├── production/
 └── dashboard/
 ```
 
 2. Adapter les imports dans les tests
 3. Vérifier la couverture de tests
 4. Ajouter des tests d'intégration entre modules ML
-
-## Étapes d'Implémentation
-
-1. Préparation :
-   - Créer la nouvelle structure de dossiers
-   - Définir les interfaces communes
-   - Préparer la configuration centralisée
-
-2. Migration par Module :
-   - Commencer par inventory_ml (le plus autonome)
-   - Suivre avec projects_ml
-   - Extraire et migrer finance_ml
-   - Terminer par dashboard_ml
-
-3. Tests et Validation :
-   - Migrer les tests correspondants
-   - Vérifier que tous les tests passent
-   - Tester les intégrations entre modules
-
-4. Documentation :
-   - Mettre à jour la documentation API
-   - Documenter les interfaces communes
-   - Documenter les patterns d'utilisation
 
 ## Validation Finale
 

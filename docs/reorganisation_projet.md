@@ -36,6 +36,25 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
 
 ### État d'Avancement
 
+#### Services ML
+1. Module Projets ML :
+   - [x] Services migrés vers services/ml/projets/
+   - [x] Tests migrés vers tests/ml/projets/
+   - [x] Structure validée et cohérente avec core/
+   - [x] Tests de non-régression passés
+
+2. Module Inventaire ML :
+   - [x] Services migrés vers services/ml/inventaire/
+   - [x] Tests migrés vers tests/ml/inventaire/
+   - [x] Structure validée et cohérente avec core/
+   - [x] Tests de non-régression passés
+
+3. Module Finance/Comptabilité ML :
+   - [x] Tests migrés vers tests/ml/finance_comptabilite/
+   - [x] Structure validée et cohérente avec core/
+   - [x] Tests de non-régression passés
+   - [x] Documentation mise à jour
+
 #### Composants Migrés
 1. Module Inventaire :
    - [x] FormulaireProduit déplacé vers frontend
@@ -180,7 +199,7 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
    - Déployer le frontend
    - Valider le support multilingue
 
-   ### Méthodologie suggérée
+### Méthodologie suggérée
 1. Analyse des doublons :
    - Utiliser des outils de comparaison de fichiers
    - Vérifier les dates de modification
@@ -199,8 +218,6 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
    - Tester la compilation
    - Valider les imports
    - Tester les traductions
-
-
 
 Merci de me tenir informé de ton analyse et de tes recommandations pour chaque phase.
 

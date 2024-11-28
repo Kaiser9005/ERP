@@ -18,6 +18,12 @@ Les services ML suivants ont été réorganisés avec succès :
    - Structure validée et cohérente avec core/
    - Tests de non-régression passés
 
+3. Module Finance/Comptabilité ML
+   - Tests migrés vers tests/ml/finance_comptabilite/
+   - Structure validée et cohérente avec core/
+   - Tests de non-régression passés
+   - Documentation mise à jour
+
 ### Services ML à Réorganiser
 
 1. Module Production ML
@@ -26,11 +32,10 @@ Les services ML suivants ont été réorganisés avec succès :
    - Migrer les tests vers tests/ml/production/
    - Valider l'intégration avec core/
 
-2. Module Finance/Comptabilité ML
-   - Extraire la partie ML de services/finance_comptabilite/
-   - Créer services/ml/finance/
+2. Module Tableau de Bord ML
+   - Réorganiser services/ml/tableau_bord/
    - Migrer les tests correspondants
-   - Maintenir les autres fonctionnalités dans finance_comptabilite/
+   - Standardiser l'architecture
 
 ## Analyse des Composants Frontend
 
@@ -110,9 +115,17 @@ Les composants suivants existent dans les deux dossiers :
   - unification.py
   - __init__.py
 
+- services/finance_comptabilite/ (✓)
+  - analyse.py
+  - couts.py
+  - meteo.py
+  - iot.py
+  - cloture.py
+  - __init__.py
+
 ### Modules à Migrer
 - services/production_ml_service.py → services/ml/production/
-- services/finance_comptabilite/ (partie ML) → services/ml/finance/
+- services/ml/tableau_bord/ → Réorganiser selon architecture standard
 
 ## Plan d'Action
 
@@ -123,11 +136,10 @@ Les composants suivants existent dans les deux dossiers :
    - Adapter les tests
    - Valider l'intégration
 
-2. Migration Finance ML
-   - Identifier les composants ML dans finance_comptabilite/
-   - Créer la structure dans services/ml/finance/
-   - Migrer le code ML
-   - Adapter les tests
+2. Réorganisation Tableau de Bord ML
+   - Standardiser l'architecture
+   - Migrer les tests
+   - Valider l'intégration
 
 ### Moyen Terme
 1. Frontend
