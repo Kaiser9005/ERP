@@ -180,6 +180,28 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
    - Déployer le frontend
    - Valider le support multilingue
 
+   ### Méthodologie suggérée
+1. Analyse des doublons :
+   - Utiliser des outils de comparaison de fichiers
+   - Vérifier les dates de modification
+   - Comparer la complétude du code
+   - Identifier les chaînes à traduire
+
+2. Réorganisation :
+   - Créer une nouvelle structure temporaire
+   - Migrer les fichiers validés
+   - Mettre à jour les imports
+   - Implémenter i18next
+   - Valider la compilation
+
+3. Validation :
+   - Vérifier les dépendances
+   - Tester la compilation
+   - Valider les imports
+   - Tester les traductions
+
+
+
 Merci de me tenir informé de ton analyse et de tes recommandations pour chaque phase.
 
 Cordialement,
