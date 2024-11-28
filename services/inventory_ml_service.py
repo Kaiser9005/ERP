@@ -14,11 +14,11 @@ from models.inventory import Stock, MouvementStock
 from services.cache_service import cache_result
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
-from .inventory_ml.base import InventoryMLModel
-from .inventory_ml.optimization import StockOptimizer
-from .inventory_ml.analysis import StockAnalyzer
-from .inventory_ml.quality import QualityPredictor
-from services.inventory_ml.config import (
+from services.ml.inventaire.base import ModeleInventaireML as InventoryMLModel
+from services.ml.inventaire.optimization import OptimiseurStock as StockOptimizer
+from services.ml.inventaire.analysis import AnalyseurStock as StockAnalyzer
+from services.ml.inventaire.quality import PredicteurQualite as QualityPredictor
+from services.ml.core.config import (
     get_model_config,
     get_cache_config,
     get_monitoring_config,
