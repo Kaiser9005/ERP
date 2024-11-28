@@ -11,7 +11,7 @@ from models.iot_sensor import IoTSensor, SensorType, SensorStatus
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
 from services.cache_service import CacheService
-from services.projects_ml.weather import WeatherAnalyzer
+from services.ml.projets.weather import WeatherAnalyzer
 
 @pytest.fixture
 def db_session():

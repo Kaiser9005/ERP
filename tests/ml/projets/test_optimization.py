@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from models.task import Task, TaskStatus
 from models.resource import Resource, ResourceType
 from services.cache_service import CacheService
-from services.projects_ml.optimization import ResourceOptimizer
+from services.ml.projets.optimization import ResourceOptimizer
 
 @pytest.fixture
 def db_session():

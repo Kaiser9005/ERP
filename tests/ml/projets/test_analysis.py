@@ -11,7 +11,7 @@ from models.resource import Resource, ResourceType
 from models.iot_sensor import IoTSensor, SensorType, SensorStatus
 from services.iot_service import IoTService
 from services.cache_service import CacheService
-from services.projects_ml.analysis import PerformanceAnalyzer
+from services.ml.projets.analysis import PerformanceAnalyzer
 
 @pytest.fixture
 def db_session():

@@ -1,173 +1,141 @@
 # Rapport d'Analyse des Doublons
 
-
-
-## Analyse des Composants
-
-* Composants dans src/: 36
-
-* Composants dans frontend/src/: 220
-
-
-### Composants avec noms identiques:
-
-* ProjectsPage.tsx
-
-* LoginPage.tsx
-
-* DashboardLayout.tsx
-
-* EmployeeForm.tsx
-
-* PageHeader.tsx
-
-* StatCard.tsx
-
-* ParcelleForm.tsx
-
-* HarvestQualityForm.tsx
-
-* ParcelleMap.tsx
-
-* HRPage.tsx
-
-* StatsInventaire.tsx
-
-* EmployeesList.tsx
-
-* ProductionStats.tsx
-
-* ProjectForm.tsx
-
-* WeatherDashboard.tsx
-
-* AttendanceOverview.tsx
-
-* HistoriqueMouvements.tsx
-
-* ProjectDetails.tsx
-
-* ProjectStats.tsx
-
-* ParcelleDetails.tsx
-
-* DetailsProduit.tsx
-
-* EmployeeDetails.tsx
-
-* NotificationCenter.tsx
-
-* ListeStock.tsx
-
-* ProductionCalendar.tsx
-
-* LeaveRequests.tsx
-
-* EmployeeStats.tsx
-
-* ProductionPage.tsx
-
-* PageInventaire.tsx
-
-* ProductionDashboard.tsx
-
-* TopBar.tsx
-
-* ProtectedRoute.tsx
-
-* SideBar.tsx
-
-* LeaveRequestForm.tsx
-
-* ParcellesList.tsx
-
-* DialogueMouvementStock.tsx
-
-
-## Analyse des Services ML
-
-
-### services/ml
-
-* services/ml/comptabilite/__init__.py
-
-* services/ml/projets/__init__.py
-
-* services/ml/rh/__init__.py
-
-* services/ml/inventaire/__init__.py
-
-* services/ml/tableau_bord/predictions.py
-
-* services/ml/tableau_bord/alertes.py
-
-* services/ml/tableau_bord/__init__.py
-
-* services/ml/tableau_bord/unification.py
-
-* services/ml/production/__init__.py
-
-* services/ml/analytique/__init__.py
-
-
-### services/inventory_ml
-
-* services/inventory_ml/config.py
-
-* services/inventory_ml/analysis.py
-
-* services/inventory_ml/optimization.py
-
-* services/inventory_ml/__init__.py
-
-* services/inventory_ml/quality.py
-
-* services/inventory_ml/base.py
-
-
-### services/projects_ml
-
-* services/projects_ml/analysis.py
-
-* services/projects_ml/optimization.py
-
-* services/projects_ml/weather.py
-
-* services/projects_ml/__init__.py
-
-* services/projects_ml/base.py
-
-
-### services/finance_comptabilite
-
-* services/finance_comptabilite/meteo.py
-
-* services/finance_comptabilite/analyse.py
-
-* services/finance_comptabilite/__init__.py
-
-* services/finance_comptabilite/cloture.py
-
-* services/finance_comptabilite/iot.py
-
-* services/finance_comptabilite/couts.py
-
-
-## Recommandations
-
-### Composants
-
-1. Unifier tous les composants dans frontend/src/components
-
-2. Standardiser les noms en français
-
-3. Mettre à jour les imports
-
-
-### Services ML
-
-1. Centraliser tous les services ML dans services/ml/
-
-2. Organiser par domaine (tableau_bord, inventory, projects)
-
-3. Créer une interface commune
+## État Actuel de la Réorganisation
+
+### Services ML Réorganisés
+
+Les services ML suivants ont été réorganisés avec succès :
+
+1. Module Projets ML
+   - Services migrés vers services/ml/projets/
+   - Tests migrés vers tests/ml/projets/
+   - Anciens fichiers supprimés de services/projects_ml/
+   - Tests validés et fonctionnels
+
+2. Module Inventaire ML
+   - Services migrés vers services/ml/inventaire/
+   - Tests migrés vers tests/ml/inventaire/
+   - Structure validée et cohérente avec core/
+   - Tests de non-régression passés
+
+### Services ML à Réorganiser
+
+1. Module Production ML
+   - Déplacer services/production_ml_service.py vers services/ml/production/
+   - Créer la structure modulaire (base.py, analysis.py, etc.)
+   - Migrer les tests vers tests/ml/production/
+   - Valider l'intégration avec core/
+
+2. Module Finance/Comptabilité ML
+   - Extraire la partie ML de services/finance_comptabilite/
+   - Créer services/ml/finance/
+   - Migrer les tests correspondants
+   - Maintenir les autres fonctionnalités dans finance_comptabilite/
+
+## Analyse des Composants Frontend
+
+### Statistiques
+- Composants dans src/: 36
+- Composants dans frontend/src/: 220
+
+### Composants Dupliqués
+
+Les composants suivants existent dans les deux dossiers :
+
+1. Composants de Layout
+   - DashboardLayout.tsx
+   - TopBar.tsx
+   - PageHeader.tsx
+   - SideBar.tsx
+
+2. Composants Métier
+   - ParcelleDetails.tsx
+   - WeatherDashboard.tsx
+   - ProjectDetails.tsx
+   - LeaveRequestForm.tsx
+   - HistoriqueMouvements.tsx
+   - ProjectForm.tsx
+   - EmployeeForm.tsx
+   - EmployeesList.tsx
+   - ProjectsPage.tsx
+   - ParcellesList.tsx
+   - PageInventaire.tsx
+   - ProjectStats.tsx
+   - DialogueMouvementStock.tsx
+   - DetailsProduit.tsx
+   - HarvestQualityForm.tsx
+   - ParcelleForm.tsx
+   - ProductionStats.tsx
+   - ProductionCalendar.tsx
+   - EmployeeStats.tsx
+   - AttendanceOverview.tsx
+   - EmployeeDetails.tsx
+   - StatsInventaire.tsx
+   - StatCard.tsx
+   - ParcelleMap.tsx
+   - ProductionPage.tsx
+   - LeaveRequests.tsx
+   - ProductionDashboard.tsx
+   - HRPage.tsx
+   - ListeStock.tsx
+
+## Structure Actuelle des Services ML
+
+### Core (Base commune)
+- services/ml/core/
+  - config.py
+  - types.py
+  - base.py
+  - __init__.py
+
+### Modules Métier
+- services/ml/projets/ (✓)
+  - service.py
+  - base.py
+  - analysis.py
+  - optimization.py
+  - weather.py
+  - __init__.py
+
+- services/ml/inventaire/ (✓)
+  - analysis.py
+  - optimization.py
+  - quality.py
+  - base.py
+  - __init__.py
+
+- services/ml/tableau_bord/
+  - predictions.py
+  - alertes.py
+  - unification.py
+  - __init__.py
+
+### Modules à Migrer
+- services/production_ml_service.py → services/ml/production/
+- services/finance_comptabilite/ (partie ML) → services/ml/finance/
+
+## Plan d'Action
+
+### Court Terme
+1. Migration Production ML
+   - Créer la structure dans services/ml/production/
+   - Migrer le code existant
+   - Adapter les tests
+   - Valider l'intégration
+
+2. Migration Finance ML
+   - Identifier les composants ML dans finance_comptabilite/
+   - Créer la structure dans services/ml/finance/
+   - Migrer le code ML
+   - Adapter les tests
+
+### Moyen Terme
+1. Frontend
+   - Unifier les composants dans frontend/src/components/
+   - Standardiser les noms en français
+   - Mettre à jour les imports
+
+2. Tests
+   - Finaliser la migration des tests ML
+   - Valider la couverture de tests
+   - Documenter les nouveaux patterns de test
