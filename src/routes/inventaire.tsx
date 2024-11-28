@@ -1,7 +1,7 @@
 import { RouteObject } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import PageInventaire from '../components/inventaire/PageInventaire';
-import FormulaireProduit from '../components/inventaire/FormulaireProduit';
+import FormulaireProduit from '../../frontend/src/components/inventaire/FormulaireProduit';
 import StatsInventaire from '../components/inventaire/StatsInventaire';
 import ListeStock from '../components/inventaire/ListeStock';
 import HistoriqueMouvements from '../components/inventaire/HistoriqueMouvements';
