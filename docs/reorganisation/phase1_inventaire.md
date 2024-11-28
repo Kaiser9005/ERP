@@ -42,8 +42,17 @@
 - [x] Tests unitaires
 - [x] Tests d'accessibilité
 
+#### StatsInventaire
+- [x] Interface utilisateur en français
+- [x] Accessibilité (ARIA, navigation clavier)
+- [x] Graphiques interactifs
+- [x] Filtres avancés (période, catégorie, fournisseur)
+- [x] Export des données
+- [x] Support de l'internationalisation
+- [x] Tests unitaires
+- [x] Tests d'accessibilité
+
 ### Composants à Traiter
-- [ ] StatsInventaire
 - [ ] HistoriqueMouvements
 - [ ] PageInventaire
 
@@ -164,6 +173,35 @@
    - Tests de gestion des erreurs
    - Tests d'accessibilité
 
+### StatsInventaire
+1. Interface Utilisateur
+   - Traduction complète en français
+   - Format des nombres adapté à la locale française
+   - Graphiques interactifs et responsifs
+   - Filtres intuitifs et accessibles
+   - Messages d'état clairs
+
+2. Fonctionnalités
+   - Filtrage par période personnalisée
+   - Filtrage par catégorie de produit
+   - Filtrage par fournisseur
+   - Export des données en CSV
+   - Graphiques statistiques avancés
+
+3. Accessibilité
+   - Labels ARIA sur tous les contrôles
+   - Navigation au clavier optimisée
+   - Messages d'état vocaux
+   - Structure sémantique
+   - Descriptions des graphiques
+
+4. Tests
+   - Tests des filtres et graphiques
+   - Tests d'export des données
+   - Tests d'accessibilité
+   - Tests de performance
+   - Tests d'internationalisation
+
 ## Services Mis à Jour
 
 ### Service Inventaire
@@ -172,6 +210,7 @@
    - Validation des mouvements de stock
    - Gestion des erreurs améliorée
    - Support de l'export de données
+   - Filtrage par fournisseur
 
 2. Tests
    - Tests unitaires complets
@@ -182,13 +221,7 @@
 ## Prochaines Étapes
 
 ### Court Terme (Sprint 1)
-1. Améliorer StatsInventaire
-   - Ajouter des graphiques
-   - Implémenter des filtres
-   - Créer des exports
-   - Ajouter des tests
-
-2. Optimiser HistoriqueMouvements
+1. Optimiser HistoriqueMouvements
    - Ajouter des filtres avancés
    - Implémenter des graphiques
    - Améliorer la recherche
@@ -228,6 +261,7 @@
 - [x] Standards d'accessibilité
 - [x] Guide de validation des données
 - [x] Documentation des services
+- [x] Guide d'internationalisation
 
 ### À Faire
 - [ ] Guide utilisateur
