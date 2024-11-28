@@ -1,20 +1,23 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HistoriqueMouvements from '../HistoriqueMouvements';
-import { getMouvements } from '../../../services/inventaire';
+import { getMouvements, getTendances } from '../../../services/inventaire';
 import { vi } from 'vitest';
-import type { MouvementStock } from '../../../types/inventaire';
+import { 
+  MouvementStock, 
+  TypeMouvement, 
+  CategoryProduit, 
+  UniteMesure 
+} from '../../../types/inventaire';
 
-declare global {
-  namespace Vi {
-    interface JestMatchers<T> {
-      toBeInTheDocument(): boolean;
-      toHaveClass(className: string): boolean;
-    }
-  }
-}
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { changeLanguage: vi.fn() }
+  })
+}));
 
 vi.mock('../../../services/inventaire');
 
@@ -22,7 +25,7 @@ const mockMouvements: MouvementStock[] = [
   {
     id: '1',
     date_mouvement: '2024-01-20T10:00:00Z',
-    type_mouvement: 'ENTREE',
+    type_mouvement: TypeMouvement.ENTREE,
     quantite: 100,
     reference_document: 'BL-2024-001',
     responsable: {
@@ -35,8 +38,8 @@ const mockMouvements: MouvementStock[] = [
       id: '1',
       code: 'PRD001',
       nom: 'Engrais NPK',
-      categorie: 'INTRANT',
-      unite_mesure: 'KG',
+      categorie: CategoryProduit.INTRANT,
+      unite_mesure: UniteMesure.KG,
       prix_unitaire: 1500,
       seuil_alerte: 100,
       specifications: {}
@@ -46,7 +49,7 @@ const mockMouvements: MouvementStock[] = [
   {
     id: '2',
     date_mouvement: '2024-01-20T11:00:00Z',
-    type_mouvement: 'SORTIE',
+    type_mouvement: TypeMouvement.SORTIE,
     quantite: 20,
     reference_document: 'BS-2024-001',
     responsable: {
@@ -59,14 +62,19 @@ const mockMouvements: MouvementStock[] = [
       id: '2',
       code: 'PRD002',
       nom: 'Pesticide',
-      categorie: 'INTRANT',
-      unite_mesure: 'LITRE',
+      categorie: CategoryProduit.INTRANT,
+      unite_mesure: UniteMesure.L,
       prix_unitaire: 5000,
       seuil_alerte: 20,
       specifications: {}
     },
     cout_unitaire: 5000
   }
+];
+
+const mockTendances = [
+  { date: '2024-01-19', entrees: 50, sorties: 30 },
+  { date: '2024-01-20', entrees: 100, sorties: 20 }
 ];
 
 const queryClient = new QueryClient({
@@ -89,12 +97,13 @@ describe('HistoriqueMouvements', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getMouvements as any).mockResolvedValue(mockMouvements);
+    (getTendances as any).mockResolvedValue(mockTendances);
   });
 
   it('affiche l\'historique des mouvements', async () => {
     renderWithProviders(<HistoriqueMouvements />);
     
-    expect(await screen.findByText('Historique des Mouvements')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.mouvements.titre')).toBeInTheDocument();
     expect(await screen.findByText('Engrais NPK')).toBeInTheDocument();
     expect(await screen.findByText('Pesticide')).toBeInTheDocument();
   });
@@ -102,8 +111,8 @@ describe('HistoriqueMouvements', () => {
   it('affiche les types de mouvements avec les bonnes couleurs', async () => {
     renderWithProviders(<HistoriqueMouvements />);
     
-    const entreeChip = await screen.findByText('ENTREE');
-    const sortieChip = await screen.findByText('SORTIE');
+    const entreeChip = await screen.findByText(TypeMouvement.ENTREE);
+    const sortieChip = await screen.findByText(TypeMouvement.SORTIE);
     
     expect(entreeChip).toHaveClass('MuiChip-colorSuccess');
     expect(sortieChip).toHaveClass('MuiChip-colorError');
@@ -133,13 +142,45 @@ describe('HistoriqueMouvements', () => {
     (getMouvements as any).mockReturnValue(new Promise(() => {}));
     renderWithProviders(<HistoriqueMouvements />);
     
-    expect(screen.getByText('Chargement...')).toBeInTheDocument();
+    expect(screen.getByText('commun.chargement')).toBeInTheDocument();
   });
 
   it('gère les erreurs de chargement', async () => {
     (getMouvements as any).mockRejectedValue(new Error('Erreur test'));
     renderWithProviders(<HistoriqueMouvements />);
     
-    expect(await screen.findByText('Erreur lors du chargement des mouvements')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.mouvements.erreurChargement')).toBeInTheDocument();
+  });
+
+  it('filtre les mouvements par type', async () => {
+    renderWithProviders(<HistoriqueMouvements />);
+    
+    const select = await screen.findByLabelText('inventaire.mouvements.filtres.type');
+    fireEvent.mouseDown(select);
+    
+    const entreeOption = await screen.findByText('inventaire.mouvements.types.entree');
+    fireEvent.click(entreeOption);
+    
+    expect(getMouvements).toHaveBeenCalledWith(expect.objectContaining({
+      type_mouvement: TypeMouvement.ENTREE
+    }));
+  });
+
+  it('filtre les mouvements par recherche', async () => {
+    renderWithProviders(<HistoriqueMouvements />);
+    
+    const searchInput = await screen.findByPlaceholderText('inventaire.mouvements.filtres.recherche');
+    fireEvent.change(searchInput, { target: { value: 'Engrais' } });
+    
+    expect(await screen.findByText('Engrais NPK')).toBeInTheDocument();
+    expect(screen.queryByText('Pesticide')).not.toBeInTheDocument();
+  });
+
+  it('affiche le graphique des tendances', async () => {
+    renderWithProviders(<HistoriqueMouvements />);
+    
+    expect(await screen.findByText('inventaire.mouvements.graphiques.titre')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.mouvements.graphiques.entrees')).toBeInTheDocument();
+    expect(await screen.findByText('inventaire.mouvements.graphiques.sorties')).toBeInTheDocument();
   });
 });

@@ -39,6 +39,8 @@ export interface FiltresInventaire {
   dateFin?: string;
   fournisseur?: string;
   seuilStock?: SeuilStock;
+  type_mouvement?: TypeMouvement;
+  recherche?: string;
 }
 
 export interface PrevisionStock {
@@ -67,6 +69,7 @@ export interface Produit {
 export interface MouvementStock {
   id: string;
   produit_id: string;
+  produit: Produit;
   type_mouvement: TypeMouvement;
   quantite: number;
   entrepot_source_id?: string;
