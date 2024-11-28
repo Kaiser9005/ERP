@@ -36,6 +36,21 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
 
 ### État d'Avancement
 
+#### Composants Météo
+1. Composants renommés en français :
+   - WeatherWidget.tsx → WidgetMeteo.tsx
+   - WeatherModule.tsx → ModuleMétéo.tsx
+   - WeatherStatCard.tsx → CarteMétéo.tsx
+   - WeatherDashboard.tsx → TableauDeBordMétéo.tsx
+   - WeatherAnalytics.tsx → AnalyseMétéo.tsx
+   - TaskWeatherDetails.tsx → DétailsMétéoTâche.tsx
+   - Tests associés renommés et mis à jour
+
+2. Tests ML réorganisés :
+   - Tests tableau de bord migrés vers tests/ml/tableau_bord/
+   - Structure cohérente avec les autres modules ML
+   - Tests de non-régression validés
+
 #### Services ML
 1. Module Projets ML :
    - [x] Services migrés vers services/ml/projets/

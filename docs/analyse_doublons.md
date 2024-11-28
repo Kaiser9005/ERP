@@ -2,6 +2,26 @@
 
 ## État Actuel de la Réorganisation
 
+### Composants Météo Standardisés
+
+Les composants météo ont été renommés en français :
+
+1. Dashboard et Production :
+   - WeatherWidget.tsx → WidgetMeteo.tsx
+   - WeatherModule.tsx → ModuleMétéo.tsx
+   - WeatherDashboard.tsx → TableauDeBordMétéo.tsx
+   - WeatherAnalytics.tsx → AnalyseMétéo.tsx
+   - TableauMeteoParcelleaire.tsx (nouveau)
+
+2. RH et Projets :
+   - WeatherStatCard.tsx → CarteMétéo.tsx
+   - TaskWeatherDetails.tsx → DétailsMétéoTâche.tsx
+
+3. Tests associés :
+   - Tests renommés pour correspondre aux nouveaux noms
+   - Tests tableau de bord migrés vers tests/ml/tableau_bord/
+   - Structure cohérente avec les autres modules ML
+
 ### Services ML Réorganisés
 
 Les services ML suivants ont été réorganisés avec succès :
