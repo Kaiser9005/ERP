@@ -8,6 +8,7 @@ interface PageHeaderProps {
     label: string;
     onClick: () => void;
     icon?: React.ReactNode;
+    'aria-label'?: string;
   };
 }
 
@@ -36,6 +37,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action }) => {
           variant="contained"
           onClick={action.onClick}
           startIcon={action.icon}
+          aria-label={action['aria-label'] || action.label}
         >
           {action.label}
         </Button>

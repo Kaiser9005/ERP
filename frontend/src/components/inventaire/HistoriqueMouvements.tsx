@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,38 +16,64 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-  Alert,
   Tooltip,
   Grid
 } from '@mui/material';
 import { Add, Remove, SwapHoriz, Search } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getMouvements, getTendances } from '../../services/inventaire';
+import { getMouvements, getProduits } from '../../services/inventaire';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TypeMouvement, FiltresInventaire } from '../../types/inventaire';
+import { TypeMouvement, FiltresInventaire, MouvementStock, Produit, CategoryProduit, UniteMesure } from '../../types/inventaire';
 
-const HistoriqueMouvements: React.FC = () => {
+interface HistoriqueMouvementsProps {
+  searchQuery?: string;
+}
+
+interface MouvementWithProduit extends MouvementStock {
+  produit: Produit;
+}
+
+const HistoriqueMouvements: React.FC<HistoriqueMouvementsProps> = ({ searchQuery = '' }) => {
   const { t } = useTranslation();
   const [typeMouvement, setTypeMouvement] = useState<TypeMouvement | ''>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  // Synchroniser searchTerm avec searchQuery
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+    }
+  }, [searchQuery]);
 
   const filtres: FiltresInventaire = {
     ...(typeMouvement && { type_mouvement: typeMouvement }),
     ...(searchTerm && { recherche: searchTerm })
   };
 
-  const { data: mouvements = [], isLoading, error } = useQuery(
-    ['recent-movements', filtres],
+  const { data: mouvements = [], isLoading: isLoadingMouvements } = useQuery(
+    ['mouvements', filtres],
     () => getMouvements(filtres)
   );
 
-  const { data: tendances = [] } = useQuery(
-    ['tendances-mouvements', filtres],
-    () => getTendances(filtres)
+  const { data: produits = [], isLoading: isLoadingProduits } = useQuery(
+    'produits',
+    () => getProduits()
   );
+
+  // Combiner les mouvements avec leurs produits
+  const mouvementsWithProduits: MouvementWithProduit[] = mouvements.map(mouvement => ({
+    ...mouvement,
+    produit: produits.find(p => p.id === mouvement.produit_id) || {
+      id: mouvement.produit_id,
+      code: 'N/A',
+      nom: 'Produit inconnu',
+      categorie: CategoryProduit.INTRANT,
+      unite_mesure: UniteMesure.UNITE,
+      description: ''
+    }
+  }));
 
   const getMovementIcon = (type: TypeMouvement) => {
     switch (type) {
@@ -71,12 +97,12 @@ const HistoriqueMouvements: React.FC = () => {
     }
   };
 
-  const filteredMouvements = mouvements.filter(mouvement => 
+  const filteredMouvements = mouvementsWithProduits.filter(mouvement => 
     mouvement.produit.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
     mouvement.reference_document?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) {
+  if (isLoadingMouvements || isLoadingProduits) {
     return (
       <Card>
         <CardContent>
@@ -84,18 +110,6 @@ const HistoriqueMouvements: React.FC = () => {
             <CircularProgress />
             <Typography ml={2}>{t('commun.chargement')}</Typography>
           </Box>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent>
-          <Alert severity="error">
-            {t('inventaire.mouvements.erreurChargement')}
-          </Alert>
         </CardContent>
       </Card>
     );
@@ -140,35 +154,6 @@ const HistoriqueMouvements: React.FC = () => {
             />
           </Grid>
         </Grid>
-
-        {tendances.length > 0 && (
-          <Box mb={3} height={300}>
-            <Typography variant="subtitle1" gutterBottom>
-              {t('inventaire.mouvements.graphiques.titre')}
-            </Typography>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={tendances}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <ChartTooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="entrees"
-                  name={t('inventaire.mouvements.graphiques.entrees')}
-                  stroke="#2e7d32"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="sorties"
-                  name={t('inventaire.mouvements.graphiques.sorties')}
-                  stroke="#d32f2f"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
-        )}
 
         {filteredMouvements.length === 0 ? (
           <Typography color="textSecondary">

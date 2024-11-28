@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -24,16 +24,24 @@ import {
 } from '@mui/material';
 import { Edit, Search, Add } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getStocks } from '../../services/inventaire';
+import { getStocks, getProduits } from '../../services/inventaire';
 import DialogueMouvementStock from './DialogueMouvementStock';
-import { Stock, Produit, CategoryProduit } from '../../types/inventaire';
+import { Stock, Produit, CategoryProduit, UniteMesure } from '../../types/inventaire';
 
 type SortField = 'code' | 'nom' | 'quantite' | 'valeur';
 type SortOrder = 'asc' | 'desc';
 
+interface StockWithProduit extends Stock {
+  produit: Produit;
+}
+
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 
-const ListeStock: React.FC = () => {
+interface ListeStockProps {
+  searchQuery?: string;
+}
+
+const ListeStock: React.FC<ListeStockProps> = ({ searchQuery = '' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [page, setPage] = useState(0);
@@ -42,7 +50,38 @@ const ListeStock: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
-  const { data: stocks = [], isLoading, isError } = useQuery<(Stock & { produit: Produit })[]>('stocks', getStocks);
+  // Charger les stocks et les produits
+  const { data: stocks = [], isLoading: isLoadingStocks } = useQuery<Stock[]>(
+    'stocks',
+    () => getStocks()
+  );
+
+  const { data: produits = [], isLoading: isLoadingProduits } = useQuery<Produit[]>(
+    'produits',
+    () => getProduits()
+  );
+
+  // Combiner les stocks avec leurs produits
+  const stocksWithProduits: StockWithProduit[] = stocks.map((stock: Stock) => ({
+    ...stock,
+    produit: produits.find(p => p.id === stock.produit_id) || {
+      id: '',
+      code: '',
+      nom: '',
+      categorie: CategoryProduit.INTRANT,
+      unite_mesure: 'UNITE' as UniteMesure,
+      seuil_alerte: 100, // Valeur par défaut
+      description: '',
+    }
+  }));
+
+  // Mettre à jour searchTerm quand searchQuery change
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+      setPage(0); // Réinitialiser la pagination
+    }
+  }, [searchQuery]);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -53,13 +92,18 @@ const ListeStock: React.FC = () => {
     }
   };
 
-  const filteredStocks = stocks
-    .filter(stock => 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setPage(0); // Réinitialiser la pagination lors d'une recherche
+  };
+
+  const filteredStocks = stocksWithProduits
+    .filter((stock: StockWithProduit) => 
       (stock.produit.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       stock.produit.code.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (!selectedCategory || stock.produit.categorie === selectedCategory)
     )
-    .sort((a, b) => {
+    .sort((a: StockWithProduit, b: StockWithProduit) => {
       const compareValue = (va: any, vb: any) => {
         if (va < vb) return sortOrder === 'asc' ? -1 : 1;
         if (va > vb) return sortOrder === 'asc' ? 1 : -1;
@@ -74,41 +118,31 @@ const ListeStock: React.FC = () => {
         case 'quantite':
           return compareValue(a.quantite, b.quantite);
         case 'valeur':
-          return compareValue(a.valeur_unitaire * a.quantite, b.valeur_unitaire * b.quantite);
+          return compareValue((a.valeur_unitaire || 0) * a.quantite, (b.valeur_unitaire || 0) * b.quantite);
         default:
           return 0;
       }
     });
 
-  const getStockLevel = (current: number, threshold: number) => {
+  const getStockLevel = (current: number, threshold: number = 100) => {
     const ratio = current / threshold;
     if (ratio <= 0.25) return 'error';
     if (ratio <= 0.5) return 'warning';
     return 'success';
   };
 
-  const getStockLevelLabel = (current: number, threshold: number) => {
+  const getStockLevelLabel = (current: number, threshold: number = 100) => {
     const ratio = current / threshold;
     if (ratio <= 0.25) return 'Stock critique';
     if (ratio <= 0.5) return 'Stock faible';
     return 'Stock normal';
   };
 
-  if (isLoading) {
+  if (isLoadingStocks || isLoadingProduits) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px" data-testid="chargement-stocks">
         <CircularProgress aria-label="Chargement des stocks" />
         <Typography sx={{ ml: 2 }}>Chargement des stocks en cours...</Typography>
-      </Box>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px" data-testid="erreur-stocks">
-        <Typography color="error">
-          Une erreur est survenue lors du chargement des stocks. Veuillez réessayer plus tard.
-        </Typography>
       </Box>
     );
   }
@@ -138,7 +172,7 @@ const ListeStock: React.FC = () => {
               size="small"
               placeholder="Rechercher un produit..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -197,57 +231,62 @@ const ListeStock: React.FC = () => {
           <TableBody>
             {filteredStocks
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((stock) => (
-                <TableRow key={stock.id} data-testid={`stock-${stock.id}`}>
-                  <TableCell>{stock.produit.code}</TableCell>
-                  <TableCell>{stock.produit.nom}</TableCell>
-                  <TableCell align="right">
-                    {stock.quantite} {stock.produit.unite_mesure}
-                  </TableCell>
-                  <TableCell align="right">
-                    {new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'XAF'
-                    }).format(stock.valeur_unitaire * stock.quantite)}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Tooltip title={getStockLevelLabel(stock.quantite, stock.produit.seuil_alerte)}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={(stock.quantite / stock.produit.seuil_alerte) * 100}
-                          color={getStockLevel(stock.quantite, stock.produit.seuil_alerte)}
-                          sx={{ flexGrow: 1 }}
-                          data-testid={`statut-${stock.id}`}
-                          aria-label={`Niveau de stock: ${Math.round((stock.quantite / stock.produit.seuil_alerte) * 100)}%`}
-                        />
+              .map((stock: StockWithProduit) => {
+                const seuilAlerte = stock.produit.seuil_alerte || 100;
+                const valeurUnitaire = stock.valeur_unitaire || 0;
+                
+                return (
+                  <TableRow key={stock.id} data-testid={`stock-${stock.id}`}>
+                    <TableCell>{stock.produit.code}</TableCell>
+                    <TableCell>{stock.produit.nom}</TableCell>
+                    <TableCell align="right">
+                      {stock.quantite} {stock.produit.unite_mesure}
+                    </TableCell>
+                    <TableCell align="right">
+                      {new Intl.NumberFormat('fr-FR', {
+                        style: 'currency',
+                        currency: 'XAF'
+                      }).format(valeurUnitaire * stock.quantite)}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Tooltip title={getStockLevelLabel(stock.quantite, seuilAlerte)}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={(stock.quantite / seuilAlerte) * 100}
+                            color={getStockLevel(stock.quantite, seuilAlerte)}
+                            sx={{ flexGrow: 1 }}
+                            data-testid={`statut-${stock.id}`}
+                            aria-label={`Niveau de stock: ${Math.round((stock.quantite / seuilAlerte) * 100)}%`}
+                          />
+                        </Tooltip>
+                        <Typography variant="body2">
+                          {Math.round((stock.quantite / seuilAlerte) * 100)}%
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Ajouter un mouvement">
+                        <IconButton
+                          size="small"
+                          onClick={() => setSelectedProduct(stock.id)}
+                          aria-label={`Ajouter un mouvement pour ${stock.produit.nom}`}
+                        >
+                          <Add />
+                        </IconButton>
                       </Tooltip>
-                      <Typography variant="body2">
-                        {Math.round((stock.quantite / stock.produit.seuil_alerte) * 100)}%
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Ajouter un mouvement">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSelectedProduct(stock.id)}
-                        aria-label={`Ajouter un mouvement pour ${stock.produit.nom}`}
-                      >
-                        <Add />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Modifier le produit">
-                      <IconButton 
-                        size="small"
-                        aria-label={`Modifier ${stock.produit.nom}`}
-                      >
-                        <Edit />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-            ))}
+                      <Tooltip title="Modifier le produit">
+                        <IconButton 
+                          size="small"
+                          aria-label={`Modifier ${stock.produit.nom}`}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
 
