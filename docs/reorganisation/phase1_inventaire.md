@@ -63,7 +63,7 @@
 - [x] Tests d'accessibilité
 
 ### Composants à Traiter
-- [ ] PageInventaire
+- [x] PageInventaire
 
 ## Améliorations Réalisées
 
@@ -297,7 +297,7 @@
 
 ### À Faire
 - [ ] Guide utilisateur
-- [ ] Documentation des API
+- [x] Documentation des API
 - [ ] Guide de maintenance
-- [ ] Documentation des intégrations
+- [x] Documentation des intégrations
 - [ ] Guide des bonnes pratiques
