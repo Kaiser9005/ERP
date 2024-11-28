@@ -24,7 +24,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { TaskWithWeather } from '../../types/task';
 
-const TaskWeatherDetails: React.FC = () => {
+const DétailsMétéoTâche: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
 
   const { data: taskData, isLoading, error } = useQuery<TaskWithWeather>({
@@ -211,4 +211,4 @@ const TaskWeatherDetails: React.FC = () => {
   );
 };
 
-export default TaskWeatherDetails;
+export default DétailsMétéoTâche;

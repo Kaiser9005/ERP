@@ -11,7 +11,7 @@ from services.production_service import ProductionService
 from services.finance_service import FinanceService
 from services.inventory_service import InventoryService
 from services.weather_service import WeatherService
-from services.projects_ml_service import ProjectsMLService
+from services.ml.projets.service import ProjetsMLService
 from services.cache_service import CacheService
 
 from .alertes import get_critical_alerts
@@ -25,7 +25,7 @@ class TableauBordUnifieService:
         finance_service: FinanceService,
         inventory_service: InventoryService,
         weather_service: WeatherService,
-        projects_ml_service: ProjectsMLService,
+        projets_ml: ProjetsMLService,
         cache_service: CacheService
     ):
         self.hr_service = hr_service
@@ -33,7 +33,7 @@ class TableauBordUnifieService:
         self.finance_service = finance_service
         self.inventory_service = inventory_service
         self.weather_service = weather_service
-        self.projects_ml_service = projects_ml_service
+        self.projets_ml = projets_ml
         self.cache_service = cache_service
         self.cache_ttl = 900  # 15 minutes
 
@@ -56,7 +56,7 @@ class TableauBordUnifieService:
                 "finance": await self._get_finance_summary(),
                 "inventory": await self._get_inventory_summary(),
                 "weather": await self._get_weather_summary(),
-                "projects": await self._get_projects_summary()
+                "projets": await self._get_projets_summary()
             },
             "alerts": await get_critical_alerts(
                 hr_service=self.hr_service,
@@ -66,7 +66,7 @@ class TableauBordUnifieService:
                 weather_service=self.weather_service
             ),
             "predictions": await get_ml_predictions(
-                projects_ml_service=self.projects_ml_service
+                projets_ml=self.projets_ml
             )
         }
 
@@ -121,13 +121,13 @@ class TableauBordUnifieService:
             "production_impact": await self.weather_service.get_production_impact()
         }
 
-    async def _get_projects_summary(self) -> Dict[str, Any]:
+    async def _get_projets_summary(self) -> Dict[str, Any]:
         """Résumé des projets et prédictions ML."""
         return {
-            "active_projects": await self.projects_ml_service.get_active_projects_count(),
-            "completion_predictions": await self.projects_ml_service.get_completion_predictions(),
-            "resource_optimization": await self.projects_ml_service.get_resource_optimization(),
-            "recent_activities": await self.projects_ml_service.get_recent_activities(limit=5)
+            "active_projects": await self.projets_ml.get_active_projects_count(),
+            "completion_predictions": await self.projets_ml.get_completion_predictions(),
+            "resource_optimization": await self.projets_ml.get_resource_optimization(),
+            "recent_activities": await self.projets_ml.get_recent_activities(limit=5)
         }
 
     async def get_module_details(self, module: str) -> Dict[str, Any]:
@@ -145,7 +145,7 @@ class TableauBordUnifieService:
             return await self.inventory_service.get_detailed_analytics()
         elif module == "weather":
             return await self.weather_service.get_detailed_analytics()
-        elif module == "projects":
-            return await self.projects_ml_service.get_detailed_analytics()
+        elif module == "projets":
+            return await self.projets_ml.get_detailed_analytics()
         else:
             raise ValueError(f"Module inconnu: {module}")

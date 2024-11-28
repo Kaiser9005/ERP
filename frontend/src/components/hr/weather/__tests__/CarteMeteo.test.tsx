@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import WeatherStatCard from '../WeatherStatCard';
+import CarteMétéo from '../CarteMétéo';
 
-describe('WeatherStatCard', () => {
+describe('CarteMétéo', () => {
   it('affiche correctement le titre et la valeur', () => {
     render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Température"
         value="32°C"
         status="HIGH"
@@ -18,7 +18,7 @@ describe('WeatherStatCard', () => {
 
   it('affiche le niveau de risque', () => {
     render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Température"
         value="32°C"
         status="HIGH"
@@ -30,7 +30,7 @@ describe('WeatherStatCard', () => {
 
   it('utilise la bonne couleur pour le statut LOW', () => {
     render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Précipitations"
         value="0 mm"
         status="LOW"
@@ -43,7 +43,7 @@ describe('WeatherStatCard', () => {
 
   it('utilise la bonne couleur pour le statut MEDIUM', () => {
     render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Vent"
         value="15 km/h"
         status="MEDIUM"
@@ -56,7 +56,7 @@ describe('WeatherStatCard', () => {
 
   it('utilise la bonne couleur pour le statut HIGH', () => {
     render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Température"
         value="35°C"
         status="HIGH"
@@ -69,7 +69,7 @@ describe('WeatherStatCard', () => {
 
   it('affiche l\'icône appropriée pour la température', () => {
     const { container } = render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Température"
         value="32°C"
         status="HIGH"
@@ -81,7 +81,7 @@ describe('WeatherStatCard', () => {
 
   it('affiche l\'icône appropriée pour les précipitations', () => {
     const { container } = render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Précipitations"
         value="10 mm"
         status="MEDIUM"
@@ -93,7 +93,7 @@ describe('WeatherStatCard', () => {
 
   it('affiche l\'icône appropriée pour le vent', () => {
     const { container } = render(
-      <WeatherStatCard
+      <CarteMétéo
         title="Vent"
         value="20 km/h"
         status="MEDIUM"

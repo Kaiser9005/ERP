@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import TaskWeatherDetails from '../TaskWeatherDetails';
+import DétailsMétéoTâche from '../DétailsMétéoTâche';
 import { TaskWithWeather, TaskStatus, TaskPriority, TaskCategory } from '../../../types/task';
 
 // Mock des paramètres de route
@@ -67,7 +67,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
   );
 };
 
-describe('TaskWeatherDetails', () => {
+describe('DétailsMétéoTâche', () => {
   beforeEach(() => {
     // Mock de la requête fetch
     global.fetch = jest.fn(() =>
@@ -84,12 +84,12 @@ describe('TaskWeatherDetails', () => {
   });
 
   it('affiche un indicateur de chargement', () => {
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
   it('affiche les détails météo de la tâche', async () => {
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
 
     // Vérifie le titre
     expect(await screen.findByText('Tâche test')).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('TaskWeatherDetails', () => {
   });
 
   it('affiche les contraintes météorologiques', async () => {
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
 
     // Vérifie les contraintes
     expect(await screen.findByText('15°C')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('TaskWeatherDetails', () => {
   });
 
   it('affiche les alertes météo', async () => {
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
 
     // Vérifie les alertes
     expect(await screen.findByText('Risque de vent fort dans l\'après-midi')).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('TaskWeatherDetails', () => {
       })
     ) as jest.Mock;
 
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
     
     expect(await screen.findByText(errorMessage)).toBeInTheDocument();
   });
@@ -149,7 +149,7 @@ describe('TaskWeatherDetails', () => {
       })
     ) as jest.Mock;
 
-    renderWithProviders(<TaskWeatherDetails />);
+    renderWithProviders(<DétailsMétéoTâche />);
     
     expect(await screen.findByText('Tâche indépendante de la météo')).toBeInTheDocument();
   });

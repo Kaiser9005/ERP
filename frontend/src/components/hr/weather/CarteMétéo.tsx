@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { WbSunny, Opacity, Air } from '@mui/icons-material';
 
-interface WeatherStatCardProps {
+interface CarteMétéoProps {
   title: string;
   value: string;
   status: 'LOW' | 'MEDIUM' | 'HIGH';
@@ -34,7 +34,7 @@ const getStatusIcon = (title: string) => {
   }
 };
 
-const WeatherStatCard: React.FC<WeatherStatCardProps> = ({
+const CarteMétéo: React.FC<CarteMétéoProps> = ({
   title,
   value,
   status
@@ -83,4 +83,4 @@ const WeatherStatCard: React.FC<WeatherStatCardProps> = ({
   );
 };
 
-export default WeatherStatCard;
+export default CarteMétéo;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import WeatherDashboard from '../WeatherDashboard';
+import TableauDeBordMétéo from '../TableauDeBordMétéo';
 import { weatherService } from '../../../../services/weather';
 import type { WeatherHRMetrics } from '../../../../types/weather';
 
@@ -75,7 +75,7 @@ const mockWeatherData: WeatherHRMetrics = {
   ]
 };
 
-describe('WeatherDashboard', () => {
+describe('TableauDeBordMétéo', () => {
   beforeEach(() => {
     (weatherService.getHRWeatherMetrics as jest.Mock).mockResolvedValue(mockWeatherData);
   });
@@ -85,17 +85,17 @@ describe('WeatherDashboard', () => {
   });
 
   it('affiche le titre du tableau de bord', async () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
     expect(screen.getByText('Tableau de Bord Météo RH')).toBeInTheDocument();
   });
 
   it('affiche un message de chargement', () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
     expect(screen.getByText('Chargement des données météo...')).toBeInTheDocument();
   });
 
   it('affiche les données météo après chargement', async () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
 
     await waitFor(() => {
       expect(screen.getByText('32°C')).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('WeatherDashboard', () => {
   });
 
   it('affiche les alertes météo', async () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
 
     await waitFor(() => {
       expect(screen.getByText('Risque de stress thermique - Protection nécessaire')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('WeatherDashboard', () => {
   });
 
   it('affiche les ajustements de planning', async () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
 
     await waitFor(() => {
       expect(screen.getByText('Températures excessives - Horaires matinaux')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('WeatherDashboard', () => {
   });
 
   it('affiche les équipements requis', async () => {
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
 
     await waitFor(() => {
       expect(screen.getByText('Équipements Requis')).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('WeatherDashboard', () => {
 
   it('gère les erreurs de chargement', async () => {
     (weatherService.getHRWeatherMetrics as jest.Mock).mockRejectedValue(new Error('Erreur API'));
-    render(<WeatherDashboard />);
+    render(<TableauDeBordMétéo />);
 
     await waitFor(() => {
       expect(screen.getByText('Erreur lors de la récupération des données météo')).toBeInTheDocument();

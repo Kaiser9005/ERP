@@ -6,27 +6,14 @@ import {
   Air as AirIcon,
   WbSunny as SunIcon
 } from '@mui/icons-material';
-import { Parcelle } from '../../types/production';
+import { Parcelle, WeatherData } from '../../types/production';
 import { productionService } from '../../services/production';
 
-interface WeatherData {
-  temperature: number;
-  humidite: number;
-  precipitation: number;
-  ensoleillement: number;
-  vent: number;
-  previsions: {
-    date: string;
-    temperature: number;
-    precipitation: number;
-  }[];
-}
-
-interface WeatherDashboardProps {
+interface TableauMeteoParcelleaireProps {
   parcelle?: Parcelle;
 }
 
-const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
+const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ parcelle }) => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +24,7 @@ const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
 
       try {
         setLoading(true);
-        const data = await productionService.getWeatherData(parcelle.id);
+        const data = await productionService.getWeatherData("current");
         setWeatherData(data);
       } catch (err) {
         setError('Erreur lors du chargement des données météo');
@@ -98,7 +85,7 @@ const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <WaterDropIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.humidite}%
+              {weatherData.humidity}%
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Humidité
@@ -106,15 +93,15 @@ const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
           </Paper>
         </Grid>
 
-        {/* Précipitations */}
+        {/* Ensoleillement */}
         <Grid item xs={12} sm={6} md={3}>
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <SunIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.ensoleillement}h
+              {weatherData.uv_index}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              Ensoleillement
+              Indice UV
             </Typography>
           </Paper>
         </Grid>
@@ -124,7 +111,7 @@ const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <AirIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.vent} km/h
+              {weatherData.wind_speed} km/h
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Vent
@@ -132,34 +119,52 @@ const WeatherDashboard: React.FC<WeatherDashboardProps> = ({ parcelle }) => {
           </Paper>
         </Grid>
 
-        {/* Prévisions */}
-        <Grid item xs={12}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Prévisions sur 5 jours
-            </Typography>
-            <Grid container spacing={2}>
-              {weatherData.previsions.map((prevision, index) => (
-                <Grid item xs={12} sm={2.4} key={index}>
-                  <Paper elevation={1} sx={{ p: 1, textAlign: 'center' }}>
-                    <Typography variant="body2">
-                      {new Date(prevision.date).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body1">
-                      {prevision.temperature}°C
-                    </Typography>
-                    <Typography variant="body2">
-                      {prevision.precipitation}mm
-                    </Typography>
-                  </Paper>
+        {/* Risques et Recommandations */}
+        {weatherData.risks && (
+          <Grid item xs={12}>
+            <Paper elevation={2} sx={{ p: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Analyse des Risques
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body1" color={
+                    weatherData.risks.precipitation.level === 'HIGH' ? 'error.main' :
+                    weatherData.risks.precipitation.level === 'MEDIUM' ? 'warning.main' : 'success.main'
+                  }>
+                    Précipitations : {weatherData.risks.precipitation.message}
+                  </Typography>
                 </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body1" color={
+                    weatherData.risks.temperature.level === 'HIGH' ? 'error.main' :
+                    weatherData.risks.temperature.level === 'MEDIUM' ? 'warning.main' : 'success.main'
+                  }>
+                    Température : {weatherData.risks.temperature.message}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {weatherData.recommendations && weatherData.recommendations.length > 0 && (
+          <Grid item xs={12}>
+            <Paper elevation={2} sx={{ p: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Recommandations
+              </Typography>
+              {weatherData.recommendations.map((recommendation, index) => (
+                <Typography key={index} variant="body1" sx={{ mb: 1 }}>
+                  • {recommendation}
+                </Typography>
               ))}
-            </Grid>
-          </Paper>
-        </Grid>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
     </Paper>
   );
 };
 
-export default WeatherDashboard;
+export default TableauMeteoParcelleaire;

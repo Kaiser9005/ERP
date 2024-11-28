@@ -13,7 +13,7 @@ import type {
   ProductionAnalytics,
   FinanceAnalytics,
   InventoryAnalytics,
-  WeatherAnalytics,
+  AnalyseMétéo,
   ProjectsAnalytics
 } from '../types/analytics_cross_module';
 
@@ -135,8 +135,8 @@ export const analyticsCrossModuleService = {
   /**
    * Récupère l'impact météo
    */
-  async getWeatherImpact(params?: AnalyticsParams): Promise<WeatherAnalytics> {
-    const { data } = await axios.get<WeatherAnalytics>(
+  async getWeatherImpact(params?: AnalyticsParams): Promise<AnalyseMétéo> {
+    const { data } = await axios.get<AnalyseMétéo>(
       `${BASE_URL}/weather-impact`,
       { params: formatDateParams(params) }
     );

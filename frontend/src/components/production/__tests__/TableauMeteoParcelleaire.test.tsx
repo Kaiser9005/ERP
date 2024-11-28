@@ -1,0 +1,114 @@
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import TableauMeteoParcelleaire from '../TableauMeteoParcelleaire';
+import { productionService } from '../../../services/production';
+import { Parcelle, WeatherData } from '../../../types/production';
+
+// Mock du service de production
+jest.mock('../../../services/production', () => ({
+  productionService: {
+    getWeatherData: jest.fn()
+  }
+}));
+
+const mockProductionService = productionService as jest.Mocked<typeof productionService>;
+
+describe('TableauMeteoParcelleaire', () => {
+  const mockParcelle: Parcelle = {
+    id: '1',
+    code: 'P001',
+    culture_type: 'palmier',
+    surface_hectares: 10,
+    statut: 'active',
+    date_plantation: '2024-01-01',
+    coordonnees_gps: {
+      latitude: 0,
+      longitude: 0
+    },
+    responsable_id: '1'
+  };
+
+  const mockWeatherData: WeatherData = {
+    timestamp: new Date().toISOString(),
+    temperature: 25,
+    humidity: 65,
+    precipitation: 0,
+    wind_speed: 10,
+    conditions: 'Ensoleillé',
+    uv_index: 5,
+    cloud_cover: 20,
+    risks: {
+      precipitation: {
+        level: 'LOW',
+        message: 'Conditions de précipitation normales'
+      },
+      temperature: {
+        level: 'MEDIUM',
+        message: 'Températures élevées - Surveillance recommandée'
+      },
+      level: 'MEDIUM'
+    },
+    recommendations: [
+      'Maintenir une surveillance de l\'hydratation des plants',
+      'Conditions favorables pour les activités agricoles'
+    ]
+  };
+
+  beforeEach(() => {
+    mockProductionService.getWeatherData.mockResolvedValue(mockWeatherData);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('affiche un message si aucune parcelle n\'est sélectionnée', () => {
+    render(<TableauMeteoParcelleaire />);
+    expect(screen.getByText(/Sélectionnez une parcelle pour voir les données météo/)).toBeInTheDocument();
+  });
+
+  it('affiche les conditions météorologiques de la parcelle', async () => {
+    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+
+    // Vérifie le titre avec le code de la parcelle
+    expect(screen.getByText(/Conditions Météorologiques - P001/)).toBeInTheDocument();
+
+    // Vérifie les données météo
+    expect(await screen.findByText(/25°C/)).toBeInTheDocument();
+    expect(screen.getByText(/65%/)).toBeInTheDocument();
+    expect(screen.getByText(/5/)).toBeInTheDocument(); // UV Index
+    expect(screen.getByText(/10 km\/h/)).toBeInTheDocument();
+  });
+
+  it('affiche les risques et recommandations', async () => {
+    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+
+    expect(await screen.findByText(/Conditions de précipitation normales/)).toBeInTheDocument();
+    expect(screen.getByText(/Températures élevées - Surveillance recommandée/)).toBeInTheDocument();
+    expect(screen.getByText(/Maintenir une surveillance de l'hydratation des plants/)).toBeInTheDocument();
+    expect(screen.getByText(/Conditions favorables pour les activités agricoles/)).toBeInTheDocument();
+  });
+
+  it('affiche un indicateur de chargement', () => {
+    mockProductionService.getWeatherData.mockImplementation(
+      () => new Promise(() => {}) // Promise qui ne se résout jamais
+    );
+
+    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    expect(screen.getByText(/Chargement des données météo/)).toBeInTheDocument();
+  });
+
+  it('affiche une erreur en cas de problème', async () => {
+    mockProductionService.getWeatherData.mockRejectedValue(
+      new Error('Erreur lors du chargement des données météo')
+    );
+
+    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    expect(await screen.findByText(/Erreur lors du chargement des données météo/)).toBeInTheDocument();
+  });
+
+  it('appelle getWeatherData avec "current"', () => {
+    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    expect(mockProductionService.getWeatherData).toHaveBeenCalledWith('current');
+  });
+});

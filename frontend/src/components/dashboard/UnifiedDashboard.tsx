@@ -10,7 +10,7 @@ import HRModule from './modules/HRModule';
 import ProductionModule from './modules/ProductionModule';
 import FinanceModule from './modules/FinanceModule';
 import InventoryModule from './modules/InventoryModule';
-import WeatherModule from './modules/WeatherModule';
+import ModuleMétéo from './modules/ModuleMétéo';
 import ProjectsModule from './modules/ProjectsModule';
 
 const UnifiedDashboard: React.FC = () => {
@@ -183,7 +183,7 @@ const UnifiedDashboard: React.FC = () => {
             onRefresh={() => handleModuleRefresh('weather')}
             loading={loading}
           >
-            <WeatherModule data={dashboardData.modules.weather} />
+            <ModuleMétéo data={dashboardData.modules.weather} />
           </ModuleCard>
         </Grid>
 

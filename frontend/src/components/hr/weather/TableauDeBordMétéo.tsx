@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { weatherService } from '../../../services/weather';
 import type { WeatherHRMetrics } from '../../../types/weather';
 import { Box, Card, Grid, Typography, Alert, Chip } from '@mui/material';
-import WeatherStatCard from './WeatherStatCard';
+import CarteMétéo from './CarteMétéo';
 
-const WeatherDashboard: React.FC = () => {
+const TableauDeBordMétéo: React.FC = () => {
   const [metrics, setMetrics] = useState<WeatherHRMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,28 +67,28 @@ const WeatherDashboard: React.FC = () => {
       {/* Conditions actuelles */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
-          <WeatherStatCard
+          <CarteMétéo
             title="Température"
             value={`${current_conditions.temperature}°C`}
             status={risks.temperature.level}
           />
         </Grid>
         <Grid item xs={12} md={3}>
-          <WeatherStatCard
+          <CarteMétéo
             title="Précipitations"
             value={`${current_conditions.precipitation} mm`}
             status={risks.precipitation.level}
           />
         </Grid>
         <Grid item xs={12} md={3}>
-          <WeatherStatCard
+          <CarteMétéo
             title="Vent"
             value={`${current_conditions.wind_speed} km/h`}
             status={risks.wind.level}
           />
         </Grid>
         <Grid item xs={12} md={3}>
-          <WeatherStatCard
+          <CarteMétéo
             title="Niveau de Risque Global"
             value={risks.level}
             status={risks.level}
@@ -159,4 +159,4 @@ const WeatherDashboard: React.FC = () => {
   );
 };
 
-export default WeatherDashboard;
+export default TableauDeBordMétéo;

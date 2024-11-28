@@ -13,7 +13,7 @@ export interface CrossModuleAnalytics {
     production: ProductionAnalytics;
     finance: FinanceAnalytics;
     inventory: InventoryAnalytics;
-    weather: WeatherAnalytics;
+    weather: AnalyseMétéo;
     projects: ProjectsAnalytics;
   };
   correlations: ModuleCorrelations;
@@ -104,7 +104,7 @@ export interface InventoryAnalytics {
   weather_impact: WeatherImpact;
 }
 
-export interface WeatherAnalytics {
+export interface AnalyseMétéo {
   current: WeatherConditions;
   forecast: WeatherForecast[];
   alerts: WeatherAlert[];

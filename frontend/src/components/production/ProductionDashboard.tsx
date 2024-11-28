@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Grid, Paper, Typography, Box, Tab, Tabs } from '@mui/material';
 import ParcelleMap from './ParcelleMap';
 import ProductionCalendar from './ProductionCalendar';
-import WeatherDashboard from './WeatherDashboard';
+import TableauMeteoParcelleaire from './TableauMeteoParcelleaire';
 import HarvestQualityForm from './HarvestQualityForm';
 import { Parcelle } from '../../types/production';
 import { productionService } from '../../services/production';
@@ -58,14 +58,13 @@ const ProductionDashboard: React.FC = () => {
     try {
       setSelectedParcelle(parcelle);
       // Charger les données détaillées de la parcelle si nécessaire
-      const detailedData = await productionService.getParcelle(parcelle.id);
-      // Mettre à jour les données si nécessaire
+      await productionService.getParcelle(parcelle.id);
     } catch (err) {
       setError('Erreur lors du chargement des détails de la parcelle');
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -115,7 +114,7 @@ const ProductionDashboard: React.FC = () => {
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
-              <WeatherDashboard parcelle={selectedParcelle} />
+              <TableauMeteoParcelleaire parcelle={selectedParcelle} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>

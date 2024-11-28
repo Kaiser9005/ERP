@@ -29,7 +29,7 @@ interface Props {
   endDate?: Date;
 }
 
-export const WeatherAnalytics: React.FC<Props> = ({
+export const AnalyseMétéo: React.FC<Props> = ({
   projectId,
   startDate = new Date(),
   endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours par défaut
@@ -223,4 +223,4 @@ export const WeatherAnalytics: React.FC<Props> = ({
   );
 };
 
-export default WeatherAnalytics;
+export default AnalyseMétéo;

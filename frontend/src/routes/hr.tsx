@@ -8,7 +8,7 @@ import LeaveRequests from '../components/hr/LeaveRequests';
 import AttendanceOverview from '../components/hr/AttendanceOverview';
 import CompetencesAgricoles from '../components/hr/agricole/CompetencesAgricoles';
 import { FormationPage } from '../components/hr/formation/FormationPage';
-import WeatherDashboard from '../components/hr/weather/WeatherDashboard';
+import TableauDeBordMétéo from '../components/hr/weather/TableauDeBordMétéo';
 
 const HRRoutes: React.FC = () => {
   return (
@@ -21,7 +21,7 @@ const HRRoutes: React.FC = () => {
       <Route path="/competences" element={<CompetencesAgricoles employeId="current" />} />
       <Route path="/paie" element={<PayrollPage />} />
       <Route path="/formations" element={<FormationPage />} />
-      <Route path="/meteo" element={<WeatherDashboard />} />
+      <Route path="/meteo" element={<TableauDeBordMétéo />} />
     </Routes>
   );
 };

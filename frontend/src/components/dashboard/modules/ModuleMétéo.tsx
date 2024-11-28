@@ -7,11 +7,11 @@ import OpacityIcon from '@mui/icons-material/Opacity';
 import AirIcon from '@mui/icons-material/Air';
 import WarningIcon from '@mui/icons-material/Warning';
 
-interface WeatherModuleProps {
+interface ModuleMétéoProps {
   data: WeatherSummary;
 }
 
-const WeatherModule: React.FC<WeatherModuleProps> = ({ data }) => {
+const ModuleMétéo: React.FC<ModuleMétéoProps> = ({ data }) => {
   const { current_conditions, daily_forecast, alerts, production_impact } = data;
 
   const getAlertSeverityColor = (severity: 'low' | 'medium' | 'high'): 'success' | 'warning' | 'error' => {
@@ -167,4 +167,4 @@ const WeatherModule: React.FC<WeatherModuleProps> = ({ data }) => {
   );
 };
 
-export default WeatherModule;
+export default ModuleMétéo;
