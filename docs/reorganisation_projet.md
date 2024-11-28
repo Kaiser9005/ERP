@@ -34,32 +34,13 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
    - Standardiser les noms de fichiers (français)
    - Centraliser les traductions dans `frontend/src/locales/`
 
-### Méthodologie suggérée
-1. Analyse des doublons :
-   - Utiliser des outils de comparaison de fichiers
-   - Vérifier les dates de modification
-   - Comparer la complétude du code
-   - Identifier les chaînes à traduire
-
-2. Réorganisation :
-   - Créer une nouvelle structure temporaire
-   - Migrer les fichiers validés
-   - Mettre à jour les imports
-   - Implémenter i18next
-   - Valider la compilation
-
-3. Validation :
-   - Vérifier les dépendances
-   - Tester la compilation
-   - Valider les imports
-   - Tester les traductions
-
 ### État d'Avancement
 
 #### Composants Migrés
 1. Module Inventaire :
    - [x] FormulaireProduit déplacé vers frontend
    - [x] StatsInventaire mis à jour avec i18n
+   - [x] HistoriqueMouvements optimisé et internationalisé
    - [x] Types et services optimisés
    - [x] Tests unitaires adaptés
    - [x] Support multilingue ajouté
@@ -73,7 +54,6 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
 
 #### Prochaines Actions
 1. Court terme :
-   - [ ] Migrer HistoriqueMouvements
    - [ ] Adapter PageInventaire
    - [ ] Compléter les traductions
    - [ ] Mettre à jour les tests

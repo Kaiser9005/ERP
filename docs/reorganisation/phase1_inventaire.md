@@ -52,8 +52,17 @@
 - [x] Tests unitaires
 - [x] Tests d'accessibilité
 
+#### HistoriqueMouvements
+- [x] Interface utilisateur en français
+- [x] Accessibilité (ARIA, navigation clavier)
+- [x] Filtres avancés (type, recherche)
+- [x] Graphiques d'évolution des mouvements
+- [x] Tooltips informatifs
+- [x] Support de l'internationalisation
+- [x] Tests unitaires
+- [x] Tests d'accessibilité
+
 ### Composants à Traiter
-- [ ] HistoriqueMouvements
 - [ ] PageInventaire
 
 ## Améliorations Réalisées
@@ -202,6 +211,35 @@
    - Tests de performance
    - Tests d'internationalisation
 
+### HistoriqueMouvements
+1. Interface Utilisateur
+   - Traduction complète en français
+   - Format des dates adapté à la locale française
+   - Graphiques d'évolution interactifs
+   - Filtres intuitifs et accessibles
+   - Messages d'état clairs
+
+2. Fonctionnalités
+   - Filtrage par type de mouvement
+   - Recherche textuelle globale
+   - Graphiques d'évolution des mouvements
+   - Affichage des tendances
+   - Gestion des états de chargement
+
+3. Accessibilité
+   - Labels ARIA sur tous les contrôles
+   - Navigation au clavier optimisée
+   - Messages d'état vocaux
+   - Structure sémantique
+   - Descriptions des graphiques
+
+4. Tests
+   - Tests des filtres et recherche
+   - Tests des graphiques
+   - Tests d'accessibilité
+   - Tests de performance
+   - Tests d'internationalisation
+
 ## Services Mis à Jour
 
 ### Service Inventaire
@@ -221,20 +259,14 @@
 ## Prochaines Étapes
 
 ### Court Terme (Sprint 1)
-1. Optimiser HistoriqueMouvements
-   - Ajouter des filtres avancés
-   - Implémenter des graphiques
-   - Améliorer la recherche
-   - Créer des tests
-
-### Moyen Terme (Sprint 2)
 1. Améliorer PageInventaire
    - Unifier l'interface
    - Ajouter des fonctionnalités de tri global
    - Optimiser les performances
    - Implémenter les tests
 
-2. Intégrations
+### Moyen Terme (Sprint 2)
+1. Intégrations
    - Connexion avec le module IoT
    - Alertes en temps réel
    - Synchronisation avec la production
