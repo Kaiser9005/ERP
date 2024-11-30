@@ -60,13 +60,31 @@ Le module Production est le cœur de l'ERP FOFAL, gérant l'ensemble des opérat
 - Vue consolidée
 - Actions rapides
 
-### 4. Monitoring
+### 4. Monitoring Météo
 
 #### WeatherDashboard
 - Conditions actuelles
 - Prévisions à 3 jours
 - Alertes météo
 - Impact sur la production
+
+#### TableauMeteoParcelleaire
+- Vue météo par parcelle
+- Conditions actuelles et prévisions
+- Alertes spécifiques aux parcelles
+- Intégration avec les capteurs IoT
+- Historique météo localisé
+- Recommandations par parcelle
+
+#### DétailsMétéoTâche
+- Conditions météo spécifiques aux tâches
+- Compatibilité avec les contraintes définies
+- Alertes et avertissements
+- Recommandations d'exécution
+- Historique météo récent
+- Prévisions pour la période planifiée
+
+### 5. Monitoring IoT
 
 #### IoTDashboard
 - État des capteurs
@@ -93,6 +111,9 @@ Le module Production est le cœur de l'ERP FOFAL, gérant l'ensemble des opérat
 - Prévisions et alertes
 - Impact sur la production
 - Historique météo
+- Analyse par tâche
+- Recommandations contextuelles
+- Intégration IoT
 
 ### iot_service
 - Gestion des capteurs
@@ -126,6 +147,16 @@ class IoTSensor(BaseModel):
     etat: SensorState
 ```
 
+### Météo
+```python
+class WeatherConstraints(BaseModel):
+    min_temperature: float
+    max_temperature: float
+    max_wind_speed: float
+    max_precipitation: float
+    humidity_range: Tuple[float, float]
+```
+
 ## Intégrations
 
 ### Avec Inventaire
@@ -142,6 +173,9 @@ class IoTSensor(BaseModel):
 - Impact sur la planification
 - Alertes conditions critiques
 - Optimisation des interventions
+- Analyse par tâche et parcelle
+- Recommandations contextuelles
+- Historique et prévisions
 
 ## Flux de Données
 
@@ -159,6 +193,11 @@ class IoTSensor(BaseModel):
 - Coûts de production
 - Valorisation des récoltes
 - Analyse de rentabilité
+
+### Production → Météo
+- Contraintes des tâches
+- Données des capteurs
+- Historique des impacts
 
 ## Sécurité
 
@@ -178,11 +217,15 @@ class IoTSensor(BaseModel):
 - Cache Redis
 - Agrégation données
 - Pagination résultats
+- Mise en cache météo
+- Optimisation IoT
 
 ### Monitoring
 - Temps de réponse
 - Utilisation ressources
 - Alertes performance
+- Latence capteurs
+- Qualité données météo
 
 ## Tests
 
@@ -190,13 +233,19 @@ class IoTSensor(BaseModel):
 - Services et modèles
 - Composants React
 - Validation données
+- Tests météo
+- Tests IoT
 
 ### Intégration
 - Flux complets
 - APIs externes
 - Synchronisation données
+- Intégration météo
+- Communication IoT
 
 ### E2E
 - Parcours utilisateur
 - Scénarios métier
 - Validation finale
+- Tests météo complets
+- Validation IoT
