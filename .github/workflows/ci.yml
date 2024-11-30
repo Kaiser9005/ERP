@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:14
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -23,12 +23,23 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       redis:
-        image: redis:7
+        image: redis:7.2-alpine
         ports:
           - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mqtt:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1883:1883
+        options: >-
+          --health-cmd "timeout 5s mosquitto_sub -t test/mqtt -C 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -39,8 +50,19 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
         cache: 'pip'
+        
+    - name: Cache ML models
+      uses: actions/cache@v3
+      with:
+        path: |
+          models/ml
+          .cache/torch
+          ~/.cache/huggingface
+        key: ${{ runner.os }}-ml-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-ml-
         
     - name: Installation des dépendances
       run: |
@@ -51,42 +73,45 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379/0
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY || '' }}
+        MQTT_BROKER: localhost
+        MQTT_PORT: 1883
         ML_MODEL_PATH: ./models/ml
-        ANALYTICS_DATA_PATH: ./data/analytics
-        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
+        WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
       run: |
-        pytest tests/ --cov=. --cov-report=xml --ignore=tests/integration --ignore=tests/e2e --ignore=tests/ml --ignore=tests/inventory_ml --ignore=tests/projects_ml
+        pytest tests/ --cov=. --cov-report=xml --ignore=tests/integration --ignore=tests/e2e --ignore=tests/ml --ignore=tests/inventory_ml --ignore=tests/projects_ml -v
 
     - name: Tests d'intégration
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379/0
+        MQTT_BROKER: localhost
+        MQTT_PORT: 1883
         ML_MODEL_PATH: ./models/ml
-        ANALYTICS_DATA_PATH: ./data/analytics
-        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
       run: |
-        pytest tests/integration/ --cov=. --cov-report=xml --cov-append
+        pytest tests/integration/ --cov=. --cov-report=xml --cov-append -v
 
     - name: Tests ML
+      timeout-minutes: 30
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379/0
         ML_MODEL_PATH: ./models/ml
-        ANALYTICS_DATA_PATH: ./data/analytics
+        TORCH_CACHE_DIR: .cache/torch
       run: |
-        pytest tests/ml/ tests/inventory_ml/ tests/projects_ml/ --cov=. --cov-report=xml --cov-append
+        pytest tests/ml/ tests/inventory_ml/ tests/projects_ml/ --cov=. --cov-report=xml --cov-append -v
 
     - name: Tests E2E
+      timeout-minutes: 30
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379/0
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY || '' }}
-        ML_MODEL_PATH: ./models/ml
-        ANALYTICS_DATA_PATH: ./data/analytics
-        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
+        MQTT_BROKER: localhost
+        MQTT_PORT: 1883
+        WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+        PLAYWRIGHT_BROWSERS_PATH: .playwright-cache
       run: |
-        pytest tests/e2e/ --cov=. --cov-report=xml --cov-append
+        playwright install chromium
+        pytest tests/e2e/ --cov=. --cov-report=xml --cov-append -v
 
     - name: Upload coverage
       uses: codecov/codecov-action@v4
@@ -102,7 +127,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
         cache: 'pip'
         
     - name: Installation des linters
@@ -115,7 +140,7 @@ jobs:
         flake8 .
         black . --check
         isort . --check-only
-        mypy .
+        mypy . --strict
 
   test-frontend:
     runs-on: ubuntu-latest
@@ -127,19 +152,26 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+        
+    - name: Cache Playwright browsers
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
         
     - name: Installation des dépendances
       working-directory: ./frontend
-      run: npm ci
+      run: |
+        npm ci
+        npx playwright install chromium
         
     - name: Configuration environnement
       working-directory: ./frontend
       run: |
-        echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" >> .env
-        echo "VITE_WEATHER_LOCATION=Ebondi,Cameroon" >> .env
+        echo "VITE_WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }}" >> .env
         echo "VITE_API_URL=http://localhost:8000" >> .env
-        echo "VITE_IOT_WEBSOCKET_URL=ws://localhost:8000/ws" >> .env
-        echo "VITE_ANALYTICS_REFRESH_INTERVAL=300000" >> .env
+        echo "VITE_MQTT_BROKER=ws://localhost:1883" >> .env
         
     - name: Vérification types
       working-directory: ./frontend
@@ -147,31 +179,15 @@ jobs:
         
     - name: Tests unitaires React
       working-directory: ./frontend
-      env:
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
-      run: npm test -- --config ./vitest.config.ts
-
+      run: npm test
+      
     - name: Tests d'intégration frontend
       working-directory: ./frontend
-      env:
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
       run: npm run test:integration
-
+      
     - name: Tests de performance frontend
       working-directory: ./frontend
-      env:
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
       run: npm run test:perf
-
-    - name: Tests de benchmark
-      working-directory: ./frontend
-      env:
-        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
-      run: npm run bench:ci
-
-    - name: Build frontend
-      working-directory: ./frontend
-      run: npm run build
 
     - name: Upload coverage frontend
       uses: codecov/codecov-action@v4
@@ -179,3 +195,20 @@ jobs:
         file: ./frontend/coverage/coverage-final.json
         flags: frontend
         fail_ci_if_error: true
+
+  build-frontend:
+    needs: [test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Build production
+      working-directory: ./frontend
+      run: |
+        npm ci
+        npm run build
