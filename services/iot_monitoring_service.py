@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from models.iot_sensor import IoTSensor, SensorReading, SensorType, SensorStatus
 from services.iot_service import IoTService
 from services.weather_service import WeatherService
-from services.production_ml_service import ProductionMLService
+from services.ml.production.service import ProductionMLService
 from core.config import settings
 
 class IoTMonitoringService:
@@ -190,12 +190,10 @@ class IoTMonitoringService:
             sensor_data[sensor.type] = readings
 
         # Génération prédictions
-        predictions = await self.ml_service.predict_conditions(
-            parcelle_id=parcelle_id,
-            sensor_data=sensor_data,
-            weather_data=weather,
-            start_date=reference_date,
-            horizon_days=7
+        predictions = await self.ml_service.analyze_meteo_impact(
+            str(parcelle_id),
+            reference_date.date(),
+            (reference_date + timedelta(days=7)).date()
         )
 
         return predictions

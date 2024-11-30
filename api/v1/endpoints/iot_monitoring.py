@@ -21,15 +21,27 @@ from schemas.iot_monitoring import (
 from services.iot_monitoring_service import IoTMonitoringService
 from services.iot_service import IoTService
 from services.weather_service import WeatherService
-from services.production_ml_service import ProductionMLService
+from services.ml.production.service import ProductionMLService
 
 router = APIRouter(prefix="/api/v1/iot-monitoring", tags=["IoT Monitoring"])
 
-async def get_monitoring_service(
+def get_iot_service(db: Session = Depends(get_db)) -> IoTService:
+    """Injection de dépendance pour le service IoT."""
+    return IoTService(db)
+
+def get_weather_service(db: Session = Depends(get_db)) -> WeatherService:
+    """Injection de dépendance pour le service météo."""
+    return WeatherService(db)
+
+def get_ml_service(db: Session = Depends(get_db)) -> ProductionMLService:
+    """Injection de dépendance pour le service ML."""
+    return ProductionMLService(db)
+
+def get_monitoring_service(
     db: Session = Depends(get_db),
-    iot_service: IoTService = Depends(),
-    weather_service: WeatherService = Depends(),
-    ml_service: ProductionMLService = Depends()
+    iot_service: IoTService = Depends(get_iot_service),
+    weather_service: WeatherService = Depends(get_weather_service),
+    ml_service: ProductionMLService = Depends(get_ml_service)
 ) -> IoTMonitoringService:
     """Injection de dépendances pour le service de monitoring."""
     return IoTMonitoringService(db, iot_service, weather_service, ml_service)
@@ -141,7 +153,13 @@ async def get_monitoring_config(
     """Récupère la configuration du monitoring."""
     try:
         # TODO: Implémenter la récupération de config depuis la base
-        return MonitoringConfigSchema()
+        return MonitoringConfigSchema(
+            sampling_interval=300,
+            alert_thresholds={},
+            maintenance_intervals={},
+            data_retention=365,
+            aggregation_policies={}
+        )
     except Exception as e:
         raise HTTPException(
             status_code=404,

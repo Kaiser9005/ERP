@@ -1,52 +1,58 @@
-from pydantic import BaseModel, UUID4
 from typing import Optional, Dict, Any, List
-from models.parametrage import TypeParametre, ModuleSysteme
+from pydantic import BaseModel, ConfigDict
+from uuid import UUID
+from models.parametrage import TypeModule, TypeParametre
 
-class ParametreBase(BaseModel):
+class ModuleSystemeBase(BaseModel):
+    """Schéma de base pour un module système"""
     code: str
-    libelle: str
-    description: Optional[str]
-    type_parametre: TypeParametre
-    module: Optional[ModuleSysteme]
-    valeur: Dict[str, Any]
-    modifiable: bool = True
-    visible: bool = True
-    ordre: int = 0
-    categorie: Optional[str]
-
-class ParametreCreate(ParametreBase):
-    pass
-
-class ParametreUpdate(ParametreBase):
-    code: Optional[str]
-    libelle: Optional[str]
-    valeur: Optional[Dict[str, Any]]
-
-class ParametreResponse(ParametreBase):
-    id: UUID4
-
-    class Config:
-        orm_mode = True
-
-class ConfigurationModuleBase(BaseModel):
-    module: ModuleSysteme
+    nom: str
+    description: Optional[str] = None
+    type_module: TypeModule
+    version: Optional[str] = None
     actif: bool = True
-    configuration: Optional[Dict[str, Any]]
-    ordre_affichage: int = 0
-    icone: Optional[str]
-    couleur: Optional[str]
-    roles_autorises: List[str] = []
+    configuration: Optional[Dict[str, Any]] = None
+    dependances: Optional[List[str]] = None
 
-class ConfigurationModuleCreate(ConfigurationModuleBase):
+class ModuleSystemeCreate(ModuleSystemeBase):
+    """Schéma pour la création d'un module système"""
     pass
 
-class ConfigurationModuleUpdate(ConfigurationModuleBase):
-    actif: Optional[bool]
-    configuration: Optional[Dict[str, Any]]
-    ordre_affichage: Optional[int]
+class ModuleSystemeUpdate(ModuleSystemeBase):
+    """Schéma pour la mise à jour d'un module système"""
+    code: Optional[str] = None
+    nom: Optional[str] = None
+    type_module: Optional[TypeModule] = None
 
-class ConfigurationModuleResponse(ConfigurationModuleBase):
-    id: UUID4
+class ModuleSystemeResponse(ModuleSystemeBase):
+    """Schéma pour la réponse d'un module système"""
+    id: UUID
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
+class ParametreSystemeBase(BaseModel):
+    """Schéma de base pour un paramètre système"""
+    code: str
+    nom: str
+    description: Optional[str] = None
+    type_parametre: TypeParametre
+    valeur: Dict[str, Any]
+    actif: bool = True
+    metadata_config: Optional[Dict[str, Any]] = None
+
+class ParametreSystemeCreate(ParametreSystemeBase):
+    """Schéma pour la création d'un paramètre système"""
+    module_id: UUID
+
+class ParametreSystemeUpdate(ParametreSystemeBase):
+    """Schéma pour la mise à jour d'un paramètre système"""
+    code: Optional[str] = None
+    nom: Optional[str] = None
+    type_parametre: Optional[TypeParametre] = None
+    valeur: Optional[Dict[str, Any]] = None
+    module_id: Optional[UUID] = None
+
+class ParametreSystemeResponse(ParametreSystemeBase):
+    """Schéma pour la réponse d'un paramètre système"""
+    id: UUID
+    module_id: UUID
+    model_config = ConfigDict(from_attributes=True)

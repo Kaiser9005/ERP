@@ -80,6 +80,31 @@ export const theme = createTheme({
   }
 });
 
+export const lightTheme = theme;
+
+export const darkTheme = createTheme({
+  ...theme,
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#4CAF50',
+      light: '#81C784',
+      dark: '#388E3C',
+      contrastText: '#fff'
+    },
+    secondary: {
+      main: '#FFB74D',
+      light: '#FFE082',
+      dark: '#FFA000',
+      contrastText: '#000'
+    },
+    background: {
+      default: '#121212',
+      paper: '#1E1E1E'
+    }
+  }
+});
+
 // Déclaration des types pour TypeScript
 declare module '@mui/material/styles' {
   interface Theme {

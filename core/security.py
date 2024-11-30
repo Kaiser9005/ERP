@@ -2,9 +2,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Union, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from core.config import SECURITY_CONFIG
+from sqlalchemy.orm import Session
+from db.database import get_db
+from models.auth import Utilisateur
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Vérifie si le mot de passe en clair correspond au hash"""
@@ -13,6 +19,22 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Génère le hash d'un mot de passe"""
     return pwd_context.hash(password)
+
+def verify_token(token: str) -> dict:
+    """Vérifie et décode un token JWT"""
+    try:
+        payload = jwt.decode(
+            token,
+            SECURITY_CONFIG["secret_key"],
+            algorithms=[SECURITY_CONFIG["algorithm"]]
+        )
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalide",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 def create_access_token(
     subject: Union[str, Any],
@@ -34,14 +56,31 @@ def create_access_token(
     )
     return encoded_jwt
 
-def verify_token(token: str) -> Optional[str]:
-    """Vérifie la validité d'un token"""
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> Utilisateur:
+    """Récupère l'utilisateur courant à partir du token JWT"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
     try:
         payload = jwt.decode(
             token,
             SECURITY_CONFIG["secret_key"],
             algorithms=[SECURITY_CONFIG["algorithm"]]
         )
-        return payload.get("sub")
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+            
+        user = db.query(Utilisateur).filter(Utilisateur.id == user_id).first()
+        if user is None:
+            raise credentials_exception
+            
+        return user
     except JWTError:
-        return None
+        raise credentials_exception

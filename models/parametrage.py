@@ -1,50 +1,57 @@
-from sqlalchemy import Column, String, JSON, Boolean, ForeignKey, Text, Enum, Integer
+from sqlalchemy import Column, String, Boolean, JSON, Enum, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 from .base import Base
 import enum
-from uuid import uuid4
-from sqlalchemy.dialects.postgresql import UUID
+import uuid
+
+class TypeModule(str, enum.Enum):
+    """Types de modules système"""
+    CORE = "CORE"
+    FINANCE = "FINANCE"
+    RH = "RH"
+    PRODUCTION = "PRODUCTION"
+    INVENTAIRE = "INVENTAIRE"
+    ANALYTIQUE = "ANALYTIQUE"
+
+class ModuleSysteme(Base):
+    """Modèle représentant un module système"""
+    __tablename__ = "modules_systeme"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    code = Column(String(50), unique=True, nullable=False)
+    nom = Column(String(100), nullable=False)
+    description = Column(String(500))
+    type_module = Column(Enum(TypeModule), nullable=False)
+    version = Column(String(20))
+    actif = Column(Boolean, default=True)
+    configuration = Column(JSON)  # Configuration spécifique au module
+    dependances = Column(JSON)  # Liste des modules requis
+
+    # Relations
+    parametres = relationship("ParametreSysteme", back_populates="module")
 
 class TypeParametre(str, enum.Enum):
     """Types de paramètres système"""
     GENERAL = "GENERAL"
-    MODULE = "MODULE"
-    UTILISATEUR = "UTILISATEUR"
+    SECURITE = "SECURITE"
+    NOTIFICATION = "NOTIFICATION"
+    INTEGRATION = "INTEGRATION"
+    PERFORMANCE = "PERFORMANCE"
 
-class ModuleSysteme(str, enum.Enum):
-    """Modules du système"""
-    PRODUCTION = "PRODUCTION"
-    INVENTAIRE = "INVENTAIRE"
-    RH = "RH"
-    FINANCE = "FINANCE"
-    COMPTABILITE = "COMPTABILITE"
-    PARAMETRAGE = "PARAMETRAGE"
+class ParametreSysteme(Base):
+    """Modèle représentant un paramètre système"""
+    __tablename__ = "parametres_systeme"
 
-class Parametre(Base):
-    """Modèle pour les paramètres système"""
-    __tablename__ = "parametres"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code = Column(String(50), unique=True, nullable=False)
-    libelle = Column(String(200), nullable=False)
-    description = Column(Text)
+    nom = Column(String(100), nullable=False)
+    description = Column(String(500))
     type_parametre = Column(Enum(TypeParametre), nullable=False)
-    module = Column(Enum(ModuleSysteme), nullable=True)
-    valeur = Column(JSON, nullable=False)  # Stockage flexible des valeurs
-    modifiable = Column(Boolean, default=True)
-    visible = Column(Boolean, default=True)
-    ordre = Column(Integer, default=0)
-    categorie = Column(String(50))  # Pour grouper les paramètres
-
-class ConfigurationModule(Base):
-    """Modèle pour la configuration des modules"""
-    __tablename__ = "configurations_modules"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    module = Column(Enum(ModuleSysteme), unique=True, nullable=False)
+    valeur = Column(JSON, nullable=False)  # Valeur du paramètre (peut être de n'importe quel type)
+    module_id = Column(UUID(as_uuid=True), ForeignKey("modules_systeme.id"))
     actif = Column(Boolean, default=True)
-    configuration = Column(JSON)  # Configuration spécifique au module
-    ordre_affichage = Column(Integer, default=0)
-    icone = Column(String(50))
-    couleur = Column(String(20))
-    roles_autorises = Column(JSON)  # Liste des rôles ayant accès au module
+    metadata_config = Column(JSON)  # Métadonnées de configuration (validation, etc.)
+
+    # Relations
+    module = relationship("ModuleSysteme", back_populates="parametres")

@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 export const api = axios.create({
-export const api = axios.create({
   baseURL: '/api/v1', // Base URL pour toutes les requêtes
   timeout: 30000, // Timeout de 30 secondes
   headers: {

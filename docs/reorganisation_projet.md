@@ -197,22 +197,24 @@ Suite à l'implémentation complète des modules de l'ERP, nous devons procéder
 ## Prochaines Étapes
 
 1. Phase 1 :
-   - Commencer par l'analyse des doublons
-   - Proposer une nouvelle structure
-   - Valider la réorganisation
-   - Finaliser l'internationalisation
-
-2. Phase 2 :
+     Commencer par 
    - Exécuter les tests existants
    - Identifier les manques
    - Compléter la couverture
    - Tester les traductions
 
-3. Phase 3 :
+2. Phase 2 :
    - Vérifier l'environnement
    - Configurer la base de données
    - Déployer le frontend
    - Valider le support multilingue
+
+3. Phase 3 :
+   - l'analyse des doublons
+   - Proposer une nouvelle structure
+   - Valider la réorganisation
+   - Finaliser l'internationalisation
+
 
 ### Méthodologie suggérée
 1. Analyse des doublons :

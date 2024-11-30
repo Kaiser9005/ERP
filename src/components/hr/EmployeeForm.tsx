@@ -49,11 +49,11 @@ const EmployeeForm: React.FC = () => {
   const queryClient = useQueryClient();
   const isEdit = Boolean(id);
 
-  const { data: employee, isLoading: isLoadingEmployee } = useQuery(
-    ['employees', id],
-    () => getEmployee(id!),
-    { enabled: isEdit }
-  );
+  const { data: employee, isLoading: isLoadingEmployee } = useQuery({
+    queryKey: ['employees', id],
+    queryFn: () => getEmployee(id!),
+    enabled: isEdit
+  });
 
   const defaultValues: EmployeeFormData = {
     matricule: '',
@@ -77,17 +77,17 @@ const EmployeeForm: React.FC = () => {
   });
 
   const mutation = useMutation(
-    (data: EmployeeFormData) => {
-      const employeeData = {
-        ...data,
-        date_naissance: new Date(data.date_naissance).toISOString(),
-        date_embauche: new Date(data.date_embauche).toISOString()
-      };
-      return isEdit ? updateEmployee(id!, employeeData) : createEmployee(employeeData);
-    },
     {
+      mutationFn: (data: EmployeeFormData) => {
+        const employeeData = {
+          ...data,
+          date_naissance: new Date(data.date_naissance).toISOString(),
+          date_embauche: new Date(data.date_embauche).toISOString()
+        };
+        return isEdit ? updateEmployee(id!, employeeData) : createEmployee(employeeData);
+      },
       onSuccess: () => {
-        queryClient.invalidateQueries(['employees']);
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
         navigate('/hr');
       }
     }
@@ -372,7 +372,8 @@ const EmployeeForm: React.FC = () => {
                   <LoadingButton
                     variant="contained"
                     type="submit"
-                    loading={mutation.isLoading}
+                    loading={mutation.isloading}
+                  
                   >
                     {isEdit ? 'Modifier' : 'Créer'}
                   </LoadingButton>

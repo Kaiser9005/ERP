@@ -1,141 +1,132 @@
-"""Schémas de validation pour le monitoring IoT."""
+"""Schémas Pydantic pour le monitoring IoT."""
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Optional, Dict, List
 from uuid import UUID
-
 from pydantic import BaseModel, Field
 
 from models.iot_sensor import SensorType, SensorStatus
 
-class SensorHealthSchema(BaseModel):
-    """État de santé d'un capteur."""
-    id: UUID
+class IoTSensorCreate(BaseModel):
+    """Schéma pour la création d'un capteur."""
     code: str
     type: SensorType
-    status: SensorStatus
-    message: str
-    batterie: Optional[float]
-    signal: Optional[float]
-    derniere_lecture: Optional[datetime]
-
-class SensorReadingStatsSchema(BaseModel):
-    """Statistiques des lectures d'un capteur."""
-    moyenne: float
-    minimum: float
-    maximum: float
-    nombre_lectures: int
-
-class SensorReadingsSchema(BaseModel):
-    """Lectures agrégées d'un capteur."""
-    capteur_id: UUID
-    lectures: List[Dict[str, Any]]
-    statistiques: SensorReadingStatsSchema
-
-class SensorAlertSchema(BaseModel):
-    """Alerte d'un capteur."""
-    capteur_id: UUID
-    type: str
-    valeur: Optional[float]
-    seuil: Optional[float]
-    timestamp: datetime
-    message: str
-    status: Optional[SensorStatus]
-
-class MLPredictionSchema(BaseModel):
-    """Prédiction ML pour une parcelle."""
-    type_capteur: SensorType
-    predictions: List[Dict[str, Any]]
-    confiance: float
-    facteurs_influence: List[str]
-    recommandations: List[str]
-
-class SystemHealthSchema(BaseModel):
-    """État de santé global du système IoT."""
-    total_capteurs: int
-    capteurs_actifs: int
-    capteurs_maintenance: int
-    capteurs_erreur: int
-    batterie_faible: int
-    signal_faible: int
-    sante_globale: float
-    timestamp: datetime
-
-class MaintenanceRecommendationSchema(BaseModel):
-    """Recommandation de maintenance pour un capteur."""
-    capteur_id: UUID
-    code: str
-    type: SensorType
-    priorite: str
-    raison: str
-    action_recommandee: str
-    deadline: datetime
-
-class MonitoringDataSchema(BaseModel):
-    """Données complètes de monitoring pour une parcelle."""
     parcelle_id: UUID
-    periode: Dict[str, datetime]
-    capteurs: List[SensorHealthSchema]
-    mesures: Dict[SensorType, List[SensorReadingsSchema]]
-    alertes: List[SensorAlertSchema]
-    predictions: Dict[str, Any]
-    sante_systeme: SystemHealthSchema
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    altitude: Optional[float] = None
+    config: Dict = Field(default_factory=dict)
+    seuils_alerte: Dict = Field(default_factory=dict)
+    intervalle_lecture: float = 300
+    fabricant: Optional[str] = None
+    modele: Optional[str] = None
+    firmware: Optional[str] = None
 
-class MonitoringDashboardSchema(BaseModel):
-    """Données pour le dashboard de monitoring."""
-    temps_reel: MonitoringDataSchema
-    historique: Dict[str, MonitoringDataSchema]
-    predictions: Dict[str, MLPredictionSchema]
-    maintenance: List[MaintenanceRecommendationSchema]
+class IoTSensorUpdate(BaseModel):
+    """Schéma pour la mise à jour d'un capteur."""
+    status: Optional[SensorStatus]
+    config: Optional[Dict]
+    seuils_alerte: Optional[Dict]
+    intervalle_lecture: Optional[float]
+    firmware: Optional[str]
+    derniere_maintenance: Optional[datetime]
+    prochaine_maintenance: Optional[datetime]
 
-# Schémas pour les requêtes
+class SensorReadingCreate(BaseModel):
+    """Schéma pour la création d'une lecture de capteur."""
+    valeur: float
+    unite: str
+    qualite_signal: Optional[float] = None
+    niveau_batterie: Optional[float] = None
+    meta_data: Dict = Field(default_factory=dict)
+
 class MonitoringRequestSchema(BaseModel):
-    """Paramètres pour une requête de monitoring."""
+    """Schéma pour une requête de monitoring."""
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-    types_capteur: Optional[List[SensorType]] = None
-    inclure_predictions: bool = True
-    inclure_maintenance: bool = True
+    metrics: List[str] = Field(default_factory=list)
+    aggregation: Optional[str] = "hour"
+
+class MonitoringDataPoint(BaseModel):
+    """Point de données de monitoring."""
+    timestamp: datetime
+    value: float
+    unit: str
+    quality: Optional[float] = None
+
+class MonitoringDataSeries(BaseModel):
+    """Série de données de monitoring."""
+    sensor_id: UUID
+    sensor_type: SensorType
+    metric: str
+    data: List[MonitoringDataPoint]
+
+class MonitoringDataSchema(BaseModel):
+    """Schéma pour les données de monitoring."""
+    parcelle_id: UUID
+    period_start: datetime
+    period_end: datetime
+    series: List[MonitoringDataSeries]
+    metadata: Dict = Field(default_factory=dict)
+
+class MonitoringStatsSchema(BaseModel):
+    """Statistiques de monitoring."""
+    min_value: float
+    max_value: float
+    avg_value: float
+    std_dev: Optional[float] = None
+    samples_count: int
+
+class MonitoringDashboardSchema(BaseModel):
+    """Schéma pour le dashboard de monitoring."""
+    parcelle_id: UUID
+    timestamp: datetime
+    sensors_status: Dict[UUID, SensorStatus]
+    current_values: Dict[UUID, MonitoringDataPoint]
+    daily_stats: Dict[UUID, MonitoringStatsSchema]
+    alerts_count: int
+    maintenance_due: List[UUID]
 
 class MaintenanceRequestSchema(BaseModel):
-    """Paramètres pour une requête de maintenance."""
-    priorite_minimum: Optional[str] = None
-    types_capteur: Optional[List[SensorType]] = None
-    deadline_max: Optional[datetime] = None
+    """Schéma pour une requête de maintenance."""
+    sensor_ids: Optional[List[UUID]] = None
+    priority: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
 
-# Schémas pour les réponses d'erreur
-class MonitoringErrorSchema(BaseModel):
-    """Erreur lors du monitoring."""
-    code: str
-    message: str
-    details: Optional[Dict[str, Any]] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+class MaintenanceRecommendationSchema(BaseModel):
+    """Schéma pour une recommandation de maintenance."""
+    sensor_id: UUID
+    sensor_type: SensorType
+    priority: str
+    reason: str
+    recommended_date: datetime
+    estimated_duration: int  # minutes
+    required_skills: List[str]
+    parts_needed: Optional[List[str]] = None
 
-# Schémas pour les webhooks
-class SensorAlertWebhookSchema(BaseModel):
-    """Données pour le webhook d'alerte capteur."""
-    type_alerte: str
-    capteur_id: UUID
-    message: str
-    timestamp: datetime
-    niveau: str
-    donnees: Dict[str, Any]
-
-class MaintenanceAlertWebhookSchema(BaseModel):
-    """Données pour le webhook d'alerte maintenance."""
-    capteur_id: UUID
-    type_maintenance: str
-    priorite: str
-    deadline: datetime
-    description: str
-    actions_requises: List[str]
-
-# Schémas pour la configuration
 class MonitoringConfigSchema(BaseModel):
     """Configuration du monitoring."""
-    intervalle_actualisation: int = 300  # secondes
-    seuil_alerte_batterie: float = 20.0  # pourcentage
-    seuil_alerte_signal: float = 30.0    # pourcentage
-    periode_retention_donnees: int = 90   # jours
-    webhook_urls: Dict[str, str] = Field(default_factory=dict)
-    notifications_email: List[str] = Field(default_factory=list)
+    sampling_interval: int = 300  # secondes
+    alert_thresholds: Dict[str, Dict[str, float]]
+    maintenance_intervals: Dict[str, int]  # jours
+    data_retention: int = 365  # jours
+    aggregation_policies: Dict[str, str]
+
+class MonitoringErrorSchema(BaseModel):
+    """Schéma pour les erreurs de monitoring."""
+    code: str
+    message: str
+    details: Optional[Dict] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class SensorAlertWebhookSchema(BaseModel):
+    """Schéma pour les webhooks d'alertes."""
+    sensor_id: UUID
+    alert_type: str
+    severity: str
+    message: str
+    timestamp: datetime
+    value: Optional[float] = None
+    threshold: Optional[float] = None
+    metadata: Dict = Field(default_factory=dict)

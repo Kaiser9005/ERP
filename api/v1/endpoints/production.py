@@ -1,16 +1,16 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from ....db.database import get_db
-from ....schemas.production import (
+from db.database import get_db
+from schemas.production import (
     ParcelleCreate, ParcelleUpdate, ParcelleInDB,
     CycleCultureCreate, CycleCultureUpdate, CycleCultureInDB,
     RecolteCreate, RecolteUpdate, RecolteInDB,
     ProductionEventCreate, ProductionEventUpdate, ProductionEventInDB,
     ProductionStats
 )
-from ....models.production import Parcelle, CycleCulture, Recolte, ProductionEvent
-from ....core.security import get_current_user
+from models.production import Parcelle, CycleCulture, Recolte, ProductionEvent
+from core.security import get_current_user
 from uuid import UUID
 from datetime import date, datetime, timedelta
 from sqlalchemy import func

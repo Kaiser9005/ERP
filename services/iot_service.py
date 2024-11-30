@@ -8,10 +8,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 
-from models.iot_sensor import (
-    IoTSensor, SensorReading, 
+from models.iot_sensor import IoTSensor, SensorReading, SensorStatus
+from schemas.iot_monitoring import (
     IoTSensorCreate, IoTSensorUpdate,
-    SensorReadingCreate, SensorStatus
+    SensorReadingCreate
 )
 from services.weather_service import WeatherService
 from core.config import settings

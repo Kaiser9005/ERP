@@ -8,7 +8,6 @@ from .endpoints import (
     dashboard,
     auth,
     parametrage,
-    agriculture,
     iot_monitoring
 )
 
@@ -22,5 +21,4 @@ api_router.include_router(production.router, prefix="/production", tags=["Produc
 api_router.include_router(weather.router, prefix="/weather", tags=["Météo"])
 api_router.include_router(activities.router, prefix="/activities", tags=["Activités"])
 api_router.include_router(parametrage.router, prefix="/parametrage", tags=["Paramétrage"])
-api_router.include_router(agriculture.router, prefix="/agriculture", tags=["Agriculture"])
 api_router.include_router(iot_monitoring.router, prefix="/iot-monitoring", tags=["IoT Monitoring"])

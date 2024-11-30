@@ -16,19 +16,12 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Création de l'enum
-    op.execute("""
-        CREATE TYPE typedocument AS ENUM (
-            'CONTRAT', 'FACTURE', 'BON_LIVRAISON', 'PIECE_JOINTE', 'RAPPORT', 'AUTRE'
-        );
-    """)
-
     # Création de la table documents
     op.create_table(
         'documents',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('nom', sa.String(200), nullable=False),
-        sa.Column('type_document', sa.Enum('CONTRAT', 'FACTURE', 'BON_LIVRAISON', 'PIECE_JOINTE', 'RAPPORT', 'AUTRE', name='typedocument'), nullable=False),
+        sa.Column('type_document', sa.String(20), nullable=False),
         sa.Column('description', sa.Text),
         sa.Column('chemin_fichier', sa.String(500), nullable=False),
         sa.Column('taille', sa.Integer),
@@ -40,7 +33,8 @@ def upgrade():
         sa.Column('created_at', sa.DateTime, nullable=False),
         sa.Column('updated_at', sa.DateTime, nullable=False),
         sa.ForeignKeyConstraint(['uploaded_by_id'], ['employes.id']),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.CheckConstraint("type_document IN ('CONTRAT', 'FACTURE', 'BON_LIVRAISON', 'PIECE_JOINTE', 'RAPPORT', 'AUTRE')", name='check_type_document')
     )
 
     # Index pour les recherches fréquentes
@@ -53,4 +47,3 @@ def upgrade():
 def downgrade():
     op.drop_index('ix_documents_module_reference')
     op.drop_table('documents')
-    op.execute('DROP TYPE typedocument')

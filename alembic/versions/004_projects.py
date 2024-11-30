@@ -16,19 +16,6 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Création des enums
-    op.execute("""
-        CREATE TYPE projectstatus AS ENUM (
-            'PLANIFIE', 'EN_COURS', 'EN_PAUSE', 'TERMINE', 'ANNULE'
-        );
-        CREATE TYPE taskpriority AS ENUM (
-            'BASSE', 'MOYENNE', 'HAUTE', 'CRITIQUE'
-        );
-        CREATE TYPE taskstatus AS ENUM (
-            'A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE', 'BLOQUE'
-        );
-    """)
-
     # Table des projets
     op.create_table(
         'projets',
@@ -39,7 +26,7 @@ def upgrade():
         sa.Column('date_debut', sa.Date, nullable=False),
         sa.Column('date_fin_prevue', sa.Date, nullable=False),
         sa.Column('date_fin_reelle', sa.Date),
-        sa.Column('statut', sa.Enum('PLANIFIE', 'EN_COURS', 'EN_PAUSE', 'TERMINE', 'ANNULE', name='projectstatus'), nullable=False),
+        sa.Column('statut', sa.String(20), nullable=False),
         sa.Column('budget', sa.Numeric(10, 2)),
         sa.Column('responsable_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('objectifs', postgresql.JSON(astext_type=sa.Text())),
@@ -48,7 +35,8 @@ def upgrade():
         sa.Column('updated_at', sa.DateTime, nullable=False),
         sa.ForeignKeyConstraint(['responsable_id'], ['employes.id']),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('code')
+        sa.UniqueConstraint('code'),
+        sa.CheckConstraint("statut IN ('PLANIFIE', 'EN_COURS', 'EN_PAUSE', 'TERMINE', 'ANNULE')", name='check_project_status')
     )
 
     # Table des tâches
@@ -58,8 +46,8 @@ def upgrade():
         sa.Column('projet_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('titre', sa.String(200), nullable=False),
         sa.Column('description', sa.Text),
-        sa.Column('priorite', sa.Enum('BASSE', 'MOYENNE', 'HAUTE', 'CRITIQUE', name='taskpriority'), nullable=False),
-        sa.Column('statut', sa.Enum('A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE', 'BLOQUE', name='taskstatus'), nullable=False),
+        sa.Column('priorite', sa.String(20), nullable=False),
+        sa.Column('statut', sa.String(20), nullable=False),
         sa.Column('date_debut', sa.DateTime),
         sa.Column('date_fin_prevue', sa.DateTime, nullable=False),
         sa.Column('date_fin_reelle', sa.DateTime),
@@ -71,7 +59,9 @@ def upgrade():
         sa.Column('updated_at', sa.DateTime, nullable=False),
         sa.ForeignKeyConstraint(['projet_id'], ['projets.id']),
         sa.ForeignKeyConstraint(['assignee_id'], ['employes.id']),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
+        sa.CheckConstraint("priorite IN ('BASSE', 'MOYENNE', 'HAUTE', 'CRITIQUE')", name='check_task_priority'),
+        sa.CheckConstraint("statut IN ('A_FAIRE', 'EN_COURS', 'EN_REVUE', 'TERMINE', 'BLOQUE')", name='check_task_status')
     )
 
     # Table des commentaires
@@ -111,6 +101,3 @@ def downgrade():
     op.drop_table('commentaires_tache')
     op.drop_table('taches')
     op.drop_table('projets')
-    op.execute('DROP TYPE taskstatus')
-    op.execute('DROP TYPE taskpriority')
-    op.execute('DROP TYPE projectstatus')

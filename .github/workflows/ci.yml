@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test-backend:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -23,29 +23,73 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
+        cache: 'pip'
         
-    - name: Install dependencies
+    - name: Installation des dépendances
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run tests
+    - name: Tests unitaires
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
         VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY || '' }}
+        ML_MODEL_PATH: ./models/ml
+        ANALYTICS_DATA_PATH: ./data/analytics
+        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
       run: |
-        pytest --cov=. --cov-report=xml
-        
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+        pytest tests/ --cov=. --cov-report=xml --ignore=tests/integration --ignore=tests/e2e --ignore=tests/ml --ignore=tests/inventory_ml --ignore=tests/projects_ml
+
+    - name: Tests d'intégration
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        ML_MODEL_PATH: ./models/ml
+        ANALYTICS_DATA_PATH: ./data/analytics
+        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
+      run: |
+        pytest tests/integration/ --cov=. --cov-report=xml --cov-append
+
+    - name: Tests ML
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        ML_MODEL_PATH: ./models/ml
+        ANALYTICS_DATA_PATH: ./data/analytics
+      run: |
+        pytest tests/ml/ tests/inventory_ml/ tests/projects_ml/ --cov=. --cov-report=xml --cov-append
+
+    - name: Tests E2E
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY || '' }}
+        ML_MODEL_PATH: ./models/ml
+        ANALYTICS_DATA_PATH: ./data/analytics
+        IOT_SENSOR_CONFIG: ./config/iot_sensors.json
+      run: |
+        pytest tests/e2e/ --cov=. --cov-report=xml --cov-append
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
@@ -53,46 +97,85 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
+        cache: 'pip'
         
-    - name: Install dependencies
+    - name: Installation des linters
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black isort
+        pip install flake8 black isort mypy
         
-    - name: Run linters
+    - name: Linting
       run: |
         flake8 .
         black . --check
         isort . --check-only
+        mypy .
 
-  build-frontend:
+  test-frontend:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'npm'
         
-    - name: Install dependencies
-      run: npm install
+    - name: Installation des dépendances
+      working-directory: ./frontend
+      run: npm ci
         
-    - name: Create env file
+    - name: Configuration environnement
+      working-directory: ./frontend
       run: |
         echo "VITE_WEATHER_API_KEY=${{ secrets.VITE_WEATHER_API_KEY }}" >> .env
         echo "VITE_WEATHER_LOCATION=Ebondi,Cameroon" >> .env
+        echo "VITE_API_URL=http://localhost:8000" >> .env
+        echo "VITE_IOT_WEBSOCKET_URL=ws://localhost:8000/ws" >> .env
+        echo "VITE_ANALYTICS_REFRESH_INTERVAL=300000" >> .env
         
-    - name: Build frontend
-      run: npm run build
+    - name: Vérification types
+      working-directory: ./frontend
+      run: npm run type-check
         
-    - name: Run frontend tests
+    - name: Tests unitaires React
+      working-directory: ./frontend
       env:
         VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
       run: npm test -- --config ./vitest.config.ts
+
+    - name: Tests d'intégration frontend
+      working-directory: ./frontend
+      env:
+        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
+      run: npm run test:integration
+
+    - name: Tests de performance frontend
+      working-directory: ./frontend
+      env:
+        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
+      run: npm run test:perf
+
+    - name: Tests de benchmark
+      working-directory: ./frontend
+      env:
+        VITE_WEATHER_API_KEY: ${{ secrets.VITE_WEATHER_API_KEY }}
+      run: npm run bench:ci
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Upload coverage frontend
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./frontend/coverage/coverage-final.json
+        flags: frontend
+        fail_ci_if_error: true
