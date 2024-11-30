@@ -3,7 +3,6 @@ import {
   Paper,
   Grid,
   TextField,
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -17,24 +16,23 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import type { CompteBalance, TypeCompte } from '../../../types/comptabilite';
+import { TypeCompteComptable, CompteBalance } from '../../../types/comptabilite';
 import { getBalance } from '../../../services/comptabilite';
 import { formatCurrency } from '../../../utils/format';
-import { queryKeys } from '../../../config/queryClient';
 
 interface QueryError {
   message: string;
 }
 
-const typeComptes: { value: TypeCompte; label: string }[] = [
-  { value: 'ACTIF', label: 'Actif' },
-  { value: 'PASSIF', label: 'Passif' },
-  { value: 'CHARGE', label: 'Charges' },
-  { value: 'PRODUIT', label: 'Produits' }
+const typeComptes = [
+  { value: TypeCompteComptable.ACTIF, label: 'Actif' },
+  { value: TypeCompteComptable.PASSIF, label: 'Passif' },
+  { value: TypeCompteComptable.CHARGE, label: 'Charges' },
+  { value: TypeCompteComptable.PRODUIT, label: 'Produits' }
 ];
 
 const Balance: React.FC = () => {
-  const [selectedType, setSelectedType] = useState<TypeCompte | ''>('');
+  const [selectedType, setSelectedType] = useState<TypeCompteComptable | ''>('');
   const [dateDebut, setDateDebut] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
@@ -45,11 +43,7 @@ const Balance: React.FC = () => {
   );
 
   const { data: comptes = [], isLoading, error } = useQuery<CompteBalance[], QueryError>({
-    queryKey: queryKeys.comptabilite.balance({
-      date_debut: dateDebut,
-      date_fin: dateFin,
-      type_compte: selectedType || undefined
-    }),
+    queryKey: ['balance', dateDebut, dateFin, selectedType],
     queryFn: () => getBalance({
       date_debut: new Date(dateDebut),
       date_fin: new Date(dateFin),
@@ -85,7 +79,7 @@ const Balance: React.FC = () => {
             select
             fullWidth
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as TypeCompte | '')}
+            onChange={(e) => setSelectedType(e.target.value as TypeCompteComptable | '')}
           >
             <MenuItem value="">Tous</MenuItem>
             {typeComptes.map((type) => (

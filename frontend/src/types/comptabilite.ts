@@ -1,5 +1,3 @@
-import { TypeTransaction } from './finance';
-
 export enum TypeCompteComptable {
   ACTIF = 'ACTIF',
   PASSIF = 'PASSIF',
@@ -47,6 +45,17 @@ export interface JournalComptable {
   actif: boolean;
   description?: string;
   metadata?: Record<string, any>;
+}
+
+export interface CompteBalance {
+  compte: {
+    numero: string;
+    libelle: string;
+    type: TypeCompteComptable;
+  };
+  debit: number;
+  credit: number;
+  solde: number;
 }
 
 export interface Balance {
@@ -200,4 +209,55 @@ export interface CashFlowData {
   solde_final: number;
   variation: number;
   metadata?: Record<string, any>;
+}
+
+// Types pour les formulaires
+export interface CompteComptableFormData {
+  numero: string;
+  libelle: string;
+  type_compte: TypeCompteComptable;
+  description?: string;
+}
+
+export interface EcritureComptableFormData {
+  date_ecriture: string;
+  journal_id: string;
+  lignes: Array<{
+    compte_id: string;
+    libelle: string;
+    debit: number;
+    credit: number;
+  }>;
+}
+
+// Types pour les filtres
+export interface ComptabiliteFilters {
+  type_compte?: TypeCompteComptable;
+  date_debut?: string;
+  date_fin?: string;
+  actif?: boolean;
+}
+
+// Types pour les statistiques
+export interface ComptabiliteStats {
+  revenue: number;
+  revenueVariation: {
+    value: number;
+    type: 'increase' | 'decrease';
+  };
+  expenses: number;
+  expensesVariation: {
+    value: number;
+    type: 'increase' | 'decrease';
+  };
+  profit: number;
+  profitVariation: {
+    value: number;
+    type: 'increase' | 'decrease';
+  };
+  cashflow: number;
+  cashflowVariation: {
+    value: number;
+    type: 'increase' | 'decrease';
+  };
 }

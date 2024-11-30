@@ -45,24 +45,38 @@ Le module Comptabilité gère la comptabilité générale et analytique de FOFAL
 
 ### Services
 ```typescript
-// Service comptabilité
-const comptabiliteService = {
-  // Plan comptable
-  getComptes(): Promise<CompteComptable[]>;
-  createCompte(data: CompteComptableFormData): Promise<CompteComptable>;
-  updateCompte(id: string, data: Partial<CompteComptable>): Promise<CompteComptable>;
-  
-  // Écritures
-  getEcritures(params?: ComptabiliteFilters): Promise<EcritureComptable[]>;
-  createEcriture(data: EcritureComptableFormData): Promise<EcritureComptable>;
-  validerEcriture(id: string, validateur_id: string): Promise<EcritureComptable>;
-  
-  // États
-  getGrandLivre(params: GrandLivreParams): Promise<LigneGrandLivre[]>;
-  getBalance(params: BalanceParams): Promise<CompteBalance[]>;
-  getBilan(date: string): Promise<Bilan>;
-  getCompteResultat(debut: string, fin: string): Promise<CompteResultat>;
-}
+// Services comptabilité
+// Plan comptable
+export const getComptes = async (params?: {
+  type_compte?: TypeCompteComptable;
+  actif?: boolean;
+}): Promise<CompteComptable[]>;
+
+export const createCompte = async (data: CompteComptableFormData): Promise<CompteComptable>;
+
+export const updateCompte = async (id: string, data: Partial<CompteComptable>): Promise<CompteComptable>;
+
+// Écritures
+export const getEcritures = async (params?: {
+  compte_id?: string;
+  journal_id?: string;
+  date_debut?: Date;
+  date_fin?: Date;
+  statut?: StatutEcriture;
+}): Promise<EcritureComptable[]>;
+
+export const createEcriture = async (data: EcritureComptableFormData): Promise<EcritureComptable>;
+
+export const validerEcriture = async (id: string, validateur_id: string): Promise<EcritureComptable>;
+
+// États
+export const getGrandLivre = async (params: GrandLivreParams): Promise<LigneGrandLivre[]>;
+
+export const getBalance = async (params: BalanceParams): Promise<CompteBalance[]>;
+
+export const getBilan = async (date: string): Promise<Bilan>;
+
+export const getCompteResultat = async (debut: string, fin: string): Promise<CompteResultat>;
 ```
 
 ### Composants React

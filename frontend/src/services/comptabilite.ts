@@ -1,22 +1,20 @@
 import { api } from './api';
 import { format } from 'date-fns';
 import type { ApiResponse } from '../types/common';
-import type {
+import {
   CompteComptable,
   EcritureComptable,
   JournalComptable,
-  LigneGrandLivre,
+  GrandLivre,
   CompteBalance,
-  Bilan,
-  CompteResultat,
   ComptabiliteStats,
-  ComptabiliteFilters,
   CompteComptableFormData,
   EcritureComptableFormData,
-  TypeCompte,
-  TypeJournal,
+  TypeCompteComptable,
   StatutEcriture,
-  BudgetAnalysis
+  BudgetAnalysis,
+  Balance,
+  RapportComptable
 } from '../types/comptabilite';
 
 const API_BASE = '/api/v1/comptabilite';
@@ -43,7 +41,7 @@ export const getCashFlow = async (days: number = 30) => {
 
 // Comptes comptables
 export const getComptes = async (params?: {
-  type_compte?: TypeCompte;
+  type_compte?: TypeCompteComptable;
   actif?: boolean;
 }): Promise<CompteComptable[]> => {
   const response = await api.get<ApiResponse<CompteComptable[]>>(`${API_BASE}/comptes`, { params });
@@ -96,7 +94,7 @@ export const validerEcriture = async (id: string, validee_par_id: string): Promi
 
 // Journaux comptables
 export const getJournaux = async (params?: {
-  type_journal?: TypeJournal;
+  type?: string;
   actif?: boolean;
 }): Promise<JournalComptable[]> => {
   const response = await api.get<ApiResponse<JournalComptable[]>>(`${API_BASE}/journaux`, { params });
@@ -113,20 +111,20 @@ export const getGrandLivre = async (params?: {
   compte_id?: string;
   date_debut?: Date;
   date_fin?: Date;
-}): Promise<LigneGrandLivre[]> => {
+}): Promise<GrandLivre[]> => {
   const formattedParams = {
     ...params,
     date_debut: params?.date_debut ? format(params.date_debut, 'yyyy-MM-dd') : undefined,
     date_fin: params?.date_fin ? format(params.date_fin, 'yyyy-MM-dd') : undefined,
   };
-  const response = await api.get<ApiResponse<LigneGrandLivre[]>>(`${API_BASE}/grand-livre`, { params: formattedParams });
+  const response = await api.get<ApiResponse<GrandLivre[]>>(`${API_BASE}/grand-livre`, { params: formattedParams });
   return response.data.data;
 };
 
 export const getBalance = async (params?: {
   date_debut?: Date;
   date_fin?: Date;
-  type_compte?: TypeCompte;
+  type_compte?: TypeCompteComptable;
 }): Promise<CompteBalance[]> => {
   const formattedParams = {
     ...params,
@@ -137,15 +135,15 @@ export const getBalance = async (params?: {
   return response.data.data;
 };
 
-export const getBilan = async (date_fin: Date): Promise<Bilan> => {
-  const response = await api.get<ApiResponse<Bilan>>(`${API_BASE}/bilan`, {
+export const getBilan = async (date_fin: Date): Promise<Balance> => {
+  const response = await api.get<ApiResponse<Balance>>(`${API_BASE}/bilan`, {
     params: { date_fin: format(date_fin, 'yyyy-MM-dd') }
   });
   return response.data.data;
 };
 
-export const getCompteResultat = async (date_debut: Date, date_fin: Date): Promise<CompteResultat> => {
-  const response = await api.get<ApiResponse<CompteResultat>>(`${API_BASE}/compte-resultat`, {
+export const getCompteResultat = async (date_debut: Date, date_fin: Date): Promise<RapportComptable> => {
+  const response = await api.get<ApiResponse<RapportComptable>>(`${API_BASE}/compte-resultat`, {
     params: {
       date_debut: format(date_debut, 'yyyy-MM-dd'),
       date_fin: format(date_fin, 'yyyy-MM-dd')
