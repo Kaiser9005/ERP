@@ -131,6 +131,113 @@ def test_feature_engineering():
     assert "value_lag1" in features.columns
 ```
 
+### Tests Météo
+```python
+def test_weather_task_compatibility():
+    """Test de la compatibilité météo pour les tâches."""
+    weather_service = WeatherService()
+    task_constraints = {
+        "min_temperature": 15,
+        "max_temperature": 35,
+        "max_wind_speed": 20,
+        "max_precipitation": 10
+    }
+    
+    # Test conditions favorables
+    good_conditions = {
+        "temperature": 25,
+        "wind_speed": 15,
+        "precipitation": 5
+    }
+    assert weather_service.check_compatibility(good_conditions, task_constraints)
+    
+    # Test conditions défavorables
+    bad_conditions = {
+        "temperature": 40,
+        "wind_speed": 25,
+        "precipitation": 15
+    }
+    assert not weather_service.check_compatibility(bad_conditions, task_constraints)
+
+def test_weather_predictions():
+    """Test des prédictions météo."""
+    weather_ml = WeatherML()
+    
+    # Données historiques
+    historical_data = pd.DataFrame({
+        "temperature": [20, 22, 25, 23],
+        "humidity": [65, 70, 68, 72],
+        "wind_speed": [10, 12, 8, 15],
+        "precipitation": [0, 5, 2, 0],
+        "timestamp": pd.date_range("2024-01-01", periods=4)
+    })
+    
+    # Prédictions
+    predictions = weather_ml.predict_next_24h(historical_data)
+    
+    # Vérifications
+    assert len(predictions) == 24
+    assert all(15 <= temp <= 35 for temp in predictions["temperature"])
+    assert all(0 <= precip <= 50 for precip in predictions["precipitation"])
+    
+    # Test de cohérence temporelle
+    assert predictions.index.freq == "H"
+    assert (predictions.index[-1] - predictions.index[0]).total_seconds() == 23*3600
+
+def test_weather_alerts():
+    """Test du système d'alertes météo."""
+    alert_system = WeatherAlertSystem()
+    
+    # Conditions critiques
+    critical_conditions = {
+        "temperature": 38,
+        "wind_speed": 30,
+        "precipitation": 25
+    }
+    
+    alerts = alert_system.check_conditions(critical_conditions)
+    
+    # Vérification des alertes
+    assert len(alerts) >= 2
+    assert any(alert["type"] == "HIGH_TEMPERATURE" for alert in alerts)
+    assert any(alert["type"] == "HIGH_WIND" for alert in alerts)
+    assert all(alert["severity"] in ["LOW", "MEDIUM", "HIGH"] for alert in alerts)
+
+def test_weather_recommendations():
+    """Test des recommandations météo."""
+    recommender = WeatherRecommender()
+    
+    task_data = {
+        "type": "IRRIGATION",
+        "constraints": {
+            "min_temperature": 15,
+            "max_temperature": 35,
+            "max_wind_speed": 20,
+            "max_precipitation": 10
+        }
+    }
+    
+    weather_data = {
+        "current": {
+            "temperature": 32,
+            "wind_speed": 18,
+            "precipitation": 0
+        },
+        "forecast": [
+            {"temperature": 30, "wind_speed": 15, "precipitation": 0},
+            {"temperature": 28, "wind_speed": 12, "precipitation": 5}
+        ]
+    }
+    
+    recommendations = recommender.get_recommendations(task_data, weather_data)
+    
+    # Vérifications
+    assert len(recommendations) > 0
+    assert all("action" in rec for rec in recommendations)
+    assert all("priority" in rec for rec in recommendations)
+    assert all(rec["priority"] in ["LOW", "MEDIUM", "HIGH"] for rec in recommendations)
+```
+
 ## Standards de Test ML
 
 ### 1. Tests de Données
@@ -326,6 +433,17 @@ def test_model_robustness():
 - Amélioration du pipeline
 
 ### Seuils de Performance Spécifiques
+
+#### Météo ML
+- Temps réponse API < 100ms
+- Précision prévisions > 90%
+- Cache hit ratio > 90%
+- Disponibilité 99.9%
+- Latence GPU < 50ms
+- Utilisation mémoire < 70%
+- Batch processing > 500/s
+- Précision alertes > 95%
+- Latence recommandations < 150ms
 
 #### Inventaire ML
 - Temps réponse API < 200ms
