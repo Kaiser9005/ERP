@@ -54,11 +54,25 @@ Pour créer une nouvelle tâche :
 
 Pour les tâches dépendantes de la météo :
 1. Un icône météo apparaît dans la liste des tâches
-2. Cliquez sur l'icône pour voir :
-   - Conditions météo actuelles
-   - Compatibilité avec les contraintes définies
-   - Alertes et avertissements
-   - Recommandations
+2. Cliquez sur l'icône pour accéder aux DétailsMétéoTâche qui affichent :
+   - Conditions météo actuelles détaillées
+   - Statut de compatibilité avec les contraintes définies
+   - Alertes et avertissements spécifiques
+   - Recommandations pour l'exécution
+   - Historique météo récent
+   - Prévisions pour les prochaines heures
+
+Le système analyse automatiquement :
+- La compatibilité des conditions actuelles
+- Les risques potentiels
+- Les périodes optimales d'exécution
+- Les ajustements recommandés
+
+Intégration avec le TableauMeteoParcelleaire :
+- Vue consolidée des conditions par parcelle
+- Alertes spécifiques aux zones de travail
+- Données des capteurs IoT locaux
+- Tendances et prévisions localisées
 
 ### 4. Gestion des Ressources
 
@@ -108,6 +122,8 @@ Points importants :
    - Définissez des contraintes réalistes
    - Consultez les prévisions avant planification
    - Prévoyez des alternatives si nécessaire
+   - Utilisez les données des capteurs IoT locaux
+   - Tenez compte des spécificités des parcelles
 
 4. Suivi :
    - Mettez à jour régulièrement les statuts
@@ -129,8 +145,9 @@ Points importants :
 
 3. "Conditions météo défavorables"
    - Vérifiez les contraintes définies
-   - Consultez les prévisions
-   - Envisagez un report
+   - Consultez les prévisions détaillées
+   - Utilisez le TableauMeteoParcelleaire
+   - Envisagez un report ou une adaptation
 
 ### Support
 
@@ -195,14 +212,23 @@ Paramètres configurables :
 1. Température :
    - Minimale : seuil bas acceptable
    - Maximale : seuil haut acceptable
+   - Impact sur la sécurité et l'efficacité
 
 2. Vent :
    - Vitesse maximale en km/h
    - Important pour traitements
+   - Sécurité des opérateurs
 
 3. Précipitations :
    - Quantité maximale en mm
    - Critique pour travaux extérieurs
+   - Impact sur la qualité du travail
+
+Intégration IoT :
+- Données en temps réel des capteurs
+- Alertes automatiques
+- Historique détaillé
+- Prévisions localisées
 
 ### C. Raccourcis Clavier
 
@@ -211,3 +237,4 @@ Paramètres configurables :
 - Ctrl + D : Dupliquer la tâche
 - Ctrl + Del : Supprimer la tâche
 - F5 : Rafraîchir la liste
+- F2 : Ouvrir les détails météo

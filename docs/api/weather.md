@@ -43,6 +43,39 @@ GET /api/v1/weather/current
 }
 ```
 
+### Obtenir les données météo d'une tâche
+
+```http
+GET /api/v1/weather/tasks/{taskId}
+```
+
+#### Réponse
+
+```json
+{
+  "task": {
+    "id": "123",
+    "title": "Irrigation parcelle A",
+    "weather_dependent": true,
+    "min_temperature": 15,
+    "max_temperature": 35,
+    "max_wind_speed": 20,
+    "max_precipitation": 10
+  },
+  "weather_suitable": true,
+  "weather_conditions": {
+    "temperature": 28.5,
+    "humidity": 65,
+    "precipitation": 0,
+    "wind_speed": 12,
+    "conditions": "Partiellement nuageux",
+    "uv_index": 6,
+    "cloud_cover": 40
+  },
+  "weather_warnings": []
+}
+```
+
 ### Obtenir les prévisions météorologiques
 
 ```http
@@ -186,18 +219,30 @@ L'API retourne les codes d'erreur standard HTTP :
 
 ### Composants Disponibles
 
-#### WeatherWidget
+#### WeatherWidget 
 - Affichage des conditions actuelles
 - Alertes visuelles pour les risques élevés
 - Recommandations agricoles
 - Mise à jour automatique
 - Indicateur de fraîcheur des données
 
-#### WeatherDashboard
 - Vue détaillée des conditions météo
 - Graphiques de tendances
 - Prévisions sur 7 jours
 - Métriques agricoles complètes
+
+#### DétailsMétéoTâche
+- Affichage des conditions météo spécifiques à une tâche
+- Indicateur de compatibilité météo
+- Alertes et avertissements
+- Recommandations pour l'exécution
+
+#### WeatherDashboard
+#### TableauMeteoParcelleaire
+- Vue météo par parcelle
+- Conditions actuelles et prévisions
+- Alertes spécifiques aux parcelles
+- Intégration avec les capteurs IoT
 
 ## Monitoring
 
