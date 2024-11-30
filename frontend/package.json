@@ -29,6 +29,10 @@
     "@mui/icons-material": "^5.14.16",
     "@mui/material": "^5.14.17",
     "@mui/x-charts": "^6.18.1",
+    "@nivo/core": "^0.84.0",
+    "@nivo/line": "^0.84.0",
+    "@nivo/bar": "^0.84.0",
+    "@nivo/pie": "^0.84.0",
     "@tanstack/react-query": "^5.8.1",
     "@tanstack/react-query-devtools": "^5.8.1",
     "@types/react-csv": "^1.1.10",
@@ -49,7 +53,6 @@
     "zod": "^3.23.8",
     "@visx/visx": "^3.5.1",
     "d3": "^7.8.5",
-    "nivo": "^0.31.0",
     "plotly.js-dist": "^2.27.1",
     "react-plotly.js": "^2.6.0"
   },
