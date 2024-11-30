@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Grid, Paper, Typography, Box } from '@mui/material';
 import {
   WaterDrop as WaterDropIcon,
@@ -6,37 +6,25 @@ import {
   Air as AirIcon,
   WbSunny as SunIcon
 } from '@mui/icons-material';
-import { Parcelle, WeatherData } from '../../types/production';
-import { productionService } from '../../services/production';
+import { Parcelle } from '../../types/production';
+import { weatherService } from '../../services/weather';
+import { useQuery } from 'react-query';
 
 interface TableauMeteoParcelleaireProps {
   parcelle?: Parcelle;
 }
 
 const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ parcelle }) => {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data: metrics, isLoading, error } = useQuery(
+    ['agricultural-metrics', parcelle?.id],
+    () => weatherService.getAgriculturalMetrics(),
+    {
+      enabled: !!parcelle,
+      refetchInterval: 30 * 60 * 1000 // Rafraîchir toutes les 30 minutes
+    }
+  );
 
-  useEffect(() => {
-    const loadWeatherData = async () => {
-      if (!parcelle) return;
-
-      try {
-        setLoading(true);
-        const data = await productionService.getWeatherData("current");
-        setWeatherData(data);
-      } catch (err) {
-        setError('Erreur lors du chargement des données météo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadWeatherData();
-  }, [parcelle]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <Typography>Chargement des données météo...</Typography>
@@ -47,18 +35,20 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
   if (error) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">Erreur lors du chargement des données météo</Typography>
       </Box>
     );
   }
 
-  if (!parcelle || !weatherData) {
+  if (!parcelle || !metrics) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <Typography>Sélectionnez une parcelle pour voir les données météo</Typography>
       </Box>
     );
   }
+
+  const { current_conditions: weather } = metrics;
 
   return (
     <Paper elevation={3} sx={{ p: 2 }}>
@@ -72,7 +62,7 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <ThermostatIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.temperature}°C
+              {weather.temperature}°C
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Température
@@ -85,7 +75,7 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <WaterDropIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.humidity}%
+              {weather.humidity}%
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Humidité
@@ -98,7 +88,7 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <SunIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.uv_index}
+              {weather.uv_index}
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Indice UV
@@ -111,7 +101,7 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
           <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
             <AirIcon color="primary" sx={{ fontSize: 40 }} />
             <Typography variant="h6">
-              {weatherData.wind_speed} km/h
+              {weather.wind_speed} km/h
             </Typography>
             <Typography variant="body2" color="textSecondary">
               Vent
@@ -120,41 +110,39 @@ const TableauMeteoParcelleaire: React.FC<TableauMeteoParcelleaireProps> = ({ par
         </Grid>
 
         {/* Risques et Recommandations */}
-        {weatherData.risks && (
-          <Grid item xs={12}>
-            <Paper elevation={2} sx={{ p: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Analyse des Risques
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="body1" color={
-                    weatherData.risks.precipitation.level === 'HIGH' ? 'error.main' :
-                    weatherData.risks.precipitation.level === 'MEDIUM' ? 'warning.main' : 'success.main'
-                  }>
-                    Précipitations : {weatherData.risks.precipitation.message}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="body1" color={
-                    weatherData.risks.temperature.level === 'HIGH' ? 'error.main' :
-                    weatherData.risks.temperature.level === 'MEDIUM' ? 'warning.main' : 'success.main'
-                  }>
-                    Température : {weatherData.risks.temperature.message}
-                  </Typography>
-                </Grid>
+        <Grid item xs={12}>
+          <Paper elevation={2} sx={{ p: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Analyse des Risques
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body1" color={
+                  metrics.risks.precipitation.level === 'HIGH' ? 'error.main' :
+                  metrics.risks.precipitation.level === 'MEDIUM' ? 'warning.main' : 'success.main'
+                }>
+                  Précipitations : {metrics.risks.precipitation.message}
+                </Typography>
               </Grid>
-            </Paper>
-          </Grid>
-        )}
+              <Grid item xs={12} md={6}>
+                <Typography variant="body1" color={
+                  metrics.risks.temperature.level === 'HIGH' ? 'error.main' :
+                  metrics.risks.temperature.level === 'MEDIUM' ? 'warning.main' : 'success.main'
+                }>
+                  Température : {metrics.risks.temperature.message}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
 
-        {weatherData.recommendations && weatherData.recommendations.length > 0 && (
+        {metrics.recommendations && metrics.recommendations.length > 0 && (
           <Grid item xs={12}>
             <Paper elevation={2} sx={{ p: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Recommandations
               </Typography>
-              {weatherData.recommendations.map((recommendation, index) => (
+              {metrics.recommendations.map((recommendation, index) => (
                 <Typography key={index} variant="body1" sx={{ mb: 1 }}>
                   • {recommendation}
                 </Typography>

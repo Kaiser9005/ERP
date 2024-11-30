@@ -1,46 +1,36 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import {
   Box,
-  Paper,
-  Typography,
-  Grid,
-  Alert,
-  CircularProgress,
   Card,
   CardContent,
+  Typography,
+  Grid,
   List,
   ListItem,
-  ListItemIcon,
-  ListItemText
+  ListItemText,
+  Chip,
+  Alert,
+  CircularProgress
 } from '@mui/material';
-import {
-  WbSunny as SunIcon,
-  Opacity as HumidityIcon,
-  Air as WindIcon,
-  WaterDrop as RainIcon,
-  Warning as WarningIcon
-} from '@mui/icons-material';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { TaskWithWeather } from '../../types/task';
+import { weatherService } from '../../services/weather';
 
 const DétailsMétéoTâche: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
 
-  const { data: taskData, isLoading, error } = useQuery<TaskWithWeather>({
-    queryKey: ['task-weather', taskId],
-    queryFn: () => 
-      fetch(`/api/v1/tasks/${taskId}/weather`)
-        .then(res => {
-          if (!res.ok) throw new Error('Erreur lors de la récupération des données');
-          return res.json();
-        }),
-    enabled: !!taskId
-  });
+  const { data: taskData, isLoading, error } = useQuery(
+    ['task-weather', taskId],
+    () => weatherService.getTaskWeather(taskId as string),
+    {
+      enabled: !!taskId,
+      refetchInterval: 5 * 60 * 1000 // Rafraîchir toutes les 5 minutes
+    }
+  );
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box display="flex" justifyContent="center" p={3}>
         <CircularProgress />
       </Box>
     );
@@ -48,8 +38,8 @@ const DétailsMétéoTâche: React.FC = () => {
 
   if (error || !taskData) {
     return (
-      <Alert severity="error">
-        {error instanceof Error ? error.message : "Données non disponibles"}
+      <Alert severity="error" sx={{ m: 2 }}>
+        Erreur lors du chargement des données météorologiques de la tâche
       </Alert>
     );
   }
@@ -67,146 +57,131 @@ const DétailsMétéoTâche: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          {taskData.title}
-        </Typography>
-        <Alert severity={getWeatherStatusColor()} sx={{ mb: 3 }}>
-          {getWeatherStatusText()}
-        </Alert>
+    <Box p={3}>
+      <Grid container spacing={3}>
+        {/* Statut météo */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Chip
+                  label={getWeatherStatusText()}
+                  color={getWeatherStatusColor()}
+                  sx={{ fontSize: '1rem' }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <Grid container spacing={3}>
-          {/* Conditions actuelles */}
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Conditions Météorologiques Actuelles
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemIcon>
-                      <SunIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Température"
-                      secondary={`${taskData.weather_conditions.temperature}°C`}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <HumidityIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Humidité"
-                      secondary={`${taskData.weather_conditions.humidity}%`}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <WindIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Vent"
-                      secondary={`${taskData.weather_conditions.wind_speed} km/h`}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <RainIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Précipitations"
-                      secondary={`${taskData.weather_conditions.precipitation} mm`}
-                    />
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Contraintes de la tâche */}
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Contraintes Météorologiques
-                </Typography>
-                <List>
-                  {taskData.min_temperature !== undefined && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <SunIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Température minimale requise"
-                        secondary={`${taskData.min_temperature}°C`}
-                      />
-                    </ListItem>
-                  )}
-                  {taskData.max_temperature !== undefined && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <SunIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Température maximale acceptable"
-                        secondary={`${taskData.max_temperature}°C`}
-                      />
-                    </ListItem>
-                  )}
-                  {taskData.max_wind_speed !== undefined && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <WindIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Vitesse du vent maximale"
-                        secondary={`${taskData.max_wind_speed} km/h`}
-                      />
-                    </ListItem>
-                  )}
-                  {taskData.max_precipitation !== undefined && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <RainIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Précipitations maximales"
-                        secondary={`${taskData.max_precipitation} mm`}
-                      />
-                    </ListItem>
-                  )}
-                </List>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Alertes */}
-          {taskData.weather_warnings.length > 0 && (
-            <Grid item xs={12}>
+        {taskData.weather_dependent && (
+          <>
+            {/* Conditions actuelles */}
+            <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Alertes Météorologiques
+                    Conditions Actuelles
                   </Typography>
                   <List>
-                    {taskData.weather_warnings.map((warning, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <WarningIcon color="error" />
-                        </ListItemIcon>
-                        <ListItemText primary={warning} />
-                      </ListItem>
-                    ))}
+                    <ListItem>
+                      <ListItemText
+                        primary="Température"
+                        secondary={`${taskData.weather_conditions.temperature}°C`}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Humidité"
+                        secondary={`${taskData.weather_conditions.humidity}%`}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Vent"
+                        secondary={`${taskData.weather_conditions.wind_speed} km/h`}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText
+                        primary="Précipitations"
+                        secondary={`${taskData.weather_conditions.precipitation} mm`}
+                      />
+                    </ListItem>
                   </List>
                 </CardContent>
               </Card>
             </Grid>
-          )}
-        </Grid>
-      </Paper>
+
+            {/* Contraintes */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Contraintes Météorologiques
+                  </Typography>
+                  <List>
+                    {taskData.min_temperature && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Température minimale"
+                          secondary={`${taskData.min_temperature}°C`}
+                        />
+                      </ListItem>
+                    )}
+                    {taskData.max_temperature && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Température maximale"
+                          secondary={`${taskData.max_temperature}°C`}
+                        />
+                      </ListItem>
+                    )}
+                    {taskData.max_wind_speed && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Vitesse du vent maximale"
+                          secondary={`${taskData.max_wind_speed} km/h`}
+                        />
+                      </ListItem>
+                    )}
+                    {taskData.max_precipitation && (
+                      <ListItem>
+                        <ListItemText
+                          primary="Précipitations maximales"
+                          secondary={`${taskData.max_precipitation} mm`}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Alertes */}
+            {taskData.weather_warnings.length > 0 && (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Alertes Météo
+                    </Typography>
+                    <List>
+                      {taskData.weather_warnings.map((warning, index) => (
+                        <ListItem key={index}>
+                          <Alert severity="warning" sx={{ width: '100%' }}>
+                            {warning}
+                          </Alert>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+          </>
+        )}
+      </Grid>
     </Box>
   );
 };

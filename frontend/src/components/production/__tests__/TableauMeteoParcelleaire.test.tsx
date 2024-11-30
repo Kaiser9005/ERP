@@ -1,19 +1,25 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TableauMeteoParcelleaire from '../TableauMeteoParcelleaire';
-import { productionService } from '../../../services/production';
-import { Parcelle, WeatherData } from '../../../types/production';
+import { weatherService } from '../../../services/weather';
+import { Parcelle } from '../../../types/production';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { AgriculturalMetrics } from '../../../types/weather';
 
-// Mock du service de production
-jest.mock('../../../services/production', () => ({
-  productionService: {
-    getWeatherData: jest.fn()
+// Mock du service météo
+jest.mock('../../../services/weather', () => ({
+  weatherService: {
+    getAgriculturalMetrics: jest.fn(),
+    getWarningMessage: jest.fn(),
+    getCacheAge: jest.fn()
   }
 }));
 
-const mockProductionService = productionService as jest.Mocked<typeof productionService>;
+const mockWeatherService = weatherService as jest.Mocked<typeof weatherService>;
 
 describe('TableauMeteoParcelleaire', () => {
+  const queryClient = new QueryClient();
+  
   const mockParcelle: Parcelle = {
     id: '1',
     code: 'P001',
@@ -28,15 +34,18 @@ describe('TableauMeteoParcelleaire', () => {
     responsable_id: '1'
   };
 
-  const mockWeatherData: WeatherData = {
-    timestamp: new Date().toISOString(),
-    temperature: 25,
-    humidity: 65,
-    precipitation: 0,
-    wind_speed: 10,
-    conditions: 'Ensoleillé',
-    uv_index: 5,
-    cloud_cover: 20,
+  const mockMetrics: AgriculturalMetrics = {
+    current_conditions: {
+      date: new Date().toISOString(),
+      temperature: 25,
+      humidity: 65,
+      precipitation: 0,
+      wind_speed: 10,
+      conditions: 'Ensoleillé',
+      uv_index: 5,
+      cloud_cover: 20,
+      cached_at: new Date().toISOString()
+    },
     risks: {
       precipitation: {
         level: 'LOW',
@@ -55,33 +64,43 @@ describe('TableauMeteoParcelleaire', () => {
   };
 
   beforeEach(() => {
-    mockProductionService.getWeatherData.mockResolvedValue(mockWeatherData);
+    mockWeatherService.getAgriculturalMetrics.mockResolvedValue(mockMetrics);
+    mockWeatherService.getWarningMessage.mockReturnValue('Attention : températures élevées');
+    mockWeatherService.getCacheAge.mockReturnValue('Il y a 5 minutes');
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  const renderWithQuery = (component: React.ReactElement) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        {component}
+      </QueryClientProvider>
+    );
+  };
+
   it('affiche un message si aucune parcelle n\'est sélectionnée', () => {
-    render(<TableauMeteoParcelleaire />);
+    renderWithQuery(<TableauMeteoParcelleaire />);
     expect(screen.getByText(/Sélectionnez une parcelle pour voir les données météo/)).toBeInTheDocument();
   });
 
   it('affiche les conditions météorologiques de la parcelle', async () => {
-    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    renderWithQuery(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
 
     // Vérifie le titre avec le code de la parcelle
-    expect(screen.getByText(/Conditions Météorologiques - P001/)).toBeInTheDocument();
+    expect(await screen.findByText(/Conditions Météorologiques - P001/)).toBeInTheDocument();
 
     // Vérifie les données météo
-    expect(await screen.findByText(/25°C/)).toBeInTheDocument();
+    expect(screen.getByText(/25°C/)).toBeInTheDocument();
     expect(screen.getByText(/65%/)).toBeInTheDocument();
     expect(screen.getByText(/5/)).toBeInTheDocument(); // UV Index
     expect(screen.getByText(/10 km\/h/)).toBeInTheDocument();
   });
 
   it('affiche les risques et recommandations', async () => {
-    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    renderWithQuery(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
 
     expect(await screen.findByText(/Conditions de précipitation normales/)).toBeInTheDocument();
     expect(screen.getByText(/Températures élevées - Surveillance recommandée/)).toBeInTheDocument();
@@ -90,25 +109,25 @@ describe('TableauMeteoParcelleaire', () => {
   });
 
   it('affiche un indicateur de chargement', () => {
-    mockProductionService.getWeatherData.mockImplementation(
+    mockWeatherService.getAgriculturalMetrics.mockImplementation(
       () => new Promise(() => {}) // Promise qui ne se résout jamais
     );
 
-    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    renderWithQuery(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
     expect(screen.getByText(/Chargement des données météo/)).toBeInTheDocument();
   });
 
   it('affiche une erreur en cas de problème', async () => {
-    mockProductionService.getWeatherData.mockRejectedValue(
+    mockWeatherService.getAgriculturalMetrics.mockRejectedValue(
       new Error('Erreur lors du chargement des données météo')
     );
 
-    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    renderWithQuery(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
     expect(await screen.findByText(/Erreur lors du chargement des données météo/)).toBeInTheDocument();
   });
 
-  it('appelle getWeatherData avec "current"', () => {
-    render(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
-    expect(mockProductionService.getWeatherData).toHaveBeenCalledWith('current');
+  it('appelle getAgriculturalMetrics', () => {
+    renderWithQuery(<TableauMeteoParcelleaire parcelle={mockParcelle} />);
+    expect(mockWeatherService.getAgriculturalMetrics).toHaveBeenCalled();
   });
 });

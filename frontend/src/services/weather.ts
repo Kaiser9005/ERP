@@ -16,10 +16,11 @@ import type {
   WeatherPolicyConfig,
   WeatherRiskAssessment
 } from '../types/weather';
+import { TaskWithWeather } from '../types/task';
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const WEATHER_LOCATION = import.meta.env.VITE_WEATHER_LOCATION;
-const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
+const BASE_URL = import.meta.env.VITE_WEATHER_API_URL;
 const API_BASE_URL = '/api/v1/weather';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000;
@@ -175,6 +176,76 @@ class WeatherService {
         recommendations: this.generateRecommendations(precipitationRisk, temperatureRisk)
       };
     }
+  }
+
+  async getTaskWeather(taskId: string): Promise<TaskWithWeather> {
+    try {
+      return await this.fetchWithRetry<TaskWithWeather>(
+        `${API_BASE_URL}/tasks/${taskId}`
+      );
+    } catch (error) {
+      // En cas d'erreur, on récupère les données météo actuelles
+      const weather = await this.getCurrentWeather();
+      const task = await this.fetchWithRetry<TaskWithWeather>(`/api/v1/tasks/${taskId}`);
+      
+      // On analyse si les conditions météo sont favorables pour la tâche
+      const suitable = this.analyzeTaskWeatherSuitability(task, weather);
+      
+      // On génère les avertissements si nécessaire
+      const warnings = this.generateTaskWeatherWarnings(task, weather);
+      
+      return {
+        ...task,
+        weather_suitable: suitable,
+        weather_conditions: {
+          temperature: weather.temperature,
+          humidity: weather.humidity,
+          precipitation: weather.precipitation,
+          wind_speed: weather.wind_speed,
+          conditions: weather.conditions,
+          uv_index: weather.uv_index,
+          cloud_cover: weather.cloud_cover
+        },
+        weather_warnings: warnings
+      };
+    }
+  }
+
+  private analyzeTaskWeatherSuitability(task: TaskWithWeather, weather: WeatherCondition): boolean {
+    if (!task.weather_dependent) return true;
+
+    const conditions = [
+      task.min_temperature === undefined || weather.temperature >= task.min_temperature,
+      task.max_temperature === undefined || weather.temperature <= task.max_temperature,
+      task.max_wind_speed === undefined || weather.wind_speed <= task.max_wind_speed,
+      task.max_precipitation === undefined || weather.precipitation <= task.max_precipitation
+    ];
+
+    return conditions.every(condition => condition);
+  }
+
+  private generateTaskWeatherWarnings(task: TaskWithWeather, weather: WeatherCondition): string[] {
+    const warnings: string[] = [];
+
+    if (!task.weather_dependent) return warnings;
+
+    if (task.min_temperature !== undefined && weather.temperature < task.min_temperature) {
+      warnings.push(`Température trop basse (${weather.temperature}°C < ${task.min_temperature}°C)`);
+    }
+
+    if (task.max_temperature !== undefined && weather.temperature > task.max_temperature) {
+      warnings.push(`Température trop élevée (${weather.temperature}°C > ${task.max_temperature}°C)`);
+    }
+
+    if (task.max_wind_speed !== undefined && weather.wind_speed > task.max_wind_speed) {
+      warnings.push(`Vent trop fort (${weather.wind_speed} km/h > ${task.max_wind_speed} km/h)`);
+    }
+
+    if (task.max_precipitation !== undefined && weather.precipitation > task.max_precipitation) {
+      warnings.push(`Précipitations trop importantes (${weather.precipitation} mm > ${task.max_precipitation} mm)`);
+    }
+
+    return warnings;
   }
 
   async getWeatherImpact(

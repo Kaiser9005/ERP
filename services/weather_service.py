@@ -10,7 +10,7 @@ from services.notification_service import NotificationService
 class WeatherService:
     def __init__(self):
         self.api_key = settings.WEATHER_API_KEY
-        self.base_url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline"
+        self.base_url = settings.WEATHER_API_URL
         self.location = "Ebondi,Cameroon"  # Localisation des plantations FOFAL
         self.redis_client = Redis(
             host=settings.REDIS_HOST,
