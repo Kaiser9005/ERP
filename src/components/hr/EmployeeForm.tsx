@@ -372,7 +372,7 @@ const EmployeeForm: React.FC = () => {
                   <LoadingButton
                     variant="contained"
                     type="submit"
-                    loading={mutation.isloading}
+                    loading={mutation.isLoading}
                   
                   >
                     {isEdit ? 'Modifier' : 'Créer'}

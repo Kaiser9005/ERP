@@ -11,8 +11,8 @@ import {
 } from '../types/inventaire';
 
 // Stats
-export const getStatsInventaire = async (): Promise<StatsInventaire> => {
-  const { data } = await api.get<StatsInventaire>('/api/v1/inventory/stats');
+export const getStatsInventaire = async (filtres?: FiltresInventaire): Promise<StatsInventaire> => {
+  const { data } = await api.get<StatsInventaire>('/api/v1/inventory/stats', { params: filtres });
   return data;
 };
 

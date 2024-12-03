@@ -28,7 +28,13 @@ export enum PeriodeInventaire {
   PERSONNALISE = 'personnalise'
 }
 
-export interface SeuilStock {
+export enum SeuilStockType {
+  NORMAL = 'normal',
+  ALERTE = 'alerte',
+  CRITIQUE = 'critique'
+}
+
+export interface SeuilStockConfig {
   produit_id: string;
   seuil_min: number;
   seuil_max: number;
@@ -36,6 +42,7 @@ export interface SeuilStock {
   actif: boolean;
   date_modification?: string;
   commentaires?: string;
+  type: SeuilStockType;
 }
 
 export interface FiltresInventaire {
@@ -107,6 +114,7 @@ export interface Produit {
 export interface Stock {
   id: string;
   produit_id: string;
+  produit: Produit;
   entrepot_id: string;
   quantite: number;
   valeur_unitaire?: number;
@@ -139,8 +147,14 @@ export interface MouvementStock {
 export interface StatsInventaire {
   total_produits: number;
   valeur_totale: number;
-  produits_sous_seuil: number;
-  mouvements_jour: number;
+  valeur_stock: number;
+  rotation_stock: number;
+  stock_faible: number;
+  alertes: number;
+  mouvements: {
+    entrees: number;
+    sorties: number;
+  };
 }
 
 export interface Entrepot {

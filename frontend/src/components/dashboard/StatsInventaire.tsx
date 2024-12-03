@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 import { getStatsInventaire } from '../../services/inventaire';
 
 const StatsInventaire: React.FC = () => {
-  const { data: stats } = useQuery('stats-inventaire', getStatsInventaire);
+  const { data: stats } = useQuery('stats-inventaire', () => getStatsInventaire());
 
   return (
     <Card>

@@ -11,8 +11,13 @@ import StatCard from '../common/StatCard';
 import { Inventory, TrendingUp, Warning, LocalShipping } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import { getStatsInventaire, getMouvements, getStocks, getPrevisions, getFournisseurs } from '../../services/inventaire';
-import { CategoryProduit, PeriodeInventaire, SeuilStock } from '../../types/inventaire';
+import { CategoryProduit, PeriodeInventaire, SeuilStockType } from '../../types/inventaire';
 import { formatNumber, formatDate, formatDateForAPI } from '../../utils/format';
+
+interface Variation {
+  valeur: number;
+  type: 'hausse' | 'baisse';
+}
 
 const StatsInventaire: React.FC = () => {
   const { t } = useTranslation();
@@ -21,7 +26,7 @@ const StatsInventaire: React.FC = () => {
   const [dateDebut, setDateDebut] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
   const [fournisseur, setFournisseur] = useState<string>('tous');
-  const [seuilStock, setSeuilStock] = useState<SeuilStock | 'tous'>('tous');
+  const [seuilStock, setSeuilStock] = useState<SeuilStockType | 'tous'>('tous');
 
   const { data: fournisseurs = [] } = useQuery('fournisseurs', getFournisseurs);
 
@@ -56,9 +61,9 @@ const StatsInventaire: React.FC = () => {
 
   const stats = statsService ? {
     valeurTotale: statsService.valeur_totale,
-    variationValeur: statsService.valeur_stock,
+    variationValeur: { valeur: statsService.valeur_stock, type: 'hausse' as const },
     tauxRotation: statsService.total_produits,
-    variationRotation: statsService.rotation_stock,
+    variationRotation: { valeur: statsService.rotation_stock, type: 'hausse' as const },
     alertes: statsService.stock_faible,
     variationAlertes: { valeur: 0, type: 'hausse' as const },
     mouvements: statsService.mouvements.entrees + statsService.mouvements.sorties,
@@ -132,13 +137,13 @@ const StatsInventaire: React.FC = () => {
               <DatePicker
                 label={t('commun.dateDebut')}
                 value={dateDebut}
-                onChange={setDateDebut}
+                onChange={(date: Date | null) => setDateDebut(date)}
                 slotProps={{ textField: { size: 'small' } }}
               />
               <DatePicker
                 label={t('commun.dateFin')}
                 value={dateFin}
-                onChange={setDateFin}
+                onChange={(date: Date | null) => setDateFin(date)}
                 slotProps={{ textField: { size: 'small' } }}
               />
             </>
@@ -183,11 +188,11 @@ const StatsInventaire: React.FC = () => {
             <Select
               labelId="seuil-select-label"
               value={seuilStock}
-              onChange={(e) => setSeuilStock(e.target.value as SeuilStock | 'tous')}
+              onChange={(e) => setSeuilStock(e.target.value as SeuilStockType | 'tous')}
               label={t('inventaire.seuilStock')}
             >
               <MenuItem value="tous">{t('commun.tous')}</MenuItem>
-              {Object.values(SeuilStock).map((seuil) => (
+              {Object.values(SeuilStockType).map((seuil) => (
                 <MenuItem key={seuil} value={seuil}>
                   {t(`inventaire.seuilStock.${seuil}`)}
                 </MenuItem>
