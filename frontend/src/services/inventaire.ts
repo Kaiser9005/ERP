@@ -84,6 +84,12 @@ export const creerEntrepot = async (entrepot: Omit<Entrepot, 'id'>): Promise<Ent
   return data;
 };
 
+// Fournisseurs
+export const getFournisseurs = async (): Promise<string[]> => {
+  const { data } = await api.get<string[]>('/api/v1/inventory/fournisseurs');
+  return data;
+};
+
 // Prévisions
 export const getPrevisions = async (filtres?: FiltresInventaire): Promise<PrevisionStock[]> => {
   const { data } = await api.get<PrevisionStock[]>('/api/v1/inventory/previsions', { params: filtres });

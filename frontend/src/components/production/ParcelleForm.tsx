@@ -15,20 +15,28 @@ import {
 import { DatePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createParcelle, updateParcelle, getParcelle } from '../../services/production';
+import { productionService } from '../../services/production';
+import { CultureType, ParcelleStatus, Parcelle } from '../../types/production';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 
-const schema = yup.object({
+type ParcelleFormData = Omit<Parcelle, 'id'>;
+
+const schema = yup.object().shape({
   code: yup.string().required('Le code est requis'),
-  culture_type: yup.string().required('Le type de culture est requis'),
+  culture_type: yup.string().oneOf(Object.values(CultureType)).required('Le type de culture est requis'),
   surface_hectares: yup.number()
     .required('La surface est requise')
     .positive('La surface doit être positive'),
-  date_plantation: yup.date().required('La date de plantation est requise'),
-  statut: yup.string().required('Le statut est requis'),
-  responsable_id: yup.string().required('Le responsable est requis')
-}).required();
+  date_plantation: yup.string().required('La date de plantation est requise'),
+  statut: yup.string().oneOf(Object.values(ParcelleStatus)).required('Le statut est requis'),
+  responsable_id: yup.string().required('Le responsable est requis'),
+  coordonnees_gps: yup.object({
+    latitude: yup.number().required('La latitude est requise'),
+    longitude: yup.number().required('La longitude est requise')
+  }).required('Les coordonnées GPS sont requises'),
+  metadata: yup.object().optional()
+});
 
 const ParcelleForm: React.FC = () => {
   const { id } = useParams();
@@ -36,35 +44,41 @@ const ParcelleForm: React.FC = () => {
   const queryClient = useQueryClient();
   const isEdit = Boolean(id);
 
-  const { data: parcelle, isLoading: isLoadingParcelle } = useQuery(
-    ['parcelle', id],
-    () => getParcelle(id!),
-    { enabled: isEdit }
-  );
+  const { data: parcelle, isLoading: isLoadingParcelle } = useQuery({
+    queryKey: ['parcelle', id],
+    queryFn: () => productionService.getParcelle(id!),
+    enabled: isEdit
+  });
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const defaultValues: ParcelleFormData = {
+    code: '',
+    culture_type: CultureType.PALMIER,
+    surface_hectares: 0,
+    date_plantation: new Date().toISOString(),
+    statut: ParcelleStatus.EN_PREPARATION,
+    responsable_id: '',
+    coordonnees_gps: {
+      latitude: 0,
+      longitude: 0
+    },
+    metadata: {}
+  };
+
+  const { control, handleSubmit, formState: { errors } } = useForm<ParcelleFormData>({
     resolver: yupResolver(schema),
-    defaultValues: parcelle || {
-      code: '',
-      culture_type: '',
-      surface_hectares: '',
-      date_plantation: null,
-      statut: 'EN_PREPARATION',
-      responsable_id: ''
+    defaultValues: parcelle || defaultValues
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: ParcelleFormData) => 
+      isEdit ? productionService.updateParcelle(id!, data) : productionService.createParcelle(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parcelles'] });
+      navigate('/production');
     }
   });
 
-  const mutation = useMutation(
-    (data: any) => isEdit ? updateParcelle(id!, data) : createParcelle(data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('parcelles');
-        navigate('/production');
-      }
-    }
-  );
-
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: ParcelleFormData) => {
     mutation.mutate(data);
   };
 
@@ -118,8 +132,8 @@ const ParcelleForm: React.FC = () => {
                       error={!!errors.culture_type}
                       helperText={errors.culture_type?.message}
                     >
-                      <MenuItem value="PALMIER">Palmier à huile</MenuItem>
-                      <MenuItem value="PAPAYE">Papaye</MenuItem>
+                      <MenuItem value={CultureType.PALMIER}>Palmier à huile</MenuItem>
+                      <MenuItem value={CultureType.PAPAYE}>Papaye</MenuItem>
                     </TextField>
                   )}
                 />
@@ -148,7 +162,8 @@ const ParcelleForm: React.FC = () => {
                   control={control}
                   render={({ field }) => (
                     <DatePicker
-                      {...field}
+                      value={field.value ? new Date(field.value) : null}
+                      onChange={(date) => field.onChange(date?.toISOString())}
                       label="Date de Plantation"
                       slotProps={{
                         textField: {
@@ -175,10 +190,45 @@ const ParcelleForm: React.FC = () => {
                       error={!!errors.statut}
                       helperText={errors.statut?.message}
                     >
-                      <MenuItem value="EN_PREPARATION">En préparation</MenuItem>
-                      <MenuItem value="ACTIVE">Active</MenuItem>
-                      <MenuItem value="EN_REPOS">En repos</MenuItem>
+                      <MenuItem value={ParcelleStatus.EN_PREPARATION}>En préparation</MenuItem>
+                      <MenuItem value={ParcelleStatus.ACTIVE}>Active</MenuItem>
+                      <MenuItem value={ParcelleStatus.EN_RECOLTE}>En récolte</MenuItem>
+                      <MenuItem value={ParcelleStatus.EN_REPOS}>En repos</MenuItem>
                     </TextField>
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="coordonnees_gps.latitude"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Latitude"
+                      type="number"
+                      fullWidth
+                      error={!!errors.coordonnees_gps?.latitude}
+                      helperText={errors.coordonnees_gps?.latitude?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="coordonnees_gps.longitude"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Longitude"
+                      type="number"
+                      fullWidth
+                      error={!!errors.coordonnees_gps?.longitude}
+                      helperText={errors.coordonnees_gps?.longitude?.message}
+                    />
                   )}
                 />
               </Grid>
@@ -194,7 +244,7 @@ const ParcelleForm: React.FC = () => {
                   <LoadingButton
                     variant="contained"
                     type="submit"
-                    loading={mutation.isLoading}
+                    loading={mutation.isPending}
                   >
                     {isEdit ? 'Modifier' : 'Créer'}
                   </LoadingButton>

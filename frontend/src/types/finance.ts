@@ -76,6 +76,95 @@ export interface TransactionFilter {
   limit?: number;
 }
 
+export interface TransactionListResponse {
+  data: Transaction[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface Budget {
+  id: string;
+  periode: string;
+  categorie: string;
+  montant_prevu: number;
+  montant_realise: number;
+  ecart: number;
+  statut: 'EN_COURS' | 'TERMINE';
+  commentaires?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface BudgetFormData {
+  periode: string;
+  categorie: string;
+  montant_prevu: number;
+  commentaires?: string;
+}
+
+export interface BudgetFilter {
+  periode?: string;
+  categorie?: string;
+  statut?: 'EN_COURS' | 'TERMINE';
+  page?: number;
+  limit?: number;
+}
+
+export interface BudgetListResponse {
+  data: Budget[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface BudgetAnalysis {
+  periode: string;
+  categories: Record<string, {
+    prevu: number;
+    realise: number;
+    ecart: number;
+    tendance: 'hausse' | 'baisse' | 'stable';
+  }>;
+  total: {
+    prevu: number;
+    realise: number;
+    ecart: number;
+  };
+}
+
+export interface DonneesTresorerie {
+  solde_actuel: number;
+  variation_periode: Variation;
+  previsions: {
+    recettes: number;
+    depenses: number;
+    solde_prevu: number;
+  };
+  historique: Array<{
+    date: string;
+    solde: number;
+    variation: Variation;
+  }>;
+}
+
+export interface AnalyseBudgetaire {
+  periode: string;
+  categories: Record<string, {
+    prevu: number;
+    realise: number;
+    ecart: number;
+    ecart_pourcentage: number;
+    tendance: 'hausse' | 'baisse' | 'stable';
+  }>;
+  total: {
+    prevu: number;
+    realise: number;
+    ecart: number;
+    ecart_pourcentage: number;
+  };
+  alertes: string[];
+}
+
 export interface VueBudgetaire {
   categorie: string;
   depense: number;
@@ -92,6 +181,19 @@ export interface ProjectionsFinancieres {
   recettes: Projection[];
   depenses: Projection[];
   facteurs_meteo: string[];
+}
+
+export interface CashFlowData {
+  periode: string;
+  entrees: number[];
+  sorties: number[];
+  solde: number[];
+  dates: string[];
+  previsions: {
+    entrees: number[];
+    sorties: number[];
+    solde: number[];
+  };
 }
 
 // Types pour les rapports financiers

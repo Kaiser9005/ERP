@@ -101,6 +101,11 @@ export const getJournaux = async (params?: {
   return response.data.data;
 };
 
+export const getJournal = async (id: string): Promise<JournalComptable> => {
+  const response = await api.get<ApiResponse<JournalComptable>>(`${API_BASE}/journaux/${id}`);
+  return response.data.data;
+};
+
 export const createJournal = async (data: Partial<JournalComptable>): Promise<JournalComptable> => {
   const response = await api.post<ApiResponse<JournalComptable>>(`${API_BASE}/journaux`, data);
   return response.data.data;

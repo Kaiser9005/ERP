@@ -28,6 +28,16 @@ export enum PeriodeInventaire {
   PERSONNALISE = 'personnalise'
 }
 
+export interface SeuilStock {
+  produit_id: string;
+  seuil_min: number;
+  seuil_max: number;
+  seuil_alerte: number;
+  actif: boolean;
+  date_modification?: string;
+  commentaires?: string;
+}
+
 export interface FiltresInventaire {
   periode?: PeriodeInventaire;
   categorie?: CategoryProduit;

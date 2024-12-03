@@ -10,7 +10,11 @@ import type {
   BudgetFormData,
   BudgetFilter,
   BudgetListResponse,
-  BudgetAnalysis
+  BudgetAnalysis,
+  DonneesTresorerie,
+  AnalyseBudgetaire,
+  ProjectionsFinancieres,
+  VueBudgetaire
 } from '../types/finance';
 import type { ApiResponse, UUID } from '../types/common';
 
@@ -108,6 +112,29 @@ export const getBudgetAnalysis = async (periode: string): Promise<BudgetAnalysis
   return response.data.data;
 };
 
+export const getAnalyseBudget = async (periode: string): Promise<AnalyseBudgetaire> => {
+  const response = await api.get<ApiResponse<AnalyseBudgetaire>>(`/api/v1/finance/analyse-budget`, {
+    params: { periode }
+  });
+  return response.data.data;
+};
+
+export const getDonneesTresorerie = async (periode?: string): Promise<DonneesTresorerie> => {
+  const params = new URLSearchParams();
+  if (periode) {
+    params.append('periode', periode);
+  }
+  const response = await api.get<ApiResponse<DonneesTresorerie>>(`/api/v1/finance/tresorerie?${params}`);
+  return response.data.data;
+};
+
+export const getProjectionsFinancieres = async (periode: string): Promise<ProjectionsFinancieres> => {
+  const response = await api.get<ApiResponse<ProjectionsFinancieres>>(`/api/v1/finance/projections`, {
+    params: { periode }
+  });
+  return response.data.data;
+};
+
 export const getCashFlowData = async (periode?: string): Promise<CashFlowData> => {
   const params = new URLSearchParams();
   if (periode) {
@@ -117,11 +144,41 @@ export const getCashFlowData = async (periode?: string): Promise<CashFlowData> =
   return response.data.data;
 };
 
-export const getFinanceStats = async (periode?: string): Promise<FinanceStats> => {
+export const getStatsFinance = async (periode?: string): Promise<FinanceStats> => {
   const params = new URLSearchParams();
   if (periode) {
     params.append('periode', periode);
   }
   const response = await api.get<ApiResponse<FinanceStats>>(`/api/v1/finance/stats?${params}`);
   return response.data.data;
+};
+
+export const getVueBudget = async (periode: string): Promise<VueBudgetaire[]> => {
+  const response = await api.get<ApiResponse<VueBudgetaire[]>>(`/api/v1/finance/vue-budget`, {
+    params: { periode }
+  });
+  return response.data.data;
+};
+
+// Alias pour la compatibilité avec le code existant
+export { getStatsFinance as getFinanceStats };
+
+export default {
+  getTransactions,
+  getTransaction,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  getBudgets,
+  getBudget,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  getBudgetAnalysis,
+  getAnalyseBudget,
+  getDonneesTresorerie,
+  getProjectionsFinancieres,
+  getCashFlowData,
+  getStatsFinance,
+  getVueBudget
 };

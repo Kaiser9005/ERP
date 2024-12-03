@@ -27,14 +27,33 @@ export interface WeatherData extends WeatherConditions {
   recommendations?: string[];
 }
 
+// Types pour les cultures et parcelles
+export enum CultureType {
+  PALMIER = 'palmier',
+  PAPAYE = 'papaye'
+}
+
+export enum ParcelleStatus {
+  EN_PREPARATION = 'en_preparation',
+  ACTIVE = 'active',
+  EN_RECOLTE = 'en_recolte',
+  EN_REPOS = 'en_repos'
+}
+
+export enum QualiteRecolte {
+  A = 'A',
+  B = 'B',
+  C = 'C'
+}
+
 // Types pour les parcelles
 export interface Parcelle {
   id: string;
   code: string;
   surface_hectares: number;
-  culture_type: 'palmier' | 'papaye';
+  culture_type: CultureType;
   date_plantation: string;
-  statut: 'en_preparation' | 'active' | 'en_recolte' | 'en_repos';
+  statut: ParcelleStatus;
   coordonnees_gps: {
     latitude: number;
     longitude: number;
@@ -62,7 +81,7 @@ export interface Recolte {
   cycle_culture_id: string;
   date_recolte: string;
   quantite_kg: number;
-  qualite: 'A' | 'B' | 'C';
+  qualite: QualiteRecolte;
   conditions_meteo: WeatherConditions;
   equipe_recolte: string[];
   notes?: string;

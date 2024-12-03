@@ -19,7 +19,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { productionService } from '../../services/production';
 import { Agriculture, WaterDrop, Thermostat } from '@mui/icons-material';
-import { Parcelle, ProductionEvent, Recolte, QualiteRecolte } from '../../types/production';
+import { Parcelle, ProductionEvent, Recolte, QualiteRecolte, ParcelleStatus } from '../../types/production';
 
 interface MeteoData {
   temperature: number;
@@ -115,7 +115,7 @@ const ParcelleDetails: React.FC = () => {
                 </Typography>
                 <Chip
                   label={parcelle.statut}
-                  color={parcelle.statut === 'ACTIVE' ? 'success' : 'default'}
+                  color={parcelle.statut === ParcelleStatus.ACTIVE ? 'success' : 'default'}
                   size="small"
                 />
               </Box>

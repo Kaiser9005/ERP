@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TableauMeteoParcelleaire from '../TableauMeteoParcelleaire';
 import { weatherService } from '../../../services/weather';
-import { Parcelle } from '../../../types/production';
+import { Parcelle, CultureType, ParcelleStatus } from '../../../types/production';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AgriculturalMetrics } from '../../../types/weather';
 
@@ -23,9 +23,9 @@ describe('TableauMeteoParcelleaire', () => {
   const mockParcelle: Parcelle = {
     id: '1',
     code: 'P001',
-    culture_type: 'palmier',
+    culture_type: CultureType.PALMIER,
     surface_hectares: 10,
-    statut: 'active',
+    statut: ParcelleStatus.ACTIVE,
     date_plantation: '2024-01-01',
     coordonnees_gps: {
       latitude: 0,
