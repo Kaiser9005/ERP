@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getDonneesTresorerie } from '../../services/finance';
 
 ChartJS.register(
@@ -24,8 +24,24 @@ ChartJS.register(
   Legend
 );
 
+interface ChartData {
+  labels: string[];
+  recettes: number[];
+  depenses: number[];
+}
+
 const GraphiqueTresorerie: React.FC = () => {
-  const { data: tresorerie } = useQuery('tresorerie', getDonneesTresorerie);
+  const { data: chartData } = useQuery({
+    queryKey: ['tresorerie'],
+    queryFn: async (): Promise<ChartData> => {
+      const tresorerieData = await getDonneesTresorerie();
+      const labels = tresorerieData.historique.map(item => item.date);
+      const recettes = tresorerieData.historique.map(item => (item.variation.type === 'increase' ? item.variation.value : 0));
+      const depenses = tresorerieData.historique.map(item => (item.variation.type === 'decrease' ? item.variation.value : 0));
+      
+      return { labels, recettes, depenses };
+    }
+  });
 
   const options = {
     responsive: true,
@@ -49,18 +65,18 @@ const GraphiqueTresorerie: React.FC = () => {
   };
 
   const data = {
-    labels: tresorerie?.labels || [],
+    labels: chartData?.labels || [],
     datasets: [
       {
         label: 'Recettes',
-        data: tresorerie?.recettes || [],
+        data: chartData?.recettes || [],
         borderColor: 'rgb(46, 125, 50)',
         backgroundColor: 'rgba(46, 125, 50, 0.5)',
         tension: 0.3
       },
       {
         label: 'Dépenses',
-        data: tresorerie?.depenses || [],
+        data: chartData?.depenses || [],
         borderColor: 'rgb(211, 47, 47)',
         backgroundColor: 'rgba(211, 47, 47, 0.5)',
         tension: 0.3

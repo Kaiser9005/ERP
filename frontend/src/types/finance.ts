@@ -12,6 +12,10 @@ export interface FinanceStats {
   profitVariation: Variation;
   cashflow: number;
   cashflowVariation: Variation;
+  tresorerie: number;
+  variation_tresorerie: Variation;
+  factures_impayees: number;
+  paiements_prevus: number;
 }
 
 // Types spécifiques aux opérations financières

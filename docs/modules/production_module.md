@@ -61,6 +61,7 @@ Permettre la création et la modification détaillée des parcelles agricoles av
 #### ParcellesList
 - Vue d'ensemble des parcelles
 - Filtrage et recherche avancés
+- Indicateurs d'état
 - Actions rapides
 
 #### ParcelleDetails
@@ -71,37 +72,206 @@ Permettre la création et la modification détaillée des parcelles agricoles av
 
 #### ParcelleMap
 - Visualisation cartographique
-- État en temps réel
+- État des parcelles en temps réel
 - Superposition des données météo
+- Emplacements des capteurs
 
-## Architecture Technique
+## Gestion des Récoltes
 
-### Frontend
-- React 18+
-- TypeScript
-- Material-UI
-- React Query
-- Vite
+### RecolteForm
+- Enregistrement des récoltes
+- Données quantitatives
+- Assignation des équipes
+- Conditions météo
 
-### Backend
-- FastAPI
-- SQLAlchemy
-- Alembic pour migrations
-- PostgreSQL
-- Redis (cache)
+#### HarvestQualityForm
+- Contrôle qualité
+- Critères d'évaluation
+- Classification des produits
+- Rapports de qualité
 
-## Sécurité et Performance
+## Planification
+
+### ProductionCalendar
+- Planning cultural
+- Synchronisation météo
+- Gestion des équipes
+- Alertes et rappels
+
+#### ProductionDashboard
+- KPIs en temps réel
+- Alertes et notifications
+- Vue consolidée
+- Actions rapides
+
+## Monitoring Météo
+
+### WeatherDashboard
+- Conditions actuelles
+- Prévisions à 3 jours
+- Alertes météo
+- Impact sur la production
+
+#### TableauMeteoParcelleaire
+- Vue météo par parcelle
+- Conditions actuelles et prévisions
+- Alertes spécifiques aux parcelles
+- Intégration avec les capteurs IoT
+- Historique météo localisé
+- Recommandations par parcelle
+
+#### DétailsMétéoTâche
+- Conditions météo spécifiques aux tâches
+- Compatibilité avec les contraintes définies
+- Alertes et avertissements
+- Recommandations d'exécution
+- Historique météo récent
+- Prévisions pour la période planifiée
+
+## Monitoring IoT
+
+### IoTDashboard
+- État des capteurs
+- Données en temps réel
+- Alertes sur seuils
+- Analyse des tendances
+
+#### Composants IoT
+- AddSensorDialog : Configuration des capteurs
+- SensorChartsDialog : Visualisation des données
+- Alertes automatiques
+- Maintenance prédictive
+
+## Services
+
+### production_service
+- Gestion des parcelles
+- Suivi des récoltes
+- Planification culturale
+- Rapports de production
+
+### weather_service
+- Données météo en temps réel
+- Prévisions et alertes
+- Impact sur la production
+- Historique météo
+- Analyse par tâche
+- Recommandations contextuelles
+- Intégration IoT
+
+### iot_service
+- Gestion des capteurs
+- Collecte des données
+- Analyse et alertes
+- Maintenance des capteurs
+
+## Modèles de Données
+
+### Production
+```python
+class Parcelle(BaseModel):
+    id: UUID
+    code: str
+    surface: float
+    culture: CultureType
+    etat: ParcelleState
+    coordonnees: Dict[str, float]
+    date_creation: datetime
+    responsable_id: UUID
+    metadata: Optional[Dict] = {}
+```
+
+### IoT
+```python
+class IoTSensor(BaseModel):
+    id: UUID
+    type: SensorType
+    parcelle_id: UUID
+    config: Dict[str, Any]
+    seuils_alerte: Dict[str, float]
+    etat: SensorState
+```
+
+### Météo
+```python
+class WeatherConstraints(BaseModel):
+    min_temperature: float
+    max_temperature: float
+    max_wind_speed: float
+    max_precipitation: float
+    humidity_range: Tuple[float, float]
+```
+
+## Intégrations Modules
+
+### Avec Inventaire
+- Suivi des stocks d'intrants
+- Gestion des récoltes
+- Traçabilité des produits
+
+### Avec RH
+- Planning des équipes
+- Suivi des performances
+- Formation du personnel
+
+### Avec Finance
+- Calcul des coûts de production
+- Valorisation des récoltes
+- Analyse de rentabilité
+
+### Avec Météo et IoT
+- Intégration des données en temps réel
+- Alertes et recommandations contextuelles
+
+## Flux de Données
+
+### Production → Inventaire
+- Entrées de récolte
+- Sorties d'intrants
+- Mouvements de stock
+
+### Production → RH
+- Besoins en personnel
+- Évaluations de performance
+- Planification des formations
+
+### Production → Finance
+- Coûts de production
+- Valorisation des récoltes
+- Analyse de rentabilité
+
+### Production → Météo
+- Contraintes des tâches
+- Données des capteurs
+- Historique des impacts
+
+## Sécurité
 
 ### Authentification
-- JWT
-- Contrôle d'accès RBAC
-- Validation des permissions
+- JWT pour l'API
+- RBAC pour les permissions
+- Audit des actions
+
+### Données
+- Validation des entrées
+- Chiffrement sensible
+- Sauvegarde régulière
+
+## Performance
 
 ### Optimisations
-- Chargement différé
-- Mise en cache des données
-- Pagination
-- Validation côté client et serveur
+- Cache Redis
+- Agrégation données
+- Pagination résultats
+- Mise en cache météo
+- Optimisation IoT
+
+### Monitoring
+- Temps de réponse
+- Utilisation ressources
+- Alertes performance
+- Latence capteurs
+- Qualité données météo
 
 ## Tests
 
@@ -115,24 +285,6 @@ Permettre la création et la modification détaillée des parcelles agricoles av
 - Objectif > 80% de couverture de code
 - Tests sur chaque composant critique
 - Validation des scénarios métier
-
-## Intégrations Modules
-
-### Inventaire
-- Synchronisation des stocks
-- Traçabilité des récoltes
-
-### Ressources Humaines
-- Affectation des équipes
-- Suivi des performances
-
-### Finance
-- Calcul des coûts de production
-- Valorisation des récoltes
-
-### Météo et IoT
-- Intégration des données en temps réel
-- Alertes et recommandations contextuelles
 
 ## Évolutions et Roadmap
 
@@ -160,3 +312,20 @@ npm run dev
 
 # Construction pour production
 npm run build
+```
+
+## Architecture Technique
+
+### Frontend
+- React 18+
+- TypeScript
+- Material-UI
+- React Query
+- Vite
+
+### Backend
+- FastAPI
+- SQLAlchemy
+- Alembic pour migrations
+- PostgreSQL
+- Redis (cache)

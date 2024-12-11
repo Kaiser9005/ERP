@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 import { getStatsFinance } from '../../services/finance';
 
 const StatsFinance: React.FC = () => {
-  const { data: stats } = useQuery('stats-finance', getStatsFinance);
+  const { data: stats } = useQuery('stats-finance', () => getStatsFinance());
 
   return (
     <Card>
@@ -27,10 +27,10 @@ const StatsFinance: React.FC = () => {
           {stats?.variation_tresorerie && (
             <Typography
               variant="body2"
-              color={stats.variation_tresorerie.type === 'hausse' ? 'success.main' : 'error.main'}
+              color={stats.variation_tresorerie.type === 'increase' ? 'success.main' : 'error.main'}
             >
-              {stats.variation_tresorerie.type === 'hausse' ? '+' : '-'}
-              {stats.variation_tresorerie.valeur}% par rapport au mois dernier
+              {stats.variation_tresorerie.type === 'increase' ? '+' : '-'}
+              {stats.variation_tresorerie.value}% par rapport au mois dernier
             </Typography>
           )}
         </Box>
