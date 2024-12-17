@@ -14,7 +14,7 @@ import {
   Box,
   Divider,
 } from '@mui/material';
-import { Bilan as BilanType } from '../../../types/comptabilite';
+import { Balance } from '../../../types/comptabilite';
 import { getBilan } from '../../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../../utils/format';
 
@@ -22,13 +22,13 @@ const Bilan: React.FC = () => {
   const [dateFin, setDateFin] = useState(
     new Date().toISOString().split('T')[0]
   );
-  const [bilan, setBilan] = useState<BilanType | null>(null);
+  const [bilan, setBilan] = useState<Balance | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const data = await getBilan(dateFin);
+      const data = await getBilan(new Date(dateFin));
       setBilan(data);
     } catch (error) {
       console.error('Erreur lors du chargement du bilan:', error);

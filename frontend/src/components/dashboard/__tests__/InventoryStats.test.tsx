@@ -1,16 +1,11 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import InventoryStats from '../InventoryStats';
-import { getInventoryStats } from '../../../services/inventory';
+import '@testing-library/jest-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import StatsInventaire from '../../inventaire/StatsInventaire';
+import { getStatsInventaire } from '../../../services/inventaire';
 
-jest.mock('../../../services/inventory');
-
-const mockStats = {
-  valeur_totale: 1500000,
-  alertes: 3,
-  mouvements_jour: 12
-};
+jest.mock('../../../services/inventaire');
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,41 +23,40 @@ const renderWithProviders = (component: React.ReactElement) => {
   );
 };
 
-describe('InventoryStats', () => {
+describe('StatsInventaire', () => {
+  const mockStats = {
+    totalProducts: 150,
+    lowStockProducts: 15,
+    stockValue: 150000,
+    averageProductValue: 1000,
+  };
+
   beforeEach(() => {
-    (getInventoryStats as jest.Mock).mockResolvedValue(mockStats);
+    (getStatsInventaire as jest.Mock).mockResolvedValue(mockStats);
   });
 
   it('affiche les statistiques d\'inventaire', async () => {
-    renderWithProviders(<InventoryStats />);
-    
-    expect(await screen.findByText('Inventaire')).toBeInTheDocument();
-    expect(await screen.findByText('1 500 000 FCFA')).toBeInTheDocument();
-  });
+    renderWithProviders(<StatsInventaire />);
 
-  it('affiche les alertes et mouvements', async () => {
-    renderWithProviders(<InventoryStats />);
-    
-    expect(await screen.findByText('3 Alertes')).toBeInTheDocument();
-    expect(await screen.findByText('12 Mouvements')).toBeInTheDocument();
-  });
-
-  it('utilise les bonnes couleurs pour les indicateurs', async () => {
-    renderWithProviders(<InventoryStats />);
-    
-    const alerteChip = await screen.findByText('3 Alertes');
-    const mouvementChip = await screen.findByText('12 Mouvements');
-    
-    expect(alerteChip).toHaveClass('MuiChip-colorError');
-    expect(mouvementChip).toHaveClass('MuiChip-colorInfo');
+    expect(await screen.findByText('150')).toBeInTheDocument(); // Total produits
+    expect(await screen.findByText('15')).toBeInTheDocument(); // Produits en stock faible
+    expect(await screen.findByText('150 000,00 €')).toBeInTheDocument(); // Valeur du stock
+    expect(await screen.findByText('1 000,00 €')).toBeInTheDocument(); // Valeur moyenne par produit
   });
 
   it('gère les erreurs de chargement', async () => {
-    (getInventoryStats as jest.Mock).mockRejectedValue(new Error('Erreur de chargement'));
-    
-    renderWithProviders(<InventoryStats />);
-    
-    expect(await screen.findByText('0 FCFA')).toBeInTheDocument();
-    expect(await screen.findByText('0 Alertes')).toBeInTheDocument();
+    (getStatsInventaire as jest.Mock).mockRejectedValue(new Error('Erreur de chargement'));
+
+    renderWithProviders(<StatsInventaire />);
+
+    expect(await screen.findByText('Erreur de chargement des statistiques')).toBeInTheDocument();
+  });
+
+  it('affiche un indicateur de chargement', () => {
+    (getStatsInventaire as jest.Mock).mockImplementation(() => new Promise(() => {}));
+
+    renderWithProviders(<StatsInventaire />);
+
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 });

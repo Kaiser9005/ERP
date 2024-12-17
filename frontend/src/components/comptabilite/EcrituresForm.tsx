@@ -17,9 +17,9 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { 
-  EcritureComptableFormData,
   CompteComptable,
-  JournalComptable
+  JournalComptable,
+  EcritureComptableFormData
 } from '../../types/comptabilite';
 import { 
   getComptes,
@@ -124,17 +124,17 @@ const EcrituresForm: React.FC = () => {
 
     try {
       // Création des écritures
-      for (const ligne of lignes) {
-        await createEcriture({
-          date_ecriture,
-          numero_piece,
-          journal_id,
+      const ecritureData: EcritureComptableFormData = {
+        date_ecriture,
+        journal_id,
+        lignes: lignes.map(ligne => ({
           compte_id: ligne.compte_id,
           libelle: ligne.libelle,
           debit: ligne.debit,
           credit: ligne.credit
-        });
-      }
+        }))
+      };
+      await createEcriture(ecritureData);
 
       // Réinitialisation du formulaire
       setLignes([{ compte_id: '', libelle: '', debit: 0, credit: 0 }]);

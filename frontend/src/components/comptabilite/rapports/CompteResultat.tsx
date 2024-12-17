@@ -14,17 +14,17 @@ import {
   Box,
   Divider,
 } from '@mui/material';
-import { CompteResultat as CompteResultatType } from '../../../types/comptabilite';
+import { CompteResultatType } from '../../../types/comptabilite';
 import { getCompteResultat } from '../../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../../utils/format';
 
 const CompteResultat: React.FC = () => {
-  const [dateDebut, setDateDebut] = useState(
+  const [dateDebut, setDateDebut] = useState<string>(
     new Date(new Date().getFullYear(), 0, 1)
       .toISOString()
       .split('T')[0]
   );
-  const [dateFin, setDateFin] = useState(
+  const [dateFin, setDateFin] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [compteResultat, setCompteResultat] = useState<CompteResultatType | null>(null);
@@ -33,7 +33,7 @@ const CompteResultat: React.FC = () => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const data = await getCompteResultat(dateDebut, dateFin);
+      const data = await getCompteResultat(new Date(dateDebut), new Date(dateFin));
       setCompteResultat(data);
     } catch (error) {
       console.error('Erreur lors du chargement du compte de résultat:', error);
@@ -42,7 +42,7 @@ const CompteResultat: React.FC = () => {
     }
   };
 
-  const renderSection = (section: Record<string, { libelle: string, montant: number }>) => {
+  const renderSection = (section: Record<string, { libelle: string; montant: number }>) => {
     return Object.entries(section).map(([numero, compte]) => (
       <TableRow key={numero}>
         <TableCell>{numero}</TableCell>

@@ -14,17 +14,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
   Grid,
   Typography,
   Box,
 } from '@mui/material';
-import { Edit, Visibility } from '@mui/icons-material';
-import { JournalComptable, TypeJournal, EcritureComptable } from '../../types/comptabilite';
+import { Visibility } from '@mui/icons-material';
+import { JournalComptable, EcritureComptable } from '../../types/comptabilite';
 import { getJournaux, getJournal } from '../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../utils/format';
-
-const TYPES_JOURNAL = ['ACHAT', 'VENTE', 'BANQUE', 'CAISSE', 'OPERATIONS_DIVERSES'] as const;
 
 const JournauxList: React.FC = () => {
   const [journaux, setJournaux] = useState<JournalComptable[]>([]);
@@ -56,8 +53,8 @@ const JournauxList: React.FC = () => {
   const handleOpenDialog = async (journal: JournalComptable) => {
     setSelectedJournal(journal);
     try {
-      const data = await getJournal(journal.id, dateDebut, dateFin);
-      setEcritures(data);
+      const data = await getJournal(journal.id);
+      setEcritures(data?.ecritures || []);
       setOpenDialog(true);
     } catch (error) {
       console.error('Erreur lors du chargement des écritures:', error);
@@ -73,8 +70,8 @@ const JournauxList: React.FC = () => {
   const handleDateChange = async () => {
     if (selectedJournal) {
       try {
-        const data = await getJournal(selectedJournal.id, dateDebut, dateFin);
-        setEcritures(data);
+        const data = await getJournal(selectedJournal.id);
+        setEcritures(data?.ecritures || []);
       } catch (error) {
         console.error('Erreur lors du chargement des écritures:', error);
       }
@@ -82,13 +79,17 @@ const JournauxList: React.FC = () => {
   };
 
   const calculateTotals = () => {
-    return ecritures.reduce(
-      (acc, ecriture) => ({
-        debit: acc.debit + ecriture.debit,
-        credit: acc.credit + ecriture.credit,
-      }),
-      { debit: 0, credit: 0 }
-    );
+    let totalDebit = 0;
+    let totalCredit = 0;
+  
+    ecritures.forEach((ecriture) => {
+      ecriture.lignes.forEach((ligne) => {
+        totalDebit += ligne.debit;
+        totalCredit += ligne.credit;
+      });
+    });
+  
+    return { debit: totalDebit, credit: totalCredit };
   };
 
   return (
@@ -108,7 +109,7 @@ const JournauxList: React.FC = () => {
               <TableRow key={journal.id}>
                 <TableCell>{journal.code}</TableCell>
                 <TableCell>{journal.libelle}</TableCell>
-                <TableCell>{journal.type_journal}</TableCell>
+                <TableCell>{journal.type}</TableCell>
                 <TableCell>
                   <IconButton 
                     onClick={() => handleOpenDialog(journal)}
@@ -178,16 +179,18 @@ const JournauxList: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {ecritures.map((ecriture) => (
-                  <TableRow key={ecriture.id}>
+              {ecritures.map((ecriture) => (
+                ecriture.lignes.map((ligne, index) => (
+                  <TableRow key={`${ecriture.id}-${index}`}>
                     <TableCell>{formatDate(ecriture.date_ecriture)}</TableCell>
-                    <TableCell>{ecriture.numero_piece}</TableCell>
-                    <TableCell>{ecriture.compte_id}</TableCell>
-                    <TableCell>{ecriture.libelle}</TableCell>
-                    <TableCell align="right">{formatCurrency(ecriture.debit)}</TableCell>
-                    <TableCell align="right">{formatCurrency(ecriture.credit)}</TableCell>
+                    <TableCell>{}</TableCell> {/* Mettre à jour si le type EcritureComptable est modifié pour inclure numero_piece */}
+                    <TableCell>{ligne.compte_id}</TableCell>
+                    <TableCell>{ligne.libelle}</TableCell>
+                    <TableCell align="right">{formatCurrency(ligne.debit)}</TableCell>
+                    <TableCell align="right">{formatCurrency(ligne.credit)}</TableCell>
                   </TableRow>
-                ))}
+                ))
+              ))}
                 {ecritures.length > 0 && (
                   <TableRow>
                     <TableCell colSpan={4}>

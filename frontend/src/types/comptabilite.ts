@@ -38,6 +38,7 @@ export interface EcritureComptable {
 }
 
 export interface JournalComptable {
+  ecritures(ecritures: any): unknown;
   id: string;
   code: string;
   libelle: string;
@@ -79,6 +80,10 @@ export interface Balance {
     solde: number;
   };
   metadata?: Record<string, any>;
+  actif: Record<string, { libelle: string, montant: number }>;
+  passif: Record<string, { libelle: string, montant: number }>;
+  total_actif: number;
+  total_passif: number;
 }
 
 export interface GrandLivre {
@@ -260,4 +265,12 @@ export interface ComptabiliteStats {
     value: number;
     type: 'increase' | 'decrease';
   };
+}
+
+export interface CompteResultatType {
+  produits: Record<string, { libelle: string; montant: number }>;
+  total_produits: number;
+  charges: Record<string, { libelle: string; montant: number }>;
+  total_charges: number;
+  resultat_net: number;
 }

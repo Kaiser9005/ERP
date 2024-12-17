@@ -14,7 +14,8 @@ import {
   StatutEcriture,
   BudgetAnalysis,
   Balance,
-  RapportComptable
+  RapportComptable,
+  CompteResultatType
 } from '../types/comptabilite';
 
 const API_BASE = '/api/v1/comptabilite';
@@ -147,8 +148,8 @@ export const getBilan = async (date_fin: Date): Promise<Balance> => {
   return response.data.data;
 };
 
-export const getCompteResultat = async (date_debut: Date, date_fin: Date): Promise<RapportComptable> => {
-  const response = await api.get<ApiResponse<RapportComptable>>(`${API_BASE}/compte-resultat`, {
+export const getCompteResultat = async (date_debut: Date, date_fin: Date): Promise<CompteResultatType> => {
+  const response = await api.get<ApiResponse<CompteResultatType>>(`${API_BASE}/compte-resultat`, {
     params: {
       date_debut: format(date_debut, 'yyyy-MM-dd'),
       date_fin: format(date_fin, 'yyyy-MM-dd')

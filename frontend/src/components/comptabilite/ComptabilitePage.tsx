@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Grid, Box, Tabs, Tab, Typography } from '@mui/material';
+import { Grid, Box, Tabs, Tab } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
 import ComptesList from './ComptesList';
 import EcrituresForm from './EcrituresForm';
@@ -51,7 +51,7 @@ const ComptabilitePage: React.FC = () => {
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState(0);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 

@@ -17,12 +17,10 @@ import {
   MenuItem,
   Grid,
 } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
-import { CompteComptable, TypeCompte, CompteComptableFormData } from '../../types/comptabilite';
+import { Edit } from '@mui/icons-material';
+import { CompteComptable, TypeCompteComptable, CompteComptableFormData } from '../../types/comptabilite';
 import { getComptes, createCompte, updateCompte } from '../../services/comptabilite';
 import { formatCurrency } from '../../utils/format';
-
-const TYPES_COMPTE = ['ACTIF', 'PASSIF', 'CHARGE', 'PRODUIT'] as const;
 
 const ComptesList: React.FC = () => {
   const [comptes, setComptes] = useState<CompteComptable[]>([]);
@@ -31,7 +29,7 @@ const ComptesList: React.FC = () => {
   const [formData, setFormData] = useState<CompteComptableFormData>({
     numero: '',
     libelle: '',
-    type_compte: 'ACTIF',
+    type_compte: TypeCompteComptable.ACTIF,
     description: ''
   });
 
@@ -62,7 +60,7 @@ const ComptesList: React.FC = () => {
       setFormData({
         numero: '',
         libelle: '',
-        type_compte: 'ACTIF',
+        type_compte: TypeCompteComptable.ACTIF,
         description: ''
       });
     }
@@ -118,8 +116,7 @@ const ComptesList: React.FC = () => {
               <TableCell>Numéro</TableCell>
               <TableCell>Libellé</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell align="right">Solde Débit</TableCell>
-              <TableCell align="right">Solde Crédit</TableCell>
+              <TableCell align="right">Solde</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -129,8 +126,7 @@ const ComptesList: React.FC = () => {
                 <TableCell>{compte.numero}</TableCell>
                 <TableCell>{compte.libelle}</TableCell>
                 <TableCell>{compte.type_compte}</TableCell>
-                <TableCell align="right">{formatCurrency(compte.solde_debit)}</TableCell>
-                <TableCell align="right">{formatCurrency(compte.solde_credit)}</TableCell>
+                <TableCell align="right">{formatCurrency(compte.solde)}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(compte)} size="small">
                     <Edit />
@@ -170,7 +166,7 @@ const ComptesList: React.FC = () => {
                   fullWidth
                   required
                 >
-                  {TYPES_COMPTE.map((type) => (
+                  {Object.values(TypeCompteComptable).map((type) => (
                     <MenuItem key={type} value={type}>
                       {type}
                     </MenuItem>

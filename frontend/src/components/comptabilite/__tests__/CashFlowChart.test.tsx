@@ -3,7 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CashFlowChart from '../CashFlowChart';
-import { comptabiliteService } from '../../../services/comptabilite';
+import { getCashFlow } from '../../../services/comptabilite';
 
 // Mock du service
 jest.mock('../../../services/comptabilite');
@@ -48,7 +48,7 @@ describe('CashFlowChart', () => {
     // Reset des mocks
     jest.resetAllMocks();
     // Configuration du mock pour getCashFlow
-    (comptabiliteService.getCashFlow as jest.Mock).mockResolvedValue(mockCashFlowData);
+    (getCashFlow as jest.Mock).mockResolvedValue(mockCashFlowData);
   });
 
   it('affiche le chargement initialement', () => {
@@ -83,7 +83,7 @@ describe('CashFlowChart', () => {
     fireEvent.change(select, { target: { value: '90' } });
 
     await waitFor(() => {
-      expect(comptabiliteService.getCashFlow).toHaveBeenCalledWith(90);
+      expect(getCashFlow).toHaveBeenCalledWith(90);
     });
   });
 
@@ -112,7 +112,7 @@ describe('CashFlowChart', () => {
 
   it('affiche un message d\'erreur en cas d\'échec du chargement', async () => {
     const error = new Error('Erreur de chargement');
-    (comptabiliteService.getCashFlow as jest.Mock).mockRejectedValue(error);
+    (getCashFlow as jest.Mock).mockRejectedValue(error);
 
     renderWithQuery(<CashFlowChart />);
 
@@ -126,14 +126,14 @@ describe('CashFlowChart', () => {
     renderWithQuery(<CashFlowChart />);
 
     await waitFor(() => {
-      expect(comptabiliteService.getCashFlow).toHaveBeenCalledTimes(1);
+      expect(getCashFlow).toHaveBeenCalledTimes(1);
     });
 
     // Avance le temps de 5 minutes
     jest.advanceTimersByTime(5 * 60 * 1000);
 
     await waitFor(() => {
-      expect(comptabiliteService.getCashFlow).toHaveBeenCalledTimes(2);
+      expect(getCashFlow).toHaveBeenCalledTimes(2);
     });
 
     jest.useRealTimers();

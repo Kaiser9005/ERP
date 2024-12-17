@@ -10,8 +10,8 @@ const mockActivities: Activity[] = [
     type: 'PRODUCTION',
     timestamp: '2024-03-15T10:00:00',
     description: 'Mise à jour production',
-    impact: 'HIGH',
-    metrics: { efficiency: 0.95 }
+    module: 'production',
+    impact_level: 5,
   }
 ];
 

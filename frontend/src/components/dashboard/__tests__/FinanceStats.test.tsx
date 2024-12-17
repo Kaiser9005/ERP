@@ -16,7 +16,11 @@ const mockStats: FinanceStatsType = {
   profit: 300000,
   profitVariation: { value: 20, type: 'increase' },
   cashflow: 500000,
-  cashflowVariation: { value: 5, type: 'increase' }
+  cashflowVariation: { value: 5, type: 'increase' },
+  tresorerie: 100000,
+  variation_tresorerie: { value: 2, type: 'increase' },
+  factures_impayees: 5,
+  paiements_prevus: 10
 };
 
 const queryClient = new QueryClient({
@@ -57,7 +61,7 @@ describe('FinanceStats', () => {
     const increaseChips = await screen.findAllByTestId('increase-chip');
     const decreaseChips = await screen.findAllByTestId('decrease-chip');
 
-    expect(increaseChips).toHaveLength(3); // revenue, profit, cashflow
+    expect(increaseChips).toHaveLength(4); // revenue, profit, cashflow, tresorerie
     expect(decreaseChips).toHaveLength(1); // expenses
   });
 

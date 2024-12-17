@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BudgetOverview from '../BudgetOverview';
-import { comptabiliteService } from '../../../services/comptabilite';
+import { getBudgetAnalysis } from '../../../services/comptabilite';
 
 // Mock du service
 jest.mock('../../../services/comptabilite');
@@ -51,7 +51,7 @@ describe('BudgetOverview', () => {
     // Reset des mocks
     jest.resetAllMocks();
     // Configuration du mock pour getBudgetAnalysis
-    (comptabiliteService.getBudgetAnalysis as jest.Mock).mockResolvedValue(mockBudgetData);
+    (getBudgetAnalysis as jest.Mock).mockResolvedValue(mockBudgetData);
   });
 
   it('affiche le chargement initialement', () => {
@@ -88,7 +88,7 @@ describe('BudgetOverview', () => {
 
   it('affiche un message d\'erreur en cas d\'échec du chargement', async () => {
     const error = new Error('Erreur de chargement');
-    (comptabiliteService.getBudgetAnalysis as jest.Mock).mockRejectedValue(error);
+    (getBudgetAnalysis as jest.Mock).mockRejectedValue(error);
 
     renderWithQuery(<BudgetOverview />);
 
@@ -102,14 +102,14 @@ describe('BudgetOverview', () => {
     renderWithQuery(<BudgetOverview />);
 
     await waitFor(() => {
-      expect(comptabiliteService.getBudgetAnalysis).toHaveBeenCalledTimes(1);
+      expect(getBudgetAnalysis).toHaveBeenCalledTimes(1);
     });
 
     // Avance le temps de 5 minutes
     jest.advanceTimersByTime(5 * 60 * 1000);
 
     await waitFor(() => {
-      expect(comptabiliteService.getBudgetAnalysis).toHaveBeenCalledTimes(2);
+      expect(getBudgetAnalysis).toHaveBeenCalledTimes(2);
     });
 
     jest.useRealTimers();
