@@ -4,7 +4,7 @@ import {
   MouvementStock,
   Stock,
   StatsInventaire
-} from '../types/inventaire';
+} from '../../frontend/src/types/inventaire';
 
 export const getProduits = async (): Promise<Produit[]> => {
   const { data } = await api.get<Produit[]>('/api/inventaire/produits');
@@ -48,5 +48,15 @@ export const getStatsInventaire = async (): Promise<StatsInventaire> => {
 
 export const getStocks = async (): Promise<Stock[]> => {
   const { data } = await api.get<Stock[]>('/api/inventaire/stocks');
+  return data;
+};
+
+export const verifierCodeUnique = async (code: string): Promise<boolean> => {
+  const { data } = await api.get(`/api/inventaire/produits/verifier-code?code=${code}`);
+  return data;
+};
+
+export const getTendances = async (): Promise<any> => { // Remplacer 'any' par un type plus précis si possible
+  const { data } = await api.get('/api/inventaire/tendances');
   return data;
 };

@@ -109,6 +109,7 @@ export interface Produit {
   prix_unitaire?: number;
   specifications?: Record<string, any>;
   conditions_stockage?: ConditionsStockage;
+  quantite_stock?: number;
 }
 
 export interface Stock {

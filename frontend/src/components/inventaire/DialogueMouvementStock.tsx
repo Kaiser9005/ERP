@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -70,6 +71,7 @@ const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
   productId
 }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -114,8 +116,14 @@ const DialogueMouvementStock: React.FC<DialogueMouvementStockProps> = ({
   const handleConfirm = (data: MouvementData) => {
     if (productId) {
       setSubmitError(null);
+      if (!user?.id) {
+        setSubmitError("Utilisateur non connecté");
+        return;
+      }
+      
       mutation.mutate({
         produit_id: productId,
+        responsable_id: user.id,
         ...data
       });
     }

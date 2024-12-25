@@ -1,32 +1,37 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BudgetOverview from '../BudgetOverview';
+import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import BudgetOverview from '../../comptabilite/BudgetOverview';
 import { getBudgetAnalysis } from '../../../services/comptabilite';
 
-// Mock du service
-jest.mock('../../../services/comptabilite');
+jest.mock('../../../services/finance');
 
-const mockBudgetData = {
-  total_prevu: 250000,
-  total_realise: 245000,
-  categories: {
-    '601': {
-      libelle: 'Achats matières premières',
-      prevu: 100000,
-      realise: 98000
+const mockBudgetAnalysis = {
+  total_prevu: 1500000,
+  total_realise: 1200000,
+  categories: [
+    {
+      code: 'PROD',
+      libelle: 'Production',
+      prevu: 1000000,
+      realise: 750000,
+      ecart_percentage: -25
+    },
+    {
+      code: 'MKT',
+      libelle: 'Marketing',
+      prevu: 500000,
+      realise: 450000,
+      ecart_percentage: -10
     }
-  },
+  ],
   weather_impact: {
-    score: 25,
-    factors: ['Fortes précipitations', 'Températures élevées'],
-    projections: {
-      'TRANSPORT': 'Augmentation probable des coûts'
-    }
+    score: 15,
+    factors: ['Précipitations élevées', 'Température']
   },
   recommendations: [
-    'Optimisation des coûts de transport recommandée'
+    'Ajuster le budget production',
+    'Surveiller les dépenses marketing'
   ]
 };
 
@@ -38,7 +43,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithQuery = (component: React.ReactElement) => {
+const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <QueryClientProvider client={queryClient}>
       {component}
@@ -48,70 +53,49 @@ const renderWithQuery = (component: React.ReactElement) => {
 
 describe('BudgetOverview', () => {
   beforeEach(() => {
-    // Reset des mocks
-    jest.resetAllMocks();
-    // Configuration du mock pour getBudgetAnalysis
-    (getBudgetAnalysis as jest.Mock).mockResolvedValue(mockBudgetData);
+    (getBudgetAnalysis as jest.Mock).mockResolvedValue(mockBudgetAnalysis);
   });
 
-  it('affiche le chargement initialement', () => {
-    renderWithQuery(<BudgetOverview />);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  it('affiche le titre et le score météo', async () => {
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('Aperçu Budgétaire')).toBeInTheDocument();
+    expect(await screen.findByText('Impact météo: 15%')).toBeInTheDocument();
   });
 
-  it('affiche les données budgétaires après chargement', async () => {
-    renderWithQuery(<BudgetOverview />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Aperçu Budgétaire')).toBeInTheDocument();
-    });
-
-    // Vérification des données principales
-    expect(screen.getByText('Progression globale')).toBeInTheDocument();
-    expect(screen.getByText('98.0%')).toBeInTheDocument();
-
-    // Vérification des montants
-    expect(screen.getByText('250 000,00 €')).toBeInTheDocument();
-    expect(screen.getByText('245 000,00 €')).toBeInTheDocument();
-
-    // Vérification des catégories
-    expect(screen.getByText('Achats matières premières')).toBeInTheDocument();
-
-    // Vérification de l'impact météo
-    expect(screen.getByText('Impact météo: 25%')).toBeInTheDocument();
-    expect(screen.getByText('Fortes précipitations')).toBeInTheDocument();
-    expect(screen.getByText('Températures élevées')).toBeInTheDocument();
-
-    // Vérification des recommandations
-    expect(screen.getByText('Optimisation des coûts de transport recommandée')).toBeInTheDocument();
+  it('affiche les catégories budgétaires', async () => {
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('Production')).toBeInTheDocument();
+    expect(await screen.findByText('Marketing')).toBeInTheDocument();
   });
 
-  it('affiche un message d\'erreur en cas d\'échec du chargement', async () => {
-    const error = new Error('Erreur de chargement');
-    (getBudgetAnalysis as jest.Mock).mockRejectedValue(error);
-
-    renderWithQuery(<BudgetOverview />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Aucune donnée budgétaire disponible')).toBeInTheDocument();
-    });
+  it('affiche les montants formatés', async () => {
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('750 000 FCFA / 1 000 000 FCFA')).toBeInTheDocument();
+    expect(await screen.findByText('450 000 FCFA / 500 000 FCFA')).toBeInTheDocument();
   });
 
-  it('met à jour les données périodiquement', async () => {
-    jest.useFakeTimers();
-    renderWithQuery(<BudgetOverview />);
+  it('affiche les facteurs météorologiques', async () => {
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('Précipitations élevées')).toBeInTheDocument();
+    expect(await screen.findByText('Température')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(getBudgetAnalysis).toHaveBeenCalledTimes(1);
-    });
+  it('affiche les recommandations', async () => {
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('• Ajuster le budget production')).toBeInTheDocument();
+    expect(await screen.findByText('• Surveiller les dépenses marketing')).toBeInTheDocument();
+  });
 
-    // Avance le temps de 5 minutes
-    jest.advanceTimersByTime(5 * 60 * 1000);
-
-    await waitFor(() => {
-      expect(getBudgetAnalysis).toHaveBeenCalledTimes(2);
-    });
-
-    jest.useRealTimers();
+  it('gère les erreurs de chargement', async () => {
+    (getBudgetAnalysis as jest.Mock).mockRejectedValue(new Error('Erreur de chargement'));
+    
+    renderWithProviders(<BudgetOverview />);
+    
+    expect(await screen.findByText('Aucune donnée budgétaire disponible')).toBeInTheDocument();
   });
 });

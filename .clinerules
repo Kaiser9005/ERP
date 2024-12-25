@@ -1,0 +1,3 @@
+log every change you make with a summary and files you have changed in a log file named changes.md.If it doesn't exist, then create it as well.
+Avant de modifier un fichier, toujours lire son contenu pour t'assurer de ne rien supprimer d'important, et de faire les bons ajustements.
+Avant de créer un nouveau fichier , toujours t'assurer qu'il n'existe pas déja.

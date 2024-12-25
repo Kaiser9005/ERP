@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -16,9 +15,10 @@ describe('GraphiqueTresorerie', () => {
   const queryClient = new QueryClient();
 
   const mockData = {
-    labels: ['Jan', 'Fév', 'Mar'],
-    recettes: [1500000, 1800000, 1600000],
-    depenses: [1200000, 1300000, 1400000]
+    soldeActuel: 2500000,
+    entrees: 1800000,
+    sorties: 1400000,
+    previsionsTresorerie: 2900000
   };
 
   beforeEach(() => {
@@ -38,8 +38,9 @@ describe('GraphiqueTresorerie', () => {
     expect(await screen.findByText('Flux de Trésorerie')).toBeInTheDocument();
   });
 
-  it('affiche les légendes du graphique', async () => {
+  it('affiche les données de trésorerie', async () => {
     renderComponent();
+    
     // Attendre que les données soient chargées
     await screen.findByText('Flux de Trésorerie');
 
@@ -48,16 +49,17 @@ describe('GraphiqueTresorerie', () => {
     expect(screen.getByText('Dépenses')).toBeInTheDocument();
   });
 
-  it('gère le cas où les données sont nulles', () => {
+  it('gère le cas où les données sont nulles', async () => {
     mockGetDonneesTresorerie.mockResolvedValue(null as any);
     renderComponent();
 
     // Le composant devrait toujours s'afficher sans erreur
-    expect(screen.getByText('Flux de Trésorerie')).toBeInTheDocument();
+    expect(await screen.findByText('Flux de Trésorerie')).toBeInTheDocument();
   });
 
-  it('appelle getDonneesTresorerie au chargement', () => {
+  it('appelle getDonneesTresorerie au chargement', async () => {
     renderComponent();
+    await screen.findByText('Flux de Trésorerie');
     expect(mockGetDonneesTresorerie).toHaveBeenCalled();
   });
 });

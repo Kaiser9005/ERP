@@ -14,9 +14,15 @@ import type {
   DonneesTresorerie,
   AnalyseBudgetaire,
   ProjectionsFinancieres,
-  VueBudgetaire
+  VueBudgetaire,
+  Compte
 } from '../types/finance';
 import type { ApiResponse, UUID } from '../types/common';
+
+export const getComptes = async (): Promise<Compte[]> => {
+  const response = await api.get<ApiResponse<Compte[]>>('/api/v1/finance/comptes');
+  return response.data.data;
+};
 
 // Transactions
 export const getTransactions = async (filter?: TransactionFilter): Promise<TransactionListResponse> => {

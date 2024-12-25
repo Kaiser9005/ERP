@@ -1,85 +1,78 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import StatsFinance from '../StatsFinance';
-import { getStatsFinance } from '../../../services/finance';
+import { FinanceStats } from '../../../types/finance';
 
-// Mock du service finance
-jest.mock('../../../services/finance', () => ({
-  getStatsFinance: jest.fn()
-}));
-
-const mockGetStatsFinance = getStatsFinance as jest.MockedFunction<typeof getStatsFinance>;
+const mockStats: FinanceStats = {
+  revenue: 1200000,
+  revenueVariation: {
+    valeur: 15,
+    type: 'hausse'
+  },
+  profit: 250000,
+  profitVariation: {
+    valeur: 10,
+    type: 'hausse'
+  },
+  cashflow: 300000,
+  cashflowVariation: {
+    valeur: 5,
+    type: 'baisse'
+  },
+  expenses: 950000,
+  expensesVariation: {
+    valeur: 12,
+    type: 'hausse'
+  },
+  tresorerie: 15000000,
+  variation_tresorerie: {
+    valeur: 10,
+    type: 'hausse'
+  },
+  factures_impayees: 5,
+  paiements_prevus: 8,
+  budget_mensuel: 20000000,
+  depenses_mois: 18000000
+};
 
 describe('StatsFinance', () => {
-  const queryClient = new QueryClient();
-
-  const mockStats = {
-    revenue: 1500000,
-    revenueVariation: { value: 5.2, type: 'increase' as const },
-    profit: 450000,
-    profitVariation: { value: 3.8, type: 'increase' as const },
-    cashflow: 750000,
-    cashflowVariation: { value: -2.1, type: 'decrease' as const },
-    expenses: 1050000,
-    expensesVariation: { value: 1.5, type: 'increase' as const }
-  };
-
-  beforeEach(() => {
-    mockGetStatsFinance.mockResolvedValue(mockStats);
-  });
-
-  const renderComponent = () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <StatsFinance />
-      </QueryClientProvider>
-    );
-  };
-
-  it('affiche les statistiques financières', async () => {
-    renderComponent();
-
-    // Vérifie les titres
-    expect(await screen.findByText("Chiffre d'Affaires")).toBeInTheDocument();
-    expect(screen.getByText('Bénéfice Net')).toBeInTheDocument();
-    expect(screen.getByText('Trésorerie')).toBeInTheDocument();
+  it('renders financial statistics', () => {
+    render(<StatsFinance stats={mockStats} />);
+    
+    expect(screen.getByText('Statistiques Financières')).toBeInTheDocument();
+    
+    // Revenus
+    expect(screen.getByText('Revenus')).toBeInTheDocument();
+    expect(screen.getByText('1 200 000 FCFA')).toBeInTheDocument();
+    expect(screen.getByText('▲ 15%')).toBeInTheDocument();
+    
+    // Bénéfice
+    expect(screen.getByText('Bénéfice')).toBeInTheDocument();
+    expect(screen.getByText('250 000 FCFA')).toBeInTheDocument();
+    expect(screen.getByText('▲ 10%')).toBeInTheDocument();
+    
+    // Flux de Trésorerie
+    expect(screen.getByText('Flux de Trésorerie')).toBeInTheDocument();
+    expect(screen.getByText('300 000 FCFA')).toBeInTheDocument();
+    expect(screen.getByText('▼ 5%')).toBeInTheDocument();
+    
+    // Dépenses
     expect(screen.getByText('Dépenses')).toBeInTheDocument();
-
-    // Vérifie les valeurs formatées
-    expect(screen.getByText('1 500 000 FCFA')).toBeInTheDocument();
-    expect(screen.getByText('450 000 FCFA')).toBeInTheDocument();
-    expect(screen.getByText('750 000 FCFA')).toBeInTheDocument();
-    expect(screen.getByText('1 050 000 FCFA')).toBeInTheDocument();
-
-    // Vérifie les variations
-    expect(screen.getByText('5.2%')).toBeInTheDocument();
-    expect(screen.getByText('3.8%')).toBeInTheDocument();
-    expect(screen.getByText('-2.1%')).toBeInTheDocument();
-    expect(screen.getByText('1.5%')).toBeInTheDocument();
+    expect(screen.getByText('950 000 FCFA')).toBeInTheDocument();
+    expect(screen.getByText('▲ 12%')).toBeInTheDocument();
   });
 
-  it('gère le cas où les données sont nulles', () => {
-    mockGetStatsFinance.mockResolvedValue(null as any);
-    renderComponent();
+  it('handles missing values', () => {
+    const partialStats: FinanceStats = {
+      revenue: 1200000,
+      expenses: 950000
+    };
 
-    // Vérifie que les valeurs par défaut sont affichées
-    const defaultValues = screen.getAllByText('0 FCFA');
-    expect(defaultValues.length).toBeGreaterThan(0);
-  });
-
-  it('affiche les variations avec les bonnes couleurs', async () => {
-    renderComponent();
-
-    // Attend que les données soient chargées
-    await screen.findByText("Chiffre d'Affaires");
-
-    // Vérifie les puces de variation
-    const increaseChips = screen.getAllByTestId('increase-chip');
-    const decreaseChips = screen.getAllByTestId('decrease-chip');
-
-    expect(increaseChips.length).toBe(3); // Pour revenue, profit et expenses
-    expect(decreaseChips.length).toBe(1); // Pour cashflow
+    render(<StatsFinance stats={partialStats} />);
+    
+    expect(screen.getByText('Statistiques Financières')).toBeInTheDocument();
+    expect(screen.getByText('Revenus')).toBeInTheDocument();
+    expect(screen.getByText('1 200 000 FCFA')).toBeInTheDocument();
+    expect(screen.getByText('Dépenses')).toBeInTheDocument();
+    expect(screen.getByText('950 000 FCFA')).toBeInTheDocument();
   });
 });

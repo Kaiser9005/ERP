@@ -100,3 +100,8 @@ export const updateTask = async (id: string, data: any): Promise<Task> => {
   const response = await api.put(`/projects/tasks/${id}`, data);
   return response.data;
 };
+
+export const getRecentTasks = async (): Promise<Task[]> => {
+  const response = await api.get('/projects/tasks/recent');
+  return response.data;
+};

@@ -35,11 +35,11 @@ const GraphiqueTresorerie: React.FC = () => {
     queryKey: ['tresorerie'],
     queryFn: async (): Promise<ChartData> => {
       const tresorerieData = await getDonneesTresorerie();
-      const labels = tresorerieData.historique.map(item => item.date);
-      const recettes = tresorerieData.historique.map(item => (item.variation.type === 'increase' ? item.variation.value : 0));
-      const depenses = tresorerieData.historique.map(item => (item.variation.type === 'decrease' ? item.variation.value : 0));
-      
-      return { labels, recettes, depenses };
+      return {
+        labels: ['Actuel', 'Prévision'],
+        recettes: [tresorerieData.entrees, tresorerieData.previsionsTresorerie],
+        depenses: [tresorerieData.sorties, 0]
+      };
     }
   });
 

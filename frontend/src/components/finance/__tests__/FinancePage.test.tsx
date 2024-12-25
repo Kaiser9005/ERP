@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
-import FinancePage from '../FinancePage';
+import PageFinance from '../PageFinance';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,22 +22,22 @@ const renderWithProviders = (component: React.ReactElement) => {
   );
 };
 
-describe('FinancePage', () => {
+describe('PageFinance', () => {
   it('affiche le titre et le sous-titre', () => {
-    renderWithProviders(<FinancePage />);
+    renderWithProviders(<PageFinance />);
     
     expect(screen.getByText('Finance')).toBeInTheDocument();
     expect(screen.getByText('Gestion financière et trésorerie')).toBeInTheDocument();
   });
 
   it('affiche le bouton pour créer une nouvelle transaction', () => {
-    renderWithProviders(<FinancePage />);
+    renderWithProviders(<PageFinance />);
     
     expect(screen.getByText('Nouvelle Transaction')).toBeInTheDocument();
   });
 
   it('contient les composants principaux', () => {
-    renderWithProviders(<FinancePage />);
+    renderWithProviders(<PageFinance />);
     
     expect(screen.getByTestId('finance-stats')).toBeInTheDocument();
     expect(screen.getByTestId('cashflow-chart')).toBeInTheDocument();

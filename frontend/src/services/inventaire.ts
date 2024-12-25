@@ -90,17 +90,18 @@ export const getFournisseurs = async (): Promise<string[]> => {
   return data;
 };
 
+// Permissions
+export const getPermissions = async (): Promise<InventoryPermissions> => {
+  const { data } = await api.get<InventoryPermissions>('/api/v1/inventory/permissions');
+  return data;
+};
+
 // Prévisions
 export const getPrevisions = async (filtres?: FiltresInventaire): Promise<PrevisionStock[]> => {
   const { data } = await api.get<PrevisionStock[]>('/api/v1/inventory/previsions', { params: filtres });
   return data;
 };
 
-// Permissions
-export const getPermissions = async (): Promise<InventoryPermissions> => {
-  const { data } = await api.get<InventoryPermissions>('/api/v1/inventory/permissions');
-  return data;
-};
 
 // Alias pour la compatibilité avec le code existant
 export const fetchInventoryPermissions = getPermissions;

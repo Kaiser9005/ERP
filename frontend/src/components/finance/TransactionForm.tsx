@@ -15,19 +15,30 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createTransaction, updateTransaction, getTransaction, getComptes, Transaction } from '../../services/finance';
+import { createTransaction, updateTransaction, getTransaction, getComptes } from '../../services/finance';
+import { TypeTransaction, StatutTransaction, Compte, Transaction } from '../../types/finance';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 
-interface TransactionFormData extends Omit<Transaction, 'id'> {
+interface TransactionFormData {
+  reference: string;
+  date_transaction: string;
+  type_transaction: TypeTransaction;
+  categorie: string;
+  montant: number;
+  description?: string;
   compte_source?: string;
   compte_destination?: string;
+  statut: StatutTransaction;
+  fichierJustificatif?: File;
 }
 
 const schema = yup.object().shape({
   reference: yup.string().required('La référence est requise'),
   date_transaction: yup.string().required('La date est requise'),
-  type_transaction: yup.string().required('Le type est requis'),
+  type_transaction: yup.mixed<TypeTransaction>()
+    .oneOf(Object.values(TypeTransaction))
+    .required('Le type est requis'),
   categorie: yup.string().required('La catégorie est requise'),
   montant: yup.number()
     .required('Le montant est requis')
@@ -36,7 +47,7 @@ const schema = yup.object().shape({
   compte_source: yup.string()
     .test('compte-source-required', 'Le compte source est requis', function(value) {
       const type = this.parent.type_transaction;
-      if (type === 'DEPENSE' || type === 'VIREMENT') {
+      if (type === TypeTransaction.DEPENSE || type === TypeTransaction.VIREMENT) {
         return !!value;
       }
       return true;
@@ -44,12 +55,14 @@ const schema = yup.object().shape({
   compte_destination: yup.string()
     .test('compte-destination-required', 'Le compte destination est requis', function(value) {
       const type = this.parent.type_transaction;
-      if (type === 'RECETTE' || type === 'VIREMENT') {
+      if (type === TypeTransaction.RECETTE || type === TypeTransaction.VIREMENT) {
         return !!value;
       }
       return true;
     }),
-  statut: yup.string().default('BROUILLON')
+  statut: yup.mixed<StatutTransaction>()
+    .oneOf(Object.values(StatutTransaction))
+    .default(StatutTransaction.BROUILLON)
 });
 
 const TransactionForm: React.FC = () => {
@@ -58,24 +71,28 @@ const TransactionForm: React.FC = () => {
   const queryClient = useQueryClient();
   const isEdit = Boolean(id);
 
-  const { data: transaction, isLoading: isLoadingTransaction } = useQuery(
-    ['transactions', id],
-    () => getTransaction(id!),
-    { enabled: isEdit }
-  );
+  const { data: transaction, isLoading: isLoadingTransaction } = useQuery({
+    queryKey: ['transactions', id],
+    queryFn: () => getTransaction(id!),
+    enabled: isEdit
+  });
 
-  const { data: comptes = [] } = useQuery(['comptes'], getComptes);
+  const { data: comptes = [] } = useQuery<Compte[]>({
+    queryKey: ['comptes'],
+    queryFn: getComptes,
+    initialData: []
+  });
 
   const defaultValues: TransactionFormData = {
     reference: '',
     date_transaction: new Date().toISOString(),
-    type_transaction: '',
+    type_transaction: TypeTransaction.RECETTE,
     categorie: '',
     montant: 0,
     description: '',
     compte_source: '',
     compte_destination: '',
-    statut: 'BROUILLON'
+    statut: StatutTransaction.BROUILLON
   };
 
   const { control, handleSubmit, watch, formState: { errors } } = useForm<TransactionFormData>({
@@ -85,24 +102,34 @@ const TransactionForm: React.FC = () => {
 
   const typeTransaction = watch('type_transaction');
 
-  const mutation = useMutation(
-    (data: TransactionFormData) => {
-      const transactionData = {
-        ...data,
-        date_transaction: new Date(data.date_transaction).toISOString()
+  const mutation = useMutation<Transaction, Error, TransactionFormData>({
+    mutationFn: (data: TransactionFormData) => {
+      const transactionData: TransactionFormData = {
+        date_transaction: new Date(data.date_transaction).toISOString(),
+        montant: data.montant,
+        type_transaction: data.type_transaction,
+        categorie: data.categorie,
+        description: data.description,
+        reference: data.reference,
+        compte_source: data.compte_source,
+        compte_destination: data.compte_destination,
+        statut: data.statut || StatutTransaction.BROUILLON,
+        fichierJustificatif: data.fichierJustificatif
       };
       return isEdit ? updateTransaction(id!, transactionData) : createTransaction(transactionData);
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['transactions']);
-        navigate('/finance');
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      navigate('/finance');
     }
-  );
+  });
 
   const onSubmit = (data: TransactionFormData) => {
-    mutation.mutate(data);
+    const formData = {
+      ...data,
+      statut: data.statut || 'BROUILLON'
+    };
+    mutation.mutate(formData);
   };
 
   if (isEdit && isLoadingTransaction) {
@@ -303,7 +330,7 @@ const TransactionForm: React.FC = () => {
                   <LoadingButton
                     variant="contained"
                     type="submit"
-                    loading={mutation.isLoading}
+                    loading={mutation.isPending}
                   >
                     {isEdit ? 'Modifier' : 'Créer'}
                   </LoadingButton>

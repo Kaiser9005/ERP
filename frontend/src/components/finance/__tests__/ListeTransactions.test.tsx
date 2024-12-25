@@ -1,10 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter } from 'react-router-dom';
 import ListeTransactions from '../ListeTransactions';
-import { getTransactions, TypeTransaction, StatutTransaction } from '../../../services/finance';
+import { getTransactions } from '../../../services/finance';
+import { TypeTransaction, StatutTransaction } from '../../../types/finance';
 
 // Mock du service finance
 jest.mock('../../../services/finance', () => ({
@@ -15,16 +15,16 @@ const mockGetTransactions = getTransactions as jest.MockedFunction<typeof getTra
 
 describe('ListeTransactions', () => {
   const queryClient = new QueryClient();
-
-  const mockTransactions = [
+const mockTransactions = {
+  transactions: [
     {
       id: '1',
       date: '2024-01-15T10:00:00Z',
       reference: 'TR-001',
       description: 'Vente production',
       montant: 150000,
-      type: 'ENTREE' as TypeTransaction,
-      statut: 'VALIDEE' as StatutTransaction,
+      type: TypeTransaction.RECETTE,
+      statut: StatutTransaction.VALIDE,
       categorie: 'Ventes'
     },
     {
@@ -33,11 +33,15 @@ describe('ListeTransactions', () => {
       reference: 'TR-002',
       description: 'Achat fournitures',
       montant: 50000,
-      type: 'SORTIE' as TypeTransaction,
-      statut: 'VALIDEE' as StatutTransaction,
+      type: TypeTransaction.DEPENSE,
+      statut: StatutTransaction.VALIDE,
       categorie: 'Fournitures'
     }
-  ];
+  ],
+  total: 2,
+  page: 1,
+  limit: 10
+};
 
   beforeEach(() => {
     mockGetTransactions.mockResolvedValue(mockTransactions);
@@ -86,7 +90,12 @@ describe('ListeTransactions', () => {
   });
 
   it('gère le cas où il n\'y a pas de transactions', async () => {
-    mockGetTransactions.mockResolvedValueOnce([]);
+    mockGetTransactions.mockResolvedValueOnce({
+      transactions: [],
+      total: 0,
+      page: 1,
+      limit: 10
+    });
     renderComponent();
 
     // Vérifier que les en-têtes sont toujours affichés

@@ -37,6 +37,16 @@ const DocumentList: React.FC<DocumentListProps> = ({ module, referenceId }) => {
     () => getDocuments({ module, referenceId })
   );
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography>Chargement des documents...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const deleteMutation = useMutation(deleteDocument, {
     onSuccess: () => {
       queryClient.invalidateQueries(['documents', module, referenceId]);
@@ -54,7 +64,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ module, referenceId }) => {
 
   const handleDelete = (id: string) => {
     if (window.confirm('Voulez-vous vraiment supprimer ce document ?')) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate({ id, module, referenceId });
     }
   };
 

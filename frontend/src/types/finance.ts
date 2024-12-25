@@ -1,250 +1,189 @@
-export interface Variation {
-  value: number;
-  type: 'increase' | 'decrease';
-}
+import { UUID } from './common';
 
-export interface FinanceStats {
-  revenue: number;
-  revenueVariation: Variation;
-  expenses: number;
-  expensesVariation: Variation;
-  profit: number;
-  profitVariation: Variation;
-  cashflow: number;
-  cashflowVariation: Variation;
-  tresorerie: number;
-  variation_tresorerie: Variation;
-  factures_impayees: number;
-  paiements_prevus: number;
-}
-
-// Types spécifiques aux opérations financières
-export type TypeTransaction = 'RECETTE' | 'DEPENSE' | 'VIREMENT';
-export type StatutTransaction = 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE' | 'ANNULEE';
-export type TypeCompteFinancier = 'BANQUE' | 'CAISSE' | 'EPARGNE' | 'CREDIT';
-
-export interface CompteFinancier {
-  id: string;
-  numero: string;
+export interface Compte {
+  id: UUID;
   libelle: string;
-  type_compte: TypeCompteFinancier;
-  devise: string;
+  type: string;
   solde: number;
-  actif: boolean;
-  compte_comptable_id?: string; // Lien vers le compte comptable associé
-  metadata?: Record<string, any>;
 }
 
-export interface Transaction {
-  id: string;
-  reference: string;
-  date_transaction: string;
-  type_transaction: TypeTransaction;
-  categorie: string;
-  montant: number;
-  devise: string;
-  description?: string;
-  compte_source_id?: string;
-  compte_destination_id?: string;
-  piece_jointe?: string;
-  statut: StatutTransaction;
-  validee_par?: {
-    id: string;
-    nom: string;
-    prenom: string;
-  };
-  date_validation?: string;
-  ecriture_comptable_id?: string; // Lien vers l'écriture comptable générée
-  metadata?: Record<string, any>;
+export enum TypeTransaction {
+  RECETTE = 'RECETTE',
+  DEPENSE = 'DEPENSE',
+  VIREMENT = 'VIREMENT'
 }
 
-export interface TransactionFormData {
-  reference: string;
-  type_transaction: TypeTransaction;
-  categorie: string;
-  montant: number;
-  description?: string;
-  compte_source_id?: string;
-  compte_destination_id?: string;
-  piece_jointe?: File;
+export enum StatutTransaction {
+  BROUILLON = 'BROUILLON',
+  VALIDE = 'VALIDE',
+  ANNULE = 'ANNULE'
 }
 
 export interface TransactionFilter {
-  dateDebut?: string;
-  dateFin?: string;
-  type?: TypeTransaction;
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface Transaction {
+  id: UUID;
+  date: string;
+  montant: number;
+  type: string;
+  description?: string;
   categorie?: string;
-  statut?: StatutTransaction;
-  compte_id?: string;
-  page?: number;
-  limit?: number;
+  reference?: string;
 }
 
 export interface TransactionListResponse {
-  data: Transaction[];
+  transactions: Transaction[];
   total: number;
   page: number;
   limit: number;
+}
+
+export interface TransactionFormData {
+  date_transaction: string;
+  montant: number;
+  type_transaction: TypeTransaction;
+  description?: string;
+  categorie: string;
+  fichierJustificatif?: File;
+  compte_source?: string;
+  compte_destination?: string;
+  reference: string;
+  statut: StatutTransaction;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: number;
 }
 
 export interface Budget {
-  id: string;
-  periode: string;
+  id: UUID;
   categorie: string;
-  montant_prevu: number;
-  montant_realise: number;
-  ecart: number;
-  statut: 'EN_COURS' | 'TERMINE';
-  commentaires?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface BudgetFormData {
+  montantAlloue: number;
+  montantDepense: number;
   periode: string;
-  categorie: string;
-  montant_prevu: number;
-  commentaires?: string;
 }
 
 export interface BudgetFilter {
-  periode?: string;
-  categorie?: string;
-  statut?: 'EN_COURS' | 'TERMINE';
-  page?: number;
-  limit?: number;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface BudgetListResponse {
-  data: Budget[];
+  budgets: Budget[];
   total: number;
   page: number;
   limit: number;
 }
 
-export interface BudgetAnalysis {
+export interface BudgetFormData {
+  categorie: string;
+  montantAlloue: number;
   periode: string;
-  categories: Record<string, {
-    prevu: number;
-    realise: number;
-    ecart: number;
-    tendance: 'hausse' | 'baisse' | 'stable';
-  }>;
-  total: {
-    prevu: number;
-    realise: number;
-    ecart: number;
-  };
 }
 
-export interface DonneesTresorerie {
-  solde_actuel: number;
-  variation_periode: Variation;
-  previsions: {
-    recettes: number;
-    depenses: number;
-    solde_prevu: number;
-  };
-  historique: Array<{
-    date: string;
-    solde: number;
-    variation: Variation;
-  }>;
+export interface BudgetAnalysis {
+  totalBudget: number;
+  totalDepense: number;
+  pourcentageUtilisation: number;
+  categoriesAnalyse: {
+    categorie: string;
+    montantAlloue: number;
+    montantDepense: number;
+    pourcentageUtilisation: number;
+  }[];
 }
 
 export interface AnalyseBudgetaire {
-  periode: string;
-  categories: Record<string, {
-    prevu: number;
-    realise: number;
-    ecart: number;
-    ecart_pourcentage: number;
-    tendance: 'hausse' | 'baisse' | 'stable';
-  }>;
-  total: {
-    prevu: number;
-    realise: number;
-    ecart: number;
-    ecart_pourcentage: number;
+  total_prevu: number;
+  total_realise: number;
+  categories: {
+    [key: string]: {
+      prevu: number;
+      realise: number;
+      ecart: number;
+      ecart_pourcentage: number;
+    };
   };
-  alertes: string[];
+  impact_meteo: {
+    score: number;
+    facteurs: string[];
+    projections: {
+      [key: string]: string;
+    };
+  };
+  recommandations: string[];
+  periode?: string;
+  total?: number;
+  alertes?: string[];
+}
+
+export interface DonneesTresorerie {
+  soldeActuel: number;
+  entrees: number;
+  sorties: number;
+  previsionsTresorerie: number;
+}
+
+export interface ProjectionsFinancieres {
+  revenus: number;
+  depenses: number;
+  beneficeProjetePeriode: number;
+  tendances: {
+    periode: string;
+    revenus: number;
+    depenses: number;
+  }[];
+}
+
+export interface CashFlowData {
+  periodes: string[];
+  entrees: number[];
+  sorties: number[];
+  soldeNet: number[];
+}
+
+export interface FinanceStats {
+  totalRevenus?: number;
+  totalDepenses?: number;
+  beneficeNet?: number;
+  ratioDepensesRevenus?: number;
+  revenue?: number;
+  revenueVariation?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
+  profit?: number;
+  profitVariation?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
+  cashflow?: number;
+  cashflowVariation?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
+  expenses?: number;
+  expensesVariation?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
+  tresorerie?: number;
+  variation_tresorerie?: {
+    valeur: number;
+    type: 'hausse' | 'baisse';
+  };
+  factures_impayees?: number;
+  paiements_prevus?: number;
+  budget_mensuel?: number;
+  depenses_mois?: number;
 }
 
 export interface VueBudgetaire {
   categorie: string;
-  depense: number;
-  alloue: number;
-}
-
-export interface Projection {
-  periode: string;
-  montant: number;
-  impact_meteo: number;
-}
-
-export interface ProjectionsFinancieres {
-  recettes: Projection[];
-  depenses: Projection[];
-  facteurs_meteo: string[];
-}
-
-export interface CashFlowData {
-  periode: string;
-  entrees: number[];
-  sorties: number[];
-  solde: number[];
-  dates: string[];
-  previsions: {
-    entrees: number[];
-    sorties: number[];
-    solde: number[];
-  };
-}
-
-// Types pour les rapports financiers
-export interface RapportTresorerie {
-  date: string;
-  solde_initial: number;
-  entrees: number;
-  sorties: number;
-  solde_final: number;
-  previsions: {
-    entrees: number;
-    sorties: number;
-    impact_meteo: number;
-  };
-}
-
-export interface RapportBudgetaire {
-  periode: string;
-  categories: Record<string, {
-    prevu: number;
-    realise: number;
-    ecart: number;
-    ecart_pourcentage: number;
-  }>;
-  total_prevu: number;
-  total_realise: number;
-  impact_meteo: {
-    score: number;
-    facteurs: string[];
-  };
-}
-
-// Types pour les tableaux de bord
-export interface DashboardFinance {
-  tresorerie: {
-    solde_actuel: number;
-    variation_periode: Variation;
-    prevision_fin_mois: number;
-  };
-  budget: {
-    realisation: number;
-    variation: Variation;
-    alertes: string[];
-  };
-  transactions: {
-    en_attente: number;
-    a_valider: number;
-    recentes: Transaction[];
-  };
+  montantAlloue: number;
+  montantDepense: number;
+  pourcentageUtilisation: number;
 }

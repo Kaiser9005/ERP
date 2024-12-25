@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { Visibility } from '@mui/icons-material';
 import { JournalComptable, EcritureComptable } from '../../types/comptabilite';
-import { getJournaux, getJournal } from '../../services/comptabilite';
+import { getJournaux, getJournalEcritures } from '../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../utils/format';
 
 const JournauxList: React.FC = () => {
@@ -53,8 +53,11 @@ const JournauxList: React.FC = () => {
   const handleOpenDialog = async (journal: JournalComptable) => {
     setSelectedJournal(journal);
     try {
-      const data = await getJournal(journal.id);
-      setEcritures(data?.ecritures || []);
+      const data = await getJournalEcritures(journal.id, {
+        date_debut: new Date(dateDebut),
+        date_fin: new Date(dateFin)
+      });
+      setEcritures(data);
       setOpenDialog(true);
     } catch (error) {
       console.error('Erreur lors du chargement des écritures:', error);
@@ -70,8 +73,11 @@ const JournauxList: React.FC = () => {
   const handleDateChange = async () => {
     if (selectedJournal) {
       try {
-        const data = await getJournal(selectedJournal.id);
-        setEcritures(data?.ecritures || []);
+        const data = await getJournalEcritures(selectedJournal.id, {
+          date_debut: new Date(dateDebut),
+          date_fin: new Date(dateFin)
+        });
+        setEcritures(data);
       } catch (error) {
         console.error('Erreur lors du chargement des écritures:', error);
       }

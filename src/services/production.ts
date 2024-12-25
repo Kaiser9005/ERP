@@ -5,6 +5,7 @@ const API_URL = '/api/v1/production';
 
 export const productionService = {
   // Parcelles
+  // Parcelles
   getParcelles: async (): Promise<Parcelle[]> => {
     const response = await axios.get(`${API_URL}/parcelles`);
     return response.data;
@@ -15,16 +16,17 @@ export const productionService = {
     return response.data;
   },
 
-  // Cycles de culture
-  getCyclesCulture: async (parcelleId: string): Promise<CycleCulture[]> => {
-    const response = await axios.get(`${API_URL}/parcelles/${parcelleId}/cycles`);
+  createParcelle: async (parcelleData: Partial<Parcelle>): Promise<Parcelle> => {
+    const response = await axios.post(`${API_URL}/parcelles`, parcelleData);
     return response.data;
   },
 
-  createCycleCulture: async (data: Partial<CycleCulture>): Promise<CycleCulture> => {
-    const response = await axios.post(`${API_URL}/cycles`, data);
+  updateParcelle: async (id: string, parcelleData: Partial<Parcelle>): Promise<Parcelle> => {
+    const response = await axios.put(`${API_URL}/parcelles/${id}`, parcelleData);
     return response.data;
   },
+
+  // Cycles de culture
 
   // Récoltes
   getRecoltes: async (parcelleId: string): Promise<Recolte[]> => {

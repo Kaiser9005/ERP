@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -67,5 +66,22 @@ describe('StatsFinance', () => {
     );
 
     expect(await screen.findByText('-5% par rapport au mois dernier')).toBeInTheDocument();
+  });
+
+  it('gère correctement les données manquantes', async () => {
+    mockGetStatsFinance.mockResolvedValue({});
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <StatsFinance />
+      </QueryClientProvider>
+    );
+
+    // Vérifie que le composant affiche des valeurs par défaut
+    expect(screen.getByText('Finance')).toBeInTheDocument();
+    expect(await screen.findByText('N/A')).toBeInTheDocument();
+    expect(screen.queryByText(/par rapport au mois dernier/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Factures impayées/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Paiements prévus/)).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid, Box, Tabs, Tab } from '@mui/material';
 import PageHeader from '../layout/PageHeader';
 import StatsFinance from './StatsFinance';
@@ -9,6 +9,8 @@ import AnalyseBudget from './AnalyseBudget';
 import ProjectionsFinancieres from './ProjectionsFinancieres';
 import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { getStatsFinance } from '../../services/finance';
+import type { FinanceStats } from '../../types/finance';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -39,8 +41,26 @@ const TabPanel = (props: TabPanelProps) => {
 const PageFinance: React.FC = () => {
   const navigate = useNavigate();
   const [ongletActuel, setOngletActuel] = useState(0);
+  const [stats, setStats] = useState<FinanceStats>({
+    revenue: 0,
+    profit: 0,
+    cashflow: 0,
+    expenses: 0
+  });
 
-  const handleChangementOnglet = (event: React.SyntheticEvent, nouvelOnglet: number) => {
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await getStatsFinance();
+        setStats(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des stats:', error);
+      }
+    };
+    loadStats();
+  }, []);
+
+  const handleChangementOnglet = (_: React.SyntheticEvent, nouvelOnglet: number) => {
     setOngletActuel(nouvelOnglet);
   };
 
@@ -59,7 +79,16 @@ const PageFinance: React.FC = () => {
       {/* Vue d'ensemble - Toujours visible */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12}>
-          <StatsFinance />
+          <StatsFinance stats={{
+            revenue: stats.revenue,
+            profit: stats.profit,
+            cashflow: stats.cashflow,
+            expenses: stats.expenses,
+            revenueVariation: stats.revenueVariation,
+            profitVariation: stats.profitVariation,
+            cashflowVariation: stats.cashflowVariation,
+            expensesVariation: stats.expensesVariation
+          }} />
         </Grid>
       </Grid>
 

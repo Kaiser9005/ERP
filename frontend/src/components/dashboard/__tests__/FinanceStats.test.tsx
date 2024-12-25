@@ -10,15 +10,15 @@ jest.mock('../../../services/finance');
 
 const mockStats: FinanceStatsType = {
   revenue: 1500000,
-  revenueVariation: { value: 15, type: 'increase' },
+  revenueVariation: { valeur: 15, type: 'hausse' },
   expenses: 1200000,
-  expensesVariation: { value: 10, type: 'decrease' },
+  expensesVariation: { valeur: 10, type: 'baisse' },
   profit: 300000,
-  profitVariation: { value: 20, type: 'increase' },
+  profitVariation: { valeur: 20, type: 'hausse' },
   cashflow: 500000,
-  cashflowVariation: { value: 5, type: 'increase' },
+  cashflowVariation: { valeur: 5, type: 'hausse' },
   tresorerie: 100000,
-  variation_tresorerie: { value: 2, type: 'increase' },
+  variation_tresorerie: { valeur: 2, type: 'hausse' },
   factures_impayees: 5,
   paiements_prevus: 10
 };

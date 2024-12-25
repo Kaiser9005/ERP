@@ -6,7 +6,7 @@ Ce fichier répertorie les différents types de problèmes de build rencontrés 
 
 | Code d'erreur | Description | Suivi |
 |---|---|---|
-| [TS2305](./problemes_build_frontend_TS2305.md) | Problème TS2305 | [Suivi](./suivi_TS2305.md) |
+
 | [TS2307](./problemes_build_frontend_TS2307.md) | Problème TS2307 | [Suivi](./suivi_TS2307.md) |
 | [TS2322](./problemes_build_frontend_TS2322.md) | Problème TS2322 | [Suivi](./suivi_TS2322.md) |
 | [TS2345](./problemes_build_frontend_TS2345.md) | Problème TS2345 | [Suivi](./suivi_TS2345.md) |

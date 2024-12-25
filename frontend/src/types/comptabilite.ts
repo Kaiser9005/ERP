@@ -38,7 +38,6 @@ export interface EcritureComptable {
 }
 
 export interface JournalComptable {
-  ecritures(ecritures: any): unknown;
   id: string;
   code: string;
   libelle: string;
@@ -46,6 +45,7 @@ export interface JournalComptable {
   actif: boolean;
   description?: string;
   metadata?: Record<string, any>;
+  ecritures: EcritureComptable[];
 }
 
 export interface CompteBalance {
