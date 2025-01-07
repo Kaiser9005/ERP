@@ -1,0 +1,19 @@
+{
+  "name": "hyperbolic-deepseek",
+  "version": "0.1.0",
+  "description": "MCP server for Hyperbolic DeepSeek API",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "axios": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest"
+  },
+  "type": "module"
+}

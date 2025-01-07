@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-FOFAL ERP est un système de gestion intégré spécialement conçu pour FOFAL (Family Land), une entreprise agricole spécialisée dans la culture du palmier à huile (70 ha) et des papayes (10 ha).
+FOFAL ERP est un système de gestion intégré spécialement conçu pour FOFAL (Family Land), une entreprise agricole spécialisée dans la culture du palmier à huile (70 ha) et des papayes (10 ha). Introduction prochaine de 10 hectares de BitterKola (garniciaKola).
 
 ## État du Projet
 
@@ -43,7 +43,7 @@ Le projet est en développement actif avec plusieurs modules à différents stad
   - Cache Redis optimisé
   - Intégration météo pour prévisions
   - ML prédictif
-- RH (45%) : 
+- RH (100%) : 
   - Gestion basique des employés
   - Structure des présences
   - Gestion des compétences agricoles
