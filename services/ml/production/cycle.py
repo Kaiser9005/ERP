@@ -11,7 +11,7 @@ from .base import BaseProductionML
 from models.production import CultureType, Parcelle
 from services.weather_service import WeatherService
 
-class CycleOptimizer(BaseProductionML):
+class OptimiseurCycle(BaseProductionML):
     """Service ML pour l'optimisation des cycles de culture"""
     
     def __init__(self, db: Session):

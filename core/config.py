@@ -16,11 +16,12 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 jours
+    ALGORITHM: str = "HS256"
     
     # Database
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
-    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "cherylmaevahfodjo")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "")
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "jjifdm")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "Jejuivfadama90")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "fofal_erp_2024")
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
     DATABASE_URL: Optional[str] = None
@@ -39,10 +40,12 @@ class Settings(BaseSettings):
     
     # Storage
     MAP_PROVIDER_KEY: Optional[str] = None
-    STORAGE_PROVIDER: Optional[str] = None
-    STORAGE_ACCESS_KEY: Optional[str] = None
-    STORAGE_SECRET_KEY: Optional[str] = None
-    STORAGE_BUCKET: Optional[str] = None
+    STORAGE_PROVIDER: str = os.getenv("STORAGE_PROVIDER", "local")
+    STORAGE_ACCESS_KEY: str = os.getenv("STORAGE_ACCESS_KEY", "")
+    STORAGE_SECRET_KEY: str = os.getenv("STORAGE_SECRET_KEY", "")
+    STORAGE_BUCKET: str = os.getenv("STORAGE_BUCKET", "fofal-storage")
+    STORAGE_REGION: str = os.getenv("STORAGE_REGION", "eu-west-1")
+    STORAGE_LOCAL_PATH: str = os.getenv("STORAGE_LOCAL_PATH", "./storage")
     
     # Currency
     DEFAULT_CURRENCY: Optional[str] = None
@@ -67,11 +70,13 @@ class Settings(BaseSettings):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.SQLALCHEMY_DATABASE_URI = (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
-        )
-        self.DATABASE_URL = self.SQLALCHEMY_DATABASE_URI
+        if self.DATABASE_URL is None:
+            self.SQLALCHEMY_DATABASE_URI = (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+            )
+        else:
+            self.SQLALCHEMY_DATABASE_URI = self.DATABASE_URL
         self.REDIS_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
         self.WEATHER_API_URL = "https://api.weather.com"
 
@@ -90,8 +95,9 @@ APP_CONFIG = {
 }
 
 SECURITY_CONFIG = {
-    "SECRET_KEY": settings.SECRET_KEY,
-    "ACCESS_TOKEN_EXPIRE_MINUTES": settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    "secret_key": settings.SECRET_KEY,
+    "access_token_expire_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    "algorithm": settings.ALGORITHM
 }
 
 DATABASE_CONFIG = {
@@ -100,4 +106,27 @@ DATABASE_CONFIG = {
     "POSTGRES_USER": settings.POSTGRES_USER,
     "POSTGRES_PASSWORD": settings.POSTGRES_PASSWORD,
     "POSTGRES_DB": settings.POSTGRES_DB
+}
+
+REDIS_CONFIG = {
+    "HOST": settings.REDIS_HOST,
+    "PORT": settings.REDIS_PORT,
+    "URL": settings.REDIS_URL
+}
+
+STORAGE_CONFIG = {
+    "PROVIDER": settings.STORAGE_PROVIDER,
+    "ACCESS_KEY": settings.STORAGE_ACCESS_KEY,
+    "SECRET_KEY": settings.STORAGE_SECRET_KEY,
+    "BUCKET": settings.STORAGE_BUCKET,
+    "REGION": settings.STORAGE_REGION,
+    "LOCAL_PATH": settings.STORAGE_LOCAL_PATH
+}
+
+WEATHER_CONFIG = {
+    "API_KEY": settings.WEATHER_API_KEY,
+    "CACHE_TTL": settings.WEATHER_CACHE_TTL,
+    "API_TIMEOUT": settings.WEATHER_API_TIMEOUT,
+    "MAX_RETRIES": settings.WEATHER_API_MAX_RETRIES,
+    "API_URL": settings.WEATHER_API_URL
 }

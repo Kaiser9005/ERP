@@ -7,17 +7,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, AreaChart, Area
 } from 'recharts';
-import StatCard from '../common/StatCard';
+import CarteStatistique from '../common/CarteStatistique';
 import { Inventory, TrendingUp, Warning, LocalShipping } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import { getStatsInventaire, getMouvements, getStocks, getPrevisions, getFournisseurs } from '../../services/inventaire';
 import { CategoryProduit, PeriodeInventaire, SeuilStockType } from '../../types/inventaire';
 import { formatNumber, formatDate, formatDateForAPI } from '../../utils/format';
-
-interface Variation {
-  valeur: number;
-  type: 'hausse' | 'baisse';
-}
 
 const StatsInventaire: React.FC = () => {
   const { t } = useTranslation();
@@ -39,7 +34,7 @@ const StatsInventaire: React.FC = () => {
     seuilStock: seuilStock !== 'tous' ? seuilStock : undefined
   };
 
-  const { data: statsService } = useQuery(
+  const { data: statsService, isLoading } = useQuery(
     ['statistiques-inventaire', filtres],
     () => getStatsInventaire(filtres)
   );
@@ -214,44 +209,48 @@ const StatsInventaire: React.FC = () => {
 
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title={t('inventaire.valeurTotale')}
-            value={stats?.valeurTotale || 0}
-            unit="FCFA"
+          <CarteStatistique
+            titre={t('inventaire.valeurTotale')}
+            valeur={stats?.valeurTotale || 0}
+            unite="FCFA"
             variation={stats?.variationValeur}
-            icon={<Inventory />}
-            color="primary"
+            icone={<Inventory />}
+            couleur="primary"
+            chargement={isLoading}
           />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title={t('inventaire.tauxRotation')}
-            value={stats?.tauxRotation || 0}
-            unit={t('inventaire.produits')}
+          <CarteStatistique
+            titre={t('inventaire.tauxRotation')}
+            valeur={stats?.tauxRotation || 0}
+            unite={t('inventaire.produits')}
             variation={stats?.variationRotation}
-            icon={<TrendingUp />}
-            color="success"
+            icone={<TrendingUp />}
+            couleur="success"
+            chargement={isLoading}
           />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title={t('inventaire.alertes')}
-            value={stats?.alertes || 0}
+          <CarteStatistique
+            titre={t('inventaire.alertes')}
+            valeur={stats?.alertes || 0}
             variation={stats?.variationAlertes}
-            icon={<Warning />}
-            color="warning"
+            icone={<Warning />}
+            couleur="warning"
+            chargement={isLoading}
           />
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title={t('inventaire.mouvements')}
-            value={stats?.mouvements || 0}
+          <CarteStatistique
+            titre={t('inventaire.mouvements')}
+            valeur={stats?.mouvements || 0}
             variation={stats?.variationMouvements}
-            icon={<LocalShipping />}
-            color="info"
+            icone={<LocalShipping />}
+            couleur="info"
+            chargement={isLoading}
           />
         </Grid>
 

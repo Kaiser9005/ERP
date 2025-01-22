@@ -1,12 +1,15 @@
 from sqlalchemy import Column, String, Enum, JSON, ForeignKey, Text, Date, DateTime, Boolean, Numeric
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
+
 from .base import Base
 import enum
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from .hr_agricole import TypePersonnel
+from models.tache import Tache
+from models.hr_contract import Contract
 
 class DepartementType(str, enum.Enum):
     """Types de départements possibles"""
@@ -74,15 +77,21 @@ class Employe(Base):
     # Relations avec Documents
     documents_charges = relationship("Document", back_populates="uploaded_by")
 
-    # Relations avec Tasks
-    taches_assignees = relationship("Task", back_populates="assignee")
+    # Relations avec Taches
+    taches_assignees = relationship("Tache", back_populates="responsable")
+    commentaires_tache = relationship("CommentaireTache", back_populates="auteur")
 
     # Relations RH
-    presences = relationship("Presence", back_populates="employe")
-    conges = relationship("Conge", back_populates="employe")
-    formations = relationship("Formation", back_populates="employe")
-    evaluations = relationship("Evaluation", back_populates="employe")
+    presences = relationship("Presence", back_populates="employe", foreign_keys="[Presence.employe_id]")
+    presences_validees = relationship("Presence", foreign_keys="[Presence.validee_par_id]")
+    conges = relationship("Conge", back_populates="employe", foreign_keys="[Conge.employe_id]")
+    conges_approuves = relationship("Conge", foreign_keys="[Conge.approuve_par_id]")
+    participations_formations = relationship("ParticipationFormation", back_populates="employe")
+    evaluations_recues = relationship("Evaluation", back_populates="employe", foreign_keys="[Evaluation.employe_id]")
+    evaluations_donnees = relationship("Evaluation", back_populates="evaluateur", foreign_keys="[Evaluation.evaluateur_id]")
     documents_rh = relationship("DocumentRH", back_populates="employe")
+    contracts: Mapped[List[Contract]] = relationship(Contract, back_populates="employe")
+    projets_geres = relationship("Project", back_populates="responsable")
 
     # Relations RH Agricole
     competences_agricoles = relationship("CompetenceAgricole", back_populates="employe")
@@ -116,7 +125,7 @@ class Presence(Base):
 
     # Relations
     employe = relationship("Employe", back_populates="presences", foreign_keys=[employe_id])
-    validee_par = relationship("Employe", foreign_keys=[validee_par_id])
+    validee_par = relationship("Employe", back_populates="presences_validees", foreign_keys=[validee_par_id])
 
 class TypeConge(str, enum.Enum):
     """Types de congés possibles"""
@@ -154,7 +163,7 @@ class Conge(Base):
 
     # Relations
     employe = relationship("Employe", back_populates="conges", foreign_keys=[employe_id])
-    approuve_par = relationship("Employe", foreign_keys=[approuve_par_id])
+    approuve_par = relationship("Employe", back_populates="conges_approuves", foreign_keys=[approuve_par_id])
     piece_jointe = relationship("Document")
 
 class TypeFormation(str, enum.Enum):
@@ -165,56 +174,12 @@ class TypeFormation(str, enum.Enum):
     QUALITE = "QUALITE"
     AUTRE = "AUTRE"
 
-class Formation(Base):
-    """Modèle représentant une formation"""
-    __tablename__ = "formations"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    employe_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
-    type_formation = Column(Enum(TypeFormation), nullable=False)
-    titre = Column(String(200), nullable=False)
-    description = Column(Text)
-    date_debut = Column(Date, nullable=False)
-    date_fin = Column(Date, nullable=False)
-    formateur = Column(String(100))
-    lieu = Column(String(100))
-    cout = Column(Numeric(10, 2))
-    certification = Column(Boolean, default=False)
-    resultat = Column(String(50))
-    commentaire = Column(Text)
-    donnees_supplementaires = Column(JSON)
-
-    # Relations
-    employe = relationship("Employe", back_populates="formations")
-    details_agricoles = relationship("FormationAgricole", back_populates="formation")
-
 class TypeEvaluation(str, enum.Enum):
     """Types d'évaluations possibles"""
     ANNUELLE = "ANNUELLE"
     PROBATION = "PROBATION"
     PROJET = "PROJET"
     PERFORMANCE = "PERFORMANCE"
-
-class Evaluation(Base):
-    """Modèle représentant une évaluation"""
-    __tablename__ = "evaluations"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    employe_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
-    type_evaluation = Column(Enum(TypeEvaluation), nullable=False)
-    date_evaluation = Column(Date, nullable=False)
-    evaluateur_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
-    objectifs = Column(JSON)  # Liste des objectifs et leur statut
-    competences = Column(JSON)  # Évaluation des compétences
-    realisations = Column(JSON)  # Réalisations principales
-    commentaire = Column(Text)
-    plan_action = Column(JSON)  # Actions de développement prévues
-    donnees_supplementaires = Column(JSON)
-
-    # Relations
-    employe = relationship("Employe", back_populates="evaluations", foreign_keys=[employe_id])
-    evaluateur = relationship("Employe", foreign_keys=[evaluateur_id])
-    details_agricoles = relationship("EvaluationAgricole", back_populates="evaluation")
 
 class TypeDocumentRH(str, enum.Enum):
     """Types de documents RH"""

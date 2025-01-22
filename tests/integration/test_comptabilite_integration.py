@@ -16,6 +16,7 @@ from models.comptabilite import (
     CompteComptable, EcritureComptable, JournalComptable,
     TypeCompte, StatutEcriture, TypeJournal
 )
+from services.finance_comptabilite.analyse import AnalyseFinanceCompta
 
 @pytest.fixture
 def client():
@@ -368,3 +369,823 @@ async def test_coherence_donnees_comptables(client, db_session, mock_ml_data):
                 assert 'ml_analysis' in stats
                 assert 'recommendations' in stats
                 assert len(stats['recommendations']) > 0
+
+class TestAnalyseFinanceComptaService:
+    """Tests d'intégration du service d'analyse financière"""
+
+    async def test_calculer_rentabilite_parcelle(self, db_session):
+        """Test du calcul de rentabilité d'une parcelle"""
+        # Setup
+        service = AnalyseFinanceCompta(db_session)
+        parcelle = Mock(id=1)
+        
+        cycles = [
+            Mock(
+                produits_totaux=150000.0,
+                charges_totales=100000.0
+            ),
+            Mock(
+                produits_totaux=120000.0,
+                charges_totales=90000.0
+            )
+        ]
+        db_session.query().filter().all.return_value = cycles
+
+        # Exécution
+        result = await service._calculer_rentabilite_parcelle(
+            parcelle=parcelle,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=180),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result["produits"] == 270000.0  # 150000 + 120000
+        assert result["charges"] == 190000.0  # 100000 + 90000
+        assert result["marge"] == 80000.0  # 270000 - 190000
+        assert result["rentabilite"] == pytest.approx(42.11, 0.01)  # (80000 / 190000) * 100
+
+    async def test_generer_recommendations_rentabilite_negative(self, db_session):
+        """Test des recommandations avec rentabilité négative"""
+        # Setup
+        service = AnalyseFinanceCompta(db_session)
+        parcelle = Mock(id=1)
+        rentabilite = {
+            "produits": 100000.0,
+            "charges": 150000.0,
+            "marge": -50000.0,
+            "rentabilite": -33.33
+        }
+
+        # Exécution
+        recommendations = await service._generer_recommendations(
+            parcelle=parcelle,
+            rentabilite=rentabilite
+        )
+
+        # Vérifications
+        assert len(recommendations) == 2
+        assert any("Rentabilité négative" in r for r in recommendations)
+        assert any("Charges élevées" in r for r in recommendations)
+
+    async def test_generer_recommendations_rentabilite_faible(self, db_session):
+        """Test des recommandations avec rentabilité faible"""
+        # Setup
+        service = AnalyseFinanceCompta(db_session)
+        parcelle = Mock(id=1)
+        rentabilite = {
+            "produits": 100000.0,
+            "charges": 95000.0,
+            "marge": 5000.0,
+            "rentabilite": 5.26
+        }
+
+        # Exécution
+        recommendations = await service._generer_recommendations(
+            parcelle=parcelle,
+            rentabilite=rentabilite
+        )
+
+        # Vérifications
+        assert len(recommendations) == 2
+        assert any("Rentabilité faible" in r for r in recommendations)
+        assert any("Charges élevées" in r for r in recommendations)
+
+    async def test_get_analyse_parcelle_not_found(self, db_session):
+        """Test de l'analyse d'une parcelle inexistante"""
+        # Setup
+        service = AnalyseFinanceCompta(db_session)
+        db_session.query().get.return_value = None
+
+        # Exécution
+        result = await service.get_analyse_parcelle(
+            parcelle_id=999,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == {}
+
+    async def test_get_analyse_parcelle_cache(self, db_session):
+        """Test du cache pour l'analyse de parcelle"""
+        # Setup
+        service = AnalyseFinanceCompta(db_session)
+        mock_cache = Mock()
+        mock_cache.get.return_value = {"cached": True}
+        service.cache = mock_cache
+
+        # Exécution
+        result = await service.get_analyse_parcelle(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result["cached"]
+
+class TestGestionCoutsService:
+    """Tests d'intégration du service de gestion des coûts"""
+
+    async def test_get_couts_parcelle(self, db_session):
+        """Test de récupération des coûts d'une parcelle"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        
+        parcelle = Mock(id=1)
+        db_session.query().get.return_value = parcelle
+        
+        ecritures = [
+            Mock(
+                compte=Mock(type="CHARGE", categorie="INTRANT"),
+                montant=1000.0
+            ),
+            Mock(
+                compte=Mock(type="CHARGE", categorie="INTRANT"),
+                montant=500.0
+            ),
+            Mock(
+                compte=Mock(type="CHARGE", categorie="TRANSPORT"),
+                montant=300.0
+            ),
+            Mock(
+                compte=Mock(type="PRODUIT", categorie="VENTE"),
+                montant=2000.0  # Ne devrait pas être compté
+            )
+        ]
+        db_session.query().filter().all.return_value = ecritures
+
+        # Exécution
+        result = await service._get_couts_parcelle(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=30),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert "couts_par_categorie" in result
+        assert "total" in result
+        assert "date_calcul" in result
+        assert result["couts_par_categorie"]["INTRANT"] == 1500.0
+        assert result["couts_par_categorie"]["TRANSPORT"] == 300.0
+        assert result["total"] == 1800.0
+
+    async def test_get_couts_parcelle_not_found(self, db_session):
+        """Test avec parcelle inexistante"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        db_session.query().get.return_value = None
+
+        # Exécution
+        result = await service._get_couts_parcelle(
+            parcelle_id=999,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == {}
+
+    async def test_get_compte_charge(self, db_session):
+        """Test de récupération d'un compte de charge"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        
+        compte = Mock(code="601000", type="CHARGE")
+        db_session.query().filter().first.return_value = compte
+
+        # Exécution
+        result = await service._get_compte_charge("601000")
+
+        # Vérifications
+        assert result == compte
+
+    async def test_calculer_couts_directs(self, db_session):
+        """Test du calcul des coûts directs"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        
+        parcelle = Mock(id=1)
+        ecritures = [
+            Mock(
+                compte=Mock(type="CHARGE"),
+                montant=1000.0
+            ),
+            Mock(
+                compte=Mock(type="CHARGE"),
+                montant=500.0
+            ),
+            Mock(
+                compte=Mock(type="PRODUIT"),
+                montant=2000.0  # Ne devrait pas être compté
+            )
+        ]
+        db_session.query().filter().all.return_value = ecritures
+
+        # Exécution
+        result = await service._calculer_couts_directs(
+            parcelle=parcelle,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=30),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == 1500.0
+
+    async def test_calculer_cle_repartition(self, db_session):
+        """Test du calcul de la clé de répartition"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        
+        # Simuler 4 parcelles
+        db_session.query().count.return_value = 4
+
+        # Exécution
+        result = await service._calculer_cle_repartition(
+            parcelle=Mock(id=1),
+            date=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == 0.25  # 1/4
+
+    async def test_calculer_cle_repartition_no_parcelles(self, db_session):
+        """Test du calcul de la clé de répartition sans parcelles"""
+        # Setup
+        from services.finance_comptabilite.couts import GestionCouts
+        service = GestionCouts(db_session)
+        
+        db_session.query().count.return_value = 0
+
+        # Exécution
+        result = await service._calculer_cle_repartition(
+            parcelle=Mock(id=1),
+            date=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == 0
+
+class TestGestionMeteoService:
+    """Tests d'intégration du service de gestion météorologique"""
+
+    async def test_get_meteo_impact(self, db_session):
+        """Test du calcul de l'impact météorologique"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        parcelle = Mock(
+            id=1,
+            latitude=48.8566,
+            longitude=2.3522,
+            surface=10000.0  # 1 hectare
+        )
+        db_session.query().get.return_value = parcelle
+        
+        # Mock WeatherService
+        service.weather_service.get_historical_data = Mock(
+            return_value={
+                "precipitation": 45.0,
+                "temperature": 28.0,
+                "humidity": 75.0
+            }
+        )
+
+        # Exécution
+        result = await service._get_meteo_impact(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=30),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert "score" in result
+        assert "facteurs" in result
+        assert "couts_additionnels" in result
+        assert "risques" in result
+        assert "opportunites" in result
+        assert len(result["facteurs"]) == 3  # precipitation, temperature, humidity
+
+    async def test_calculer_provision_meteo(self, db_session):
+        """Test du calcul de la provision météorologique"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        parcelle = Mock(
+            id=1,
+            surface=10000.0,
+            latitude=48.8566,
+            longitude=2.3522
+        )
+        db_session.query().get.return_value = parcelle
+        
+        # Mock WeatherService
+        service.weather_service.get_historical_data = Mock(
+            return_value={
+                "precipitation": 60.0,  # Conditions défavorables
+                "temperature": 32.0,
+                "humidity": 85.0
+            }
+        )
+
+        # Exécution
+        provision = await service._calculer_provision_meteo(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=30),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert provision > 0  # Provision nécessaire vu les conditions
+        assert isinstance(provision, float)
+
+    async def test_analyser_facteurs_meteo(self, db_session):
+        """Test de l'analyse des facteurs météorologiques"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        meteo_data = {
+            "precipitation": 5.0,  # Trop sec
+            "temperature": 38.0,   # Trop chaud
+            "humidity": 25.0       # Trop sec
+        }
+
+        # Exécution
+        facteurs = service._analyser_facteurs_meteo(meteo_data)
+
+        # Vérifications
+        assert len(facteurs) == 3
+        assert all("impact" in f for f in facteurs)
+        assert all("type" in f for f in facteurs)
+        assert all("valeur" in f for f in facteurs)
+        
+        # Vérification des impacts négatifs
+        assert all(f["impact"] > 0 for f in facteurs)  # Conditions défavorables
+
+    async def test_evaluer_risques_opportunites(self, db_session):
+        """Test de l'évaluation des risques et opportunités"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        facteurs = [
+            {"type": "precipitation", "impact": 0.8},  # Risque élevé
+            {"type": "temperature", "impact": -0.4},   # Opportunité
+            {"type": "humidity", "impact": 0.5}        # Neutre
+        ]
+
+        # Exécution
+        risques, opportunites = service._evaluer_risques_opportunites(facteurs)
+
+        # Vérifications
+        assert len(risques) == 1
+        assert len(opportunites) == 1
+        assert "precipitation" in risques[0]
+        assert "temperature" in opportunites[0]
+
+    async def test_calculer_couts_meteo(self, db_session):
+        """Test du calcul des coûts météorologiques"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        parcelle = Mock(surface=10000.0)  # 1 hectare
+        facteurs = [
+            {"type": "precipitation", "impact": 0.8, "valeur": 60.0},
+            {"type": "temperature", "impact": 0.9, "valeur": 35.0},
+            {"type": "humidity", "impact": 0.7, "valeur": 85.0}
+        ]
+
+        # Exécution
+        couts = service._calculer_couts_meteo(parcelle, facteurs)
+
+        # Vérifications
+        assert "drainage" in couts
+        assert "protection" in couts
+        assert "ventilation" in couts
+        assert all(cout > 0 for cout in couts.values())
+
+    async def test_get_meteo_impact_not_found(self, db_session):
+        """Test avec parcelle inexistante"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        db_session.query().get.return_value = None
+
+        # Exécution
+        result = await service._get_meteo_impact(
+            parcelle_id=999,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result == {}
+
+    async def test_get_meteo_impact_no_weather_data(self, db_session):
+        """Test sans données météo"""
+        # Setup
+        from services.finance_comptabilite.meteo import GestionMeteo
+        service = GestionMeteo(db_session)
+        
+        parcelle = Mock(id=1, latitude=48.8566, longitude=2.3522)
+        db_session.query().get.return_value = parcelle
+        
+        # Mock WeatherService sans données
+        service.weather_service.get_historical_data = Mock(return_value=None)
+
+        # Exécution
+        result = await service._get_meteo_impact(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result["score"] == 0
+        assert len(result["facteurs"]) == 0
+        assert len(result["couts_additionnels"]) == 0
+        assert len(result["risques"]) == 0
+        assert len(result["opportunites"]) == 0
+
+class TestGestionClotureService:
+    """Tests d'intégration du service de clôture comptable"""
+
+    async def test_executer_cloture_mensuelle_success(self, db_session):
+        """Test d'une clôture mensuelle réussie"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(
+            id=1,
+            annee=2024,
+            statut="OUVERT",
+            periodes_status={}
+        )
+        db_session.query().get.return_value = exercice
+        
+        # Mock des conditions de clôture
+        service._verifier_conditions_cloture = Mock(
+            return_value={"peut_cloturer": True, "message": "OK"}
+        )
+        service._valider_ecritures_attente = Mock(
+            return_value={"success": True, "message": "OK"}
+        )
+        service._calculer_totaux_mensuels = Mock(
+            return_value={"CHARGE": 1000.0, "PRODUIT": -1000.0}
+        )
+        service._generer_ecritures_cloture = Mock(
+            return_value=[
+                {"type": "CHARGE", "montant": -1000.0},
+                {"type": "PRODUIT", "montant": 1000.0}
+            ]
+        )
+
+        # Exécution
+        result = await service.executer_cloture_mensuelle(1, 1)  # Janvier
+
+        # Vérifications
+        assert result["status"] == "success"
+        assert "totaux" in result
+        assert "ecritures_cloture" in result
+        assert "date_cloture" in result
+
+    async def test_verifier_conditions_cloture(self, db_session):
+        """Test de vérification des conditions de clôture"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(
+            id=1,
+            statut="OUVERT"
+        )
+        
+        # Pas d'écritures en attente
+        db_session.query().filter().count.return_value = 0
+        
+        # Mock de l'équilibre des comptes
+        service._verifier_equilibre_comptes = Mock(return_value=True)
+
+        # Exécution
+        result = await service._verifier_conditions_cloture(exercice, 1)
+
+        # Vérifications
+        assert result["peut_cloturer"] is True
+        assert result["message"] == "OK"
+
+    async def test_verifier_conditions_cloture_exercice_cloture(self, db_session):
+        """Test avec exercice déjà clôturé"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(
+            id=1,
+            statut="CLOTURE"
+        )
+
+        # Exécution
+        result = await service._verifier_conditions_cloture(exercice, 1)
+
+        # Vérifications
+        assert result["peut_cloturer"] is False
+        assert "déjà clôturé" in result["message"]
+
+    async def test_valider_ecritures_attente(self, db_session):
+        """Test de validation des écritures en attente"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(id=1)
+        ecritures = [
+            Mock(statut="ATTENTE"),
+            Mock(statut="ATTENTE")
+        ]
+        db_session.query().filter().all.return_value = ecritures
+
+        # Exécution
+        result = await service._valider_ecritures_attente(exercice, 1)
+
+        # Vérifications
+        assert result["success"] is True
+        assert "2 écritures validées" in result["message"]
+        assert all(e.statut == "VALIDE" for e in ecritures)
+        assert db_session.commit.called
+
+    async def test_calculer_totaux_mensuels(self, db_session):
+        """Test du calcul des totaux mensuels"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(id=1)
+        ecritures = [
+            Mock(compte=Mock(type="CHARGE"), montant=1000.0),
+            Mock(compte=Mock(type="CHARGE"), montant=500.0),
+            Mock(compte=Mock(type="PRODUIT"), montant=-2000.0)
+        ]
+        db_session.query().filter().all.return_value = ecritures
+
+        # Exécution
+        totaux = await service._calculer_totaux_mensuels(exercice, 1)
+
+        # Vérifications
+        assert totaux["CHARGE"] == 1500.0
+        assert totaux["PRODUIT"] == -2000.0
+
+    async def test_generer_ecritures_cloture(self, db_session):
+        """Test de génération des écritures de clôture"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(id=1, annee=2024)
+        totaux = {
+            "CHARGE": 1000.0,
+            "PRODUIT": -1000.0
+        }
+        
+        # Mock des comptes et journal de clôture
+        compte_cloture = Mock(id=1)
+        journal_cloture = Mock(id=1)
+        service._get_compte_cloture = Mock(return_value=compte_cloture)
+        service._get_journal_cloture = Mock(return_value=journal_cloture)
+
+        # Exécution
+        ecritures = await service._generer_ecritures_cloture(exercice, 1, totaux)
+
+        # Vérifications
+        assert len(ecritures) == 2
+        assert any(e["type"] == "CHARGE" and e["montant"] == -1000.0 for e in ecritures)
+        assert any(e["type"] == "PRODUIT" and e["montant"] == 1000.0 for e in ecritures)
+        assert db_session.commit.called
+
+    async def test_verifier_equilibre_comptes(self, db_session):
+        """Test de vérification de l'équilibre des comptes"""
+        # Setup
+        from services.finance_comptabilite.cloture import GestionCloture
+        service = GestionCloture(db_session)
+        
+        exercice = Mock(id=1)
+        service._calculer_totaux_mensuels = Mock(
+            return_value={
+                "CHARGE": 1000.0,
+                "PRODUIT": -1000.0
+            }
+        )
+
+        # Exécution
+        equilibre = await service._verifier_equilibre_comptes(exercice, 1)
+
+        # Vérifications
+        assert equilibre is True
+
+class TestGestionIoTService:
+    """Tests d'intégration du service de gestion IoT"""
+
+    async def test_get_iot_analysis(self, db_session):
+        """Test de l'analyse IoT complète"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+        
+        parcelle = Mock(id=1)
+        db_session.query().get.return_value = parcelle
+        
+        capteurs = [
+            Mock(
+                id=1,
+                type="temperature",
+                parcelle_id=1
+            ),
+            Mock(
+                id=2,
+                type="humidity",
+                parcelle_id=1
+            )
+        ]
+        db_session.query().filter().all.return_value = capteurs
+
+        lectures = [
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc),
+                value=25.0
+            ),
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc) + timedelta(hours=1),
+                value=26.0
+            ),
+            Mock(
+                sensor=Mock(type="humidity"),
+                timestamp=datetime.now(datetime.timezone.utc),
+                value=60.0
+            )
+        ]
+        db_session.query().filter().all.side_effect = [capteurs, lectures]
+
+        # Exécution
+        result = await service._get_iot_analysis(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc) - timedelta(days=1),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result["status"] == "ok"
+        assert "alertes" in result
+        assert "tendances" in result
+        assert "recommandations" in result
+        assert "date_analyse" in result
+
+    async def test_get_iot_analysis_no_sensors(self, db_session):
+        """Test sans capteurs IoT"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+        
+        parcelle = Mock(id=1)
+        db_session.query().get.return_value = parcelle
+        db_session.query().filter().all.return_value = []
+
+        # Exécution
+        result = await service._get_iot_analysis(
+            parcelle_id=1,
+            date_debut=datetime.now(datetime.timezone.utc),
+            date_fin=datetime.now(datetime.timezone.utc)
+        )
+
+        # Vérifications
+        assert result["status"] == "no_sensors"
+        assert len(result["alertes"]) == 0
+        assert len(result["tendances"]) == 0
+        assert len(result["recommandations"]) == 0
+
+    async def test_analyser_tendance(self, db_session):
+        """Test de l'analyse des tendances"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+        
+        lectures = [
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc),
+                value=25.0
+            ),
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc) + timedelta(hours=1),
+                value=26.0
+            ),
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc) + timedelta(hours=2),
+                value=27.0
+            )
+        ]
+
+        # Exécution
+        tendances = await service._analyser_tendance(lectures)
+
+        # Vérifications
+        assert "temperature" in tendances
+        assert "moyenne" in tendances["temperature"]
+        assert "min" in tendances["temperature"]
+        assert "max" in tendances["temperature"]
+        assert "ecart_type" in tendances["temperature"]
+        assert "tendance" in tendances["temperature"]
+        assert tendances["temperature"]["tendance"] > 0  # Tendance à la hausse
+
+    async def test_generer_alertes_iot(self, db_session):
+        """Test de la génération des alertes"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+        
+        lectures = [
+            Mock(
+                sensor=Mock(type="temperature"),
+                timestamp=datetime.now(datetime.timezone.utc),
+                value=40.0  # Au-dessus du seuil max (35.0)
+            )
+        ]
+        
+        tendances = {
+            "temperature": {
+                "max": 40.0,
+                "min": 40.0,
+                "moyenne": 40.0,
+                "ecart_type": 0.0,
+                "tendance": 0.0
+            }
+        }
+
+        # Exécution
+        alertes = await service._generer_alertes_iot(lectures, tendances)
+
+        # Vérifications
+        assert len(alertes) == 1
+        assert alertes[0]["type"] == "extreme_high"
+        assert alertes[0]["capteur"] == "temperature"
+        assert alertes[0]["priorite"] == "haute"
+
+    def test_generer_recommandations(self, db_session):
+        """Test de la génération des recommandations"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+        
+        tendances = {
+            "temperature": {
+                "ecart_type": 3.0  # Au-dessus du seuil de variation (2.0)
+            }
+        }
+        
+        alertes = [
+            {
+                "type": "extreme_high",
+                "capteur": "temperature",
+                "valeur": 40.0,
+                "seuil": 35.0,
+                "priorite": "haute"
+            }
+        ]
+
+        # Exécution
+        recommandations = service._generer_recommandations(tendances, alertes)
+
+        # Vérifications
+        assert len(recommandations) == 2
+        assert any("Réduire les niveaux de temperature" in r for r in recommandations)
+        assert any("Stabiliser les variations de temperature" in r for r in recommandations)
+
+    def test_get_seuils(self, db_session):
+        """Test des méthodes de seuils"""
+        # Setup
+        from services.finance_comptabilite.iot import GestionIoT
+        service = GestionIoT(db_session)
+
+        # Exécution & Vérifications
+        assert service._get_seuil_max("temperature") == 35.0
+        assert service._get_seuil_min("temperature") == 5.0
+        assert service._get_seuil_tendance("temperature") == 0.5
+        assert service._get_seuil_variation("temperature") == 2.0
+
+        # Test avec type de capteur inconnu
+        assert service._get_seuil_max("unknown") == float('inf')
+        assert service._get_seuil_min("unknown") == float('-inf')
+        assert service._get_seuil_tendance("unknown") == 1.0
+        assert service._get_seuil_variation("unknown") == 2.0

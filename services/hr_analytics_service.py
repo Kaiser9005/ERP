@@ -8,8 +8,8 @@ import numpy as np
 from datetime import timedelta
 
 from db.database import get_db
-from models.hr import Employee
-from models.hr_formation import Formation, Participation
+from models.hr import Employe  # Renommé de Employee à Employe
+from models.hr_formation import Formation, ParticipationFormation  # Renommé de Participation à ParticipationFormation
 from models.hr_contract import Contract
 from models.hr_payroll import Payroll
 from services.cache_service import CacheService
@@ -36,9 +36,9 @@ class HRAnalyticsService:
             return cached_stats
             
         # Calcul des statistiques si non présentes dans le cache
-        total_employees = self.db.query(Employee).count()
+        total_employees = self.db.query(Employe).count()  # Renommé de Employee à Employe
         active_contracts = self.db.query(Contract).filter(Contract.status == 'active').count()
-        formations_completed = self.db.query(Participation).filter(Participation.status == 'completed').count()
+        formations_completed = self.db.query(ParticipationFormation).filter(ParticipationFormation.status == 'completed').count()  # Renommé
         
         stats = {
             "total_employees": total_employees,
@@ -60,7 +60,7 @@ class HRAnalyticsService:
             return cached_analytics
             
         formations = self.db.query(Formation).all()
-        participations = self.db.query(Participation).all()
+        participations = self.db.query(ParticipationFormation).all()  # Renommé
         
         formation_stats = {
             "total_formations": len(formations),
@@ -153,7 +153,7 @@ class HRAnalyticsService:
             formation_types[formation.type] = formation_types.get(formation.type, 0) + 1
         return formation_types
 
-    def _get_success_rate_by_formation(self, participations: List[Participation]) -> Dict[str, float]:
+    def _get_success_rate_by_formation(self, participations: List[ParticipationFormation]) -> Dict[str, float]:  # Renommé
         """Calcule le taux de réussite par formation"""
         success_rates = {}
         for participation in participations:
@@ -219,11 +219,11 @@ class HRAnalyticsService:
 
     def _get_employee_historical_data(self, employee_id: int) -> Dict[str, Any]:
         """Récupère l'historique des données d'un employé"""
-        employee = self.db.query(Employee).filter(Employee.id == employee_id).first()
+        employee = self.db.query(Employe).filter(Employe.id == employee_id).first()  # Renommé de Employee à Employe
         if not employee:
             return None
             
-        formations = self.db.query(Participation).filter(Participation.employee_id == employee_id).all()
+        formations = self.db.query(ParticipationFormation).filter(ParticipationFormation.employe_id == employee_id).all()  # Renommé
         contracts = self.db.query(Contract).filter(Contract.employee_id == employee_id).all()
         payrolls = self.db.query(Payroll).filter(Payroll.employee_id == employee_id).all()
         

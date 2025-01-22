@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 from services.finance_service import FinanceService
 from models.finance import Budget, Transaction, Compte
-from schemas.finance import BudgetCreate, TransactionCreate
+from schemas.finance import BudgetCreate, TransactionCreate, BudgetUpdate
 from decimal import Decimal
 from typing import Dict, Any
 
@@ -454,3 +454,229 @@ class TestFinanceService:
         assert db_session.commit.called
         assert existing_budget.montant_realise == sample_transaction_create.montant
         assert mock_cache.delete.call_count == 2  # Stats et budget analysis
+
+    async def test_create_transaction_insufficient_balance(self, finance_service, sample_transaction_create, db_session):
+        """Test la création d'une transaction avec solde insuffisant"""
+        # Setup
+        db_session.query().filter().first.return_value = Mock(solde=10000)  # Solde insuffisant
+
+        # Vérification
+        with pytest.raises(ValueError, match="Solde insuffisant"):
+            await finance_service.create_transaction(sample_transaction_create)
+
+    async def test_create_transaction_account_not_found(self, finance_service, sample_transaction_create, db_session):
+        """Test la création d'une transaction avec compte inexistant"""
+        # Setup
+        db_session.query().filter().first.return_value = None
+
+        # Vérification
+        with pytest.raises(ValueError, match="Compte source non trouvé"):
+            await finance_service.create_transaction(sample_transaction_create)
+
+    async def test_handle_virement(self, finance_service, db_session):
+        """Test d'un virement entre comptes"""
+        # Setup
+        virement = TransactionCreate(
+            reference="VIR-2024-001",
+            date_transaction=datetime.now(datetime.timezone.utc),
+            type_transaction="VIREMENT",
+            categorie="VIREMENT_INTERNE",
+            montant=50000.0,
+            description="Virement entre comptes",
+            compte_source_id="compte1",
+            compte_destination_id="compte2"
+        )
+
+        compte_source = Mock(solde=100000)
+        compte_destination = Mock(solde=20000)
+        db_session.query().filter().first.side_effect = [
+            compte_source,  # Pour le compte source
+            compte_destination,  # Pour le compte destination
+            None  # Pour le budget (pas de budget pour les virements)
+        ]
+
+        # Exécution
+        await finance_service.create_transaction(virement)
+
+        # Vérifications
+        assert compte_source.solde == 50000  # 100000 - 50000
+        assert compte_destination.solde == 70000  # 20000 + 50000
+
+    async def test_update_budget_not_found(self, finance_service, db_session):
+        """Test la mise à jour d'un budget inexistant"""
+        # Setup
+        db_session.query().filter().first.return_value = None
+        budget_update = BudgetUpdate(montant_prevu=1000000.0)
+
+        # Vérification
+        with pytest.raises(ValueError, match="Budget non trouvé"):
+            await finance_service.update_budget("budget_id", budget_update)
+
+    async def test_handle_recette(self, finance_service, db_session):
+        """Test d'une recette"""
+        # Setup
+        recette = TransactionCreate(
+            reference="REC-2024-001",
+            date_transaction=datetime.now(datetime.timezone.utc),
+            type_transaction="RECETTE",
+            categorie="VENTE_PRODUCTION",
+            montant=75000.0,
+            description="Vente production",
+            compte_destination_id="compte1"
+        )
+
+        compte = Mock(solde=100000)
+        db_session.query().filter().first.side_effect = [
+            compte,  # Pour le compte
+            None  # Pour le budget
+        ]
+
+        # Exécution
+        await finance_service.create_transaction(recette)
+
+        # Vérifications
+        assert compte.solde == 175000  # 100000 + 75000
+
+    async def test_get_basic_stats(self, finance_service, db_session):
+        """Test des statistiques de base"""
+        # Setup
+        db_session.query().filter().scalar.side_effect = [
+            1000000.0,  # revenue actuel
+            800000.0,   # revenue précédent
+            600000.0,   # dépenses actuelles
+            500000.0,   # dépenses précédentes
+            2000000.0   # trésorerie
+        ]
+
+        # Exécution
+        stats = await finance_service._get_basic_stats()
+
+        # Vérifications
+        assert stats["revenue"] == 1000000.0
+        assert stats["expenses"] == 600000.0
+        assert stats["profit"] == 400000.0
+        assert stats["cashflow"] == 2000000.0
+        assert stats["revenueVariation"]["value"] == 25.0
+        assert stats["revenueVariation"]["type"] == "increase"
+
+    async def test_calculate_base_projection(self, finance_service, db_session):
+        """Test du calcul de projection de base"""
+        # Setup
+        db_session.query().filter().scalar.return_value = 50000.0
+
+        # Exécution
+        projection = await finance_service._calculate_base_projection(
+            "RECETTE",
+            "2024-02"
+        )
+
+        # Vérifications
+        assert projection == 50000.0
+
+    async def test_update_budget_realise_depense(self, finance_service, db_session):
+        """Test de mise à jour du budget réalisé pour une dépense"""
+        # Setup
+        budget = Budget(
+            periode="2024-02",
+            categorie="ACHAT_INTRANT",
+            montant_prevu=100000.0,
+            montant_realise=0
+        )
+        db_session.query().filter().first.return_value = budget
+
+        transaction = TransactionCreate(
+            reference="DEP-2024-001",
+            date_transaction=datetime.strptime("2024-02-01", "%Y-%m-%d"),
+            type_transaction="DEPENSE",
+            categorie="ACHAT_INTRANT",
+            montant=30000.0,
+            description="Test dépense",
+            compte_source_id="compte1"
+        )
+
+        # Exécution
+        await finance_service._update_budget_realise(transaction)
+
+        # Vérifications
+        assert budget.montant_realise == 30000.0
+
+    async def test_update_budget_realise_recette(self, finance_service, db_session):
+        """Test de mise à jour du budget réalisé pour une recette"""
+        # Setup
+        budget = Budget(
+            periode="2024-02",
+            categorie="VENTE_PRODUCTION",
+            montant_prevu=200000.0,
+            montant_realise=0
+        )
+        db_session.query().filter().first.return_value = budget
+
+        transaction = TransactionCreate(
+            reference="REC-2024-001",
+            date_transaction=datetime.strptime("2024-02-01", "%Y-%m-%d"),
+            type_transaction="RECETTE",
+            categorie="VENTE_PRODUCTION",
+            montant=50000.0,
+            description="Test recette",
+            compte_destination_id="compte1"
+        )
+
+        # Exécution
+        await finance_service._update_budget_realise(transaction)
+
+        # Vérifications
+        assert budget.montant_realise == 50000.0
+
+    async def test_get_budgets_all(self, finance_service, db_session):
+        """Test récupération de tous les budgets"""
+        # Setup
+        expected_budgets = [
+            Budget(
+                periode="2024-01",
+                categorie="ACHAT_INTRANT",
+                montant_prevu=1000000.0
+            ),
+            Budget(
+                periode="2024-02",
+                categorie="TRANSPORT",
+                montant_prevu=500000.0
+            )
+        ]
+        db_session.query().all.return_value = expected_budgets
+
+        # Exécution
+        budgets = await finance_service.get_budgets()
+
+        # Vérifications
+        assert len(budgets) == 2
+        assert not hasattr(budgets[0], "ml_predictions")
+
+    async def test_update_budget_multiple_fields(self, finance_service, db_session):
+        """Test mise à jour de plusieurs champs d'un budget"""
+        # Setup
+        budget = Budget(
+            periode="2024-02",
+            categorie="ACHAT_INTRANT",
+            montant_prevu=100000.0,
+            notes="Initial"
+        )
+        db_session.query().filter().first.return_value = budget
+
+        update = BudgetUpdate(
+            montant_prevu=120000.0,
+            notes="Updated"
+        )
+
+        # Mock ML
+        with patch('services.finance_comptabilite.analyse.AnalyseFinanceCompta.optimize_costs') as mock_optimize:
+            mock_optimize.return_value = {
+                "potential_savings": 10000.0,
+                "implementation_plan": []
+            }
+
+            # Exécution
+            updated = await finance_service.update_budget("budget-id", update)
+
+            # Vérifications
+            assert updated.montant_prevu == 110000.0  # 120000 - 10000
+            assert updated.notes == "Updated"

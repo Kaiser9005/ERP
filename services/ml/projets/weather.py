@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 import numpy as np
 from sqlalchemy.orm import Session
 
-from models.task import Task, TaskStatus
+from models.tache import Tache, StatutTache
 from models.iot_sensor import IoTSensor, SensorType, SensorStatus
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
@@ -18,7 +18,7 @@ class WeatherAnalyzer:
         """Initialisation de l'analyseur."""
         self.db = db
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.cache = CacheService()
 
     async def analyze_weather_impact(
@@ -98,9 +98,9 @@ class WeatherAnalyzer:
         project_id: str
     ) -> List[Dict[str, Any]]:
         """Récupère les tâches sensibles à la météo."""
-        tasks = self.db.query(Task).filter(
-            Task.project_id == project_id,
-            Task.weather_sensitive == True
+        tasks = self.db.query(Tache).filter(
+            Tache.project_id == project_id,
+            Tache.weather_sensitive == True
         ).all()
         
         return [{

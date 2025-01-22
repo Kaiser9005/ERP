@@ -16,7 +16,8 @@ import {
 } from '@mui/material';
 import { Edit, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import { getTransactions, Transaction, TypeTransaction } from '../../services/finance';
+import { getTransactions } from '../../services/finance';
+import type { Transaction, TypeTransaction, TransactionListResponse, TransactionFilter } from '../../types/finance';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,23 +25,33 @@ import { fr } from 'date-fns/locale';
 const ListeTransactions: React.FC = () => {
   const [recherche, setRecherche] = useState('');
   const navigate = useNavigate();
-  const { data: transactions = [], isLoading } = useQuery<Transaction[]>('transactions', getTransactions);
+  const { data, isLoading, error } = useQuery<TransactionListResponse, Error>(
+    ['transactions', recherche], 
+    () => getTransactions({ filter: recherche } as TransactionFilter),
+    {
+      onError: (error) => {
+        console.error("Erreur lors de la récupération des transactions:", error);
+      },
+    }
+  );
 
-  const transactionsFiltrees = transactions.filter(transaction =>
-    transaction.description.toLowerCase().includes(recherche.toLowerCase()) ||
+  const transactions = data?.transactions || [];
+
+  const transactionsFiltrees = transactions.filter((transaction: Transaction) =>
+    transaction.description?.toLowerCase().includes(recherche.toLowerCase()) ||
     (transaction.reference?.toLowerCase() || '').includes(recherche.toLowerCase())
   );
 
   const getCouleurTransaction = (type: TypeTransaction) => {
-    switch (type) {
-      case 'ENTREE':
-        return 'success';
-      case 'SORTIE':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  switch (type) {
+    case 'ENTREE':
+      return 'success';
+    case 'SORTIE':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
 
   return (
     <Card>
@@ -92,8 +103,8 @@ const ListeTransactions: React.FC = () => {
                 <TableCell>
                   <Chip
                     size="small"
-                    label={transaction.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
-                    color={getCouleurTransaction(transaction.type)}
+                    label={transaction.type}
+                    color={getCouleurTransaction(transaction.type as TypeTransaction)}
                   />
                 </TableCell>
                 <TableCell align="right">

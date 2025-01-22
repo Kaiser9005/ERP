@@ -18,7 +18,7 @@ class QualitePredictor(BaseProductionML):
     def __init__(self, db: Session):
         super().__init__(db)
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
 
     async def predict_qualite(
         self,

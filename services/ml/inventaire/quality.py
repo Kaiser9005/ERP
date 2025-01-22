@@ -12,7 +12,7 @@ import pandas as pd
 from models.inventory import Stock, MouvementStock
 from services.cache_service import cache_result
 
-class QualityPredictor:
+class PredicteurQualite:  # Renommé pour correspondre à la nomenclature française
     """Prédicteur de qualité des stocks utilisant le ML"""
 
     def __init__(self):
@@ -24,7 +24,7 @@ class QualityPredictor:
         self.scaler = StandardScaler()
         self._is_trained = False
 
-    @cache_result(timeout=1800)
+    @cache_result(ttl_seconds=1800)
     def predict_quality_risk(self,
                            stock: Stock,
                            conditions_actuelles: Dict,
@@ -80,7 +80,7 @@ class QualityPredictor:
 
         # Features du stock
         if stock.date_peremption:
-            days_until_expiry = (stock.date_peremption - datetime.utcnow()).days
+            days_until_expiry = (stock.date_peremption - datetime.now(datetime.timezone.utc)).days
             features.append(float(days_until_expiry))
         else:
             features.append(0)
@@ -132,7 +132,7 @@ class QualityPredictor:
 
         # Vérification de la péremption
         if stock.date_peremption:
-            days_until_expiry = (stock.date_peremption - datetime.utcnow()).days
+            days_until_expiry = (stock.date_peremption - datetime.now(datetime.timezone.utc)).days
             if days_until_expiry <= 0:
                 risk_factors.append({
                     "type": "peremption",

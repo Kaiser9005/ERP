@@ -84,7 +84,6 @@ argon2-cffi>=21.3.0
 
 # Cache and Performance
 redis>=5.0.1
-memcached>=1.59
 cachetools>=5.3.1
 
 # Documentation

@@ -22,6 +22,49 @@ class ResourceLimits:
     max_batch_size: int
     max_workers: int
 
+@dataclass
+class ConfigurationML:
+    """Configuration ML centralisée"""
+    training: Dict[str, Any]
+    memory: Dict[str, Any]
+    cache: Dict[str, Any]
+    compute: Dict[str, Any]
+    thresholds: Dict[str, Any]
+    inference: Dict[str, Any]
+    model_configs: Dict[str, Dict[str, Any]]
+    monitoring: Dict[str, Any]
+    resource_limits: ResourceLimits
+
+    @classmethod
+    def from_env(cls) -> 'ConfigurationML':
+        """Crée une configuration à partir de l'environnement"""
+        limits = get_resource_limits()
+        optimize_for_environment()
+        
+        return cls(
+            training=ML_CONFIG['training'],
+            memory=ML_CONFIG['memory'],
+            cache=ML_CONFIG['cache'],
+            compute=ML_CONFIG['compute'],
+            thresholds=ML_CONFIG['thresholds'],
+            inference=ML_CONFIG['inference'],
+            model_configs=MODEL_CONFIGS,
+            monitoring=MONITORING_CONFIG,
+            resource_limits=limits
+        )
+
+    def get_model_config(self, model_name: str) -> Dict[str, Any]:
+        """Récupère la configuration pour un modèle spécifique"""
+        return get_model_config(model_name)
+
+    def get_cache_config(self) -> Dict[str, Any]:
+        """Récupère la configuration du cache"""
+        return get_cache_config()
+
+    def get_monitoring_config(self) -> Dict[str, Any]:
+        """Récupère la configuration du monitoring"""
+        return get_monitoring_config()
+
 # Configuration générale optimisée
 ML_CONFIG = {
     # Paramètres d'entraînement optimisés

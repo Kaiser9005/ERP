@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSON
 from .base import Base
 import enum
 from datetime import datetime
+from uuid import uuid4
 
 class TypeNotification(str, enum.Enum):
     """Types de notifications système"""
@@ -24,7 +25,7 @@ class Notification(Base):
     """Modèle pour les notifications système"""
     __tablename__ = "notifications"
 
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     titre = Column(String(200), nullable=False)
     message = Column(String(500), nullable=False)
     type = Column(Enum(TypeNotification), nullable=False)
@@ -36,4 +37,4 @@ class Notification(Base):
     donnees = Column(JSON)  # Données supplémentaires
 
     # Relations
-    destinataire = relationship("Utilisateur", back_populates="notifications")
+    utilisateur = relationship("Utilisateur", back_populates="notifications")

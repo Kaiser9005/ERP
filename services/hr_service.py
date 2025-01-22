@@ -12,6 +12,11 @@ from models.hr import (
     Employe, Contrat, Conge, Presence,
     DepartementType, StatutEmploye, TypeContrat, TypeConge, StatutConge, TypePresence
 )
+from models import (
+    CompetenceAgricole, CertificationAgricole, AffectationParcelle,
+    ConditionTravailAgricole, FormationAgricole, EvaluationAgricole,
+    TypePersonnel, SpecialiteAgricole, NiveauCompetence, TypeCertification
+)
 
 class HRService:
     """Service de gestion des ressources humaines."""
@@ -35,7 +40,7 @@ class HRService:
             "en_conge": en_conge
         }
 
-    async def create_employee(self, employe_data: Dict[str, Any]) -> Employe:
+    async def creer_employe(self, employe_data: Dict[str, Any]) -> Employe:
         """Crée un nouvel employé."""
         employe = Employe(
             **employe_data,
@@ -148,7 +153,7 @@ class HRService:
             self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
 
-    async def get_employee_leaves(
+    async def get_conges_employe(
         self,
         employe_id: str,
         annee: Optional[int] = None
@@ -163,7 +168,7 @@ class HRService:
 
         return query.all()
 
-    async def get_employee_attendance(
+    async def get_presences_employe(
         self,
         employe_id: str,
         date_debut: datetime,
@@ -199,3 +204,81 @@ class HRService:
             "en_conge": en_conge,
             "masse_salariale": masse_salariale
         }
+
+    async def add_competence_agricole(self, competence_data: Dict[str, Any]) -> CompetenceAgricole:
+        """Ajoute une compétence agricole à un employé."""
+        competence = CompetenceAgricole(**competence_data)
+        self.db.add(competence)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(competence)
+            return competence
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    async def add_certification_agricole(self, certification_data: Dict[str, Any]) -> CertificationAgricole:
+        """Ajoute une certification agricole."""
+        certification = CertificationAgricole(**certification_data)
+        self.db.add(certification)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(certification)
+            return certification
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    async def create_affectation_parcelle(self, affectation_data: Dict[str, Any]) -> AffectationParcelle:
+        """Crée une affectation à une parcelle."""
+        affectation = AffectationParcelle(**affectation_data)
+        self.db.add(affectation)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(affectation)
+            return affectation
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    async def track_conditions_travail(self, conditions_data: Dict[str, Any]) -> ConditionTravailAgricole:
+        """Enregistre les conditions de travail agricoles."""
+        conditions = ConditionTravailAgricole(**conditions_data)
+        self.db.add(conditions)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(conditions)
+            return conditions
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    async def add_formation_agricole_details(self, formation_data: Dict[str, Any]) -> FormationAgricole:
+        """Ajoute les détails agricoles à une formation."""
+        formation = FormationAgricole(**formation_data)
+        self.db.add(formation)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(formation)
+            return formation
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+
+    async def add_evaluation_agricole_details(self, evaluation_data: Dict[str, Any]) -> EvaluationAgricole:
+        """Ajoute les détails agricoles à une évaluation."""
+        evaluation = EvaluationAgricole(**evaluation_data)
+        self.db.add(evaluation)
+        
+        try:
+            self.db.commit()
+            self.db.refresh(evaluation)
+            return evaluation
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))

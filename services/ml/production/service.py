@@ -7,8 +7,8 @@ from typing import Dict, Any, Optional
 from datetime import date
 from sqlalchemy.orm import Session
 
-from .rendement import RendementPredictor
-from .cycle import CycleOptimizer
+from .rendement import PredicteurRendement
+from .cycle import OptimiseurCycle
 from .meteo import MeteoAnalyzer
 from .qualite import QualitePredictor
 
@@ -17,8 +17,8 @@ class ProductionMLService:
     
     def __init__(self, db: Session):
         self.db = db
-        self.rendement_predictor = RendementPredictor(db)
-        self.cycle_optimizer = CycleOptimizer(db)
+        self.rendement_predictor = PredicteurRendement(db)
+        self.cycle_optimizer = OptimiseurCycle(db)
         self.meteo_analyzer = MeteoAnalyzer(db)
         self.qualite_predictor = QualitePredictor(db)
 

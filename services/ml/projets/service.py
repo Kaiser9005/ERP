@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from services.ml.projets.base import ProjectsMLService
 
-class ProjectMLService:
+class ProjetsMLService:  # Renommé pour correspondre à l'import attendu
     """Service ML pour les projets."""
     
     def __init__(self, db: Session):

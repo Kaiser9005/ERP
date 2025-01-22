@@ -5,11 +5,12 @@ from datetime import datetime, date, timedelta
 import numpy as np
 from sqlalchemy.orm import Session
 
-from models.task import Task, TaskStatus
+from models.tache import Tache, StatutTache
 from models.resource import Resource
 from models.iot_sensor import IoTSensor, SensorType, SensorStatus
 from services.iot_service import IoTService
 from services.cache_service import CacheService
+from services.weather_service import WeatherService
 
 class PerformanceAnalyzer:
     """Analyseur de performance des projets."""
@@ -17,7 +18,8 @@ class PerformanceAnalyzer:
     def __init__(self, db: Session):
         """Initialisation de l'analyseur."""
         self.db = db
-        self.iot_service = IoTService(db)
+        self.weather_service = WeatherService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.cache = CacheService()
 
     async def analyze_performance(
@@ -79,7 +81,7 @@ class PerformanceAnalyzer:
 
     async def _get_tasks(self, project_id: str) -> List[Dict[str, Any]]:
         """Récupère les tâches du projet."""
-        tasks = self.db.query(Task).filter(Task.project_id == project_id).all()
+        tasks = self.db.query(Tache).filter(Tache.project_id == project_id).all()
         return [{
             "id": task.id,
             "name": task.name,
@@ -110,12 +112,12 @@ class PerformanceAnalyzer:
         for sensor in sensors:
             readings = await self.iot_service.get_sensor_readings(
                 sensor.id,
-                start_date=datetime.utcnow() - timedelta(days=7)
+                start_date=datetime.now(datetime.timezone.utc) - timedelta(days=7)
             )
             
             stats = await self.iot_service.get_sensor_stats(
                 sensor.id,
-                start_date=datetime.utcnow() - timedelta(days=7)
+                start_date=datetime.now(datetime.timezone.utc) - timedelta(days=7)
             )
             
             health = await self.iot_service.check_sensor_health(sensor.id)
@@ -133,7 +135,7 @@ class PerformanceAnalyzer:
         if not tasks:
             return 0.0
             
-        completed = len([t for t in tasks if t["status"] == TaskStatus.COMPLETED])
+        completed = len([t for t in tasks if t["status"] == StatutTache.TERMINEE])
         total = len(tasks)
         
         planned_progress = sum(
@@ -216,8 +218,8 @@ class PerformanceAnalyzer:
             
         # Risques liés aux tâches
         task_risks = [
-            1.0 if t["status"] == TaskStatus.BLOCKED else
-            0.7 if t["status"] == TaskStatus.AT_RISK else
+            1.0 if t["status"] == StatutTache.EN_ATTENTE else
+            0.7 if t["status"] == StatutTache.EN_COURS else
             0.3 if t["progress"] < 50 else
             0.1
             for t in tasks
@@ -245,7 +247,7 @@ class PerformanceAnalyzer:
         # Calcul vélocité actuelle
         completed_tasks = [
             t for t in tasks
-            if t["status"] == TaskStatus.COMPLETED
+            if t["status"] == StatutTache.TERMINEE
         ]
         
         if not completed_tasks:
@@ -301,7 +303,7 @@ class PerformanceAnalyzer:
             
         current_rate = len([
             t for t in tasks
-            if t["status"] == TaskStatus.COMPLETED
+            if t["status"] == StatutTache.TERMINEE
         ]) / len(tasks)
         
         # Analyse tendance sur 4 semaines
@@ -310,7 +312,7 @@ class PerformanceAnalyzer:
             week_end = datetime.now().date() - timedelta(weeks=week)
             completed_at_week = len([
                 t for t in tasks
-                if t["status"] == TaskStatus.COMPLETED and t["end_date"] <= week_end
+                if t["status"] == StatutTache.TERMINEE and t["end_date"] <= week_end
             ])
             completion_rates.append(completed_at_week / len(tasks))
         
@@ -351,7 +353,7 @@ class PerformanceAnalyzer:
         current_usage = sum(
             len(t.get("resources", [])) / len(resources)
             for t in tasks
-            if t["status"] in [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED]
+            if t["status"] in [StatutTache.EN_COURS, StatutTache.TERMINEE]
         ) / len(tasks)
         
         # Analyse tendance sur 4 semaines
@@ -360,7 +362,7 @@ class PerformanceAnalyzer:
             week_end = datetime.now().date() - timedelta(weeks=week)
             active_tasks = [
                 t for t in tasks
-                if t["status"] in [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED]
+                if t["status"] in [StatutTache.EN_COURS, StatutTache.TERMINEE]
                 and t["start_date"] <= week_end
             ]
             if active_tasks:
@@ -503,7 +505,7 @@ class PerformanceAnalyzer:
             
         remaining_tasks = len([
             t for t in tasks
-            if t["status"] != TaskStatus.COMPLETED
+            if t["status"] != StatutTache.TERMINEE
         ])
         
         if remaining_tasks == 0:

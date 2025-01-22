@@ -3,10 +3,11 @@ Tests d'intégration pour les composants ML du tableau de bord.
 """
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime
 
 from services.ml.tableau_bord.unification import TableauBordUnifieService
-from services.ml.tableau_bord.alertes import get_critical_alerts
+from services.ml.tableau_bord.alertes import get_critical_alerts, AlertPriority
 from services.ml.tableau_bord.predictions import get_ml_predictions
 
 @pytest.mark.asyncio
@@ -32,60 +33,65 @@ async def test_tableau_bord_ml_integration():
     }
 
     production_alerts = [
-        {"type": "production", "message": "Alerte Production", "priority": 1}
+        {"type": "production", "message": "Alerte Production", "priority": AlertPriority.FAIBLE}
     ]
     
     finance_alerts = [
-        {"type": "finance", "message": "Alerte Finance", "priority": 2}
+        {"type": "finance", "message": "Alerte Finance", "priority": AlertPriority.MOYENNE}
     ]
 
     # Configuration des mocks
-    projects_ml_service = AsyncMock()
-    projects_ml_service.get_production_predictions.return_value = production_predictions
-    projects_ml_service.get_finance_predictions.return_value = finance_predictions
-    projects_ml_service.get_inventory_predictions.return_value = inventory_predictions
-    projects_ml_service.get_hr_predictions.return_value = hr_predictions
+    projets_ml = AsyncMock()
+    projets_ml._get_production_predictions = AsyncMock(return_value=production_predictions)
+    projets_ml._get_finance_predictions = AsyncMock(return_value=finance_predictions)
+    projets_ml._get_inventory_predictions = AsyncMock(return_value=inventory_predictions)
+    projets_ml._get_hr_predictions = AsyncMock(return_value=hr_predictions)
+    projets_ml.get_active_projects_count = AsyncMock(return_value=5)
+    projets_ml.get_completion_predictions = AsyncMock(return_value={})
+    projets_ml.get_resource_optimization = AsyncMock(return_value={})
+    projets_ml.get_recent_activities = AsyncMock(return_value=[])
 
     hr_service = AsyncMock()
-    hr_service.get_critical_alerts.return_value = []
-    hr_service.get_total_employees.return_value = 100
-    hr_service.get_active_contracts_count.return_value = 95
-    hr_service.get_completed_trainings_count.return_value = 50
-    hr_service.get_training_completion_rate.return_value = 0.85
-    hr_service.get_recent_activities.return_value = []
+    hr_service.get_critical_alerts = AsyncMock(return_value=[])
+    hr_service.get_total_employees = AsyncMock(return_value=100)
+    hr_service.get_active_contracts_count = AsyncMock(return_value=95)
+    hr_service.get_completed_trainings_count = AsyncMock(return_value=50)
+    hr_service.get_training_completion_rate = AsyncMock(return_value=0.85)
+    hr_service.get_recent_activities = AsyncMock(return_value=[])
 
     production_service = AsyncMock()
-    production_service.get_critical_alerts.return_value = production_alerts
-    production_service.get_daily_production.return_value = 1000
-    production_service.get_efficiency_rate.return_value = 0.92
-    production_service.get_active_sensors_count.return_value = 10
-    production_service.get_quality_metrics.return_value = {"defect_rate": 0.02}
-    production_service.get_recent_activities.return_value = []
+    production_service.get_critical_alerts = AsyncMock(return_value=production_alerts)
+    production_service.get_daily_production = AsyncMock(return_value=1000)
+    production_service.get_efficiency_rate = AsyncMock(return_value=0.92)
+    production_service.get_active_sensors_count = AsyncMock(return_value=10)
+    production_service.get_quality_metrics = AsyncMock(return_value={"defect_rate": 0.02})
+    production_service.get_recent_activities = AsyncMock(return_value=[])
 
     finance_service = AsyncMock()
-    finance_service.get_critical_alerts.return_value = finance_alerts
-    finance_service.get_daily_revenue.return_value = 50000
-    finance_service.get_monthly_expenses.return_value = 40000
-    finance_service.get_cash_flow.return_value = 10000
-    finance_service.get_budget_status.return_value = "on_track"
-    finance_service.get_recent_transactions.return_value = []
+    finance_service.get_critical_alerts = AsyncMock(return_value=finance_alerts)
+    finance_service.get_daily_revenue = AsyncMock(return_value=50000)
+    finance_service.get_monthly_expenses = AsyncMock(return_value=40000)
+    finance_service.get_cash_flow = AsyncMock(return_value=10000)
+    finance_service.get_budget_status = AsyncMock(return_value="on_track")
+    finance_service.get_recent_transactions = AsyncMock(return_value=[])
 
     inventory_service = AsyncMock()
-    inventory_service.get_critical_alerts.return_value = []
-    inventory_service.get_total_items.return_value = 500
-    inventory_service.get_low_stock_items.return_value = []
-    inventory_service.get_total_stock_value.return_value = 100000
-    inventory_service.get_recent_movements.return_value = []
+    inventory_service.get_critical_alerts = AsyncMock(return_value=[])
+    inventory_service.get_total_items = AsyncMock(return_value=500)
+    inventory_service.get_low_stock_items = AsyncMock(return_value=[])
+    inventory_service.get_total_stock_value = AsyncMock(return_value=100000)
+    inventory_service.get_recent_movements = AsyncMock(return_value=[])
 
     weather_service = AsyncMock()
-    weather_service.get_critical_alerts.return_value = []
-    weather_service.get_current_conditions.return_value = {}
-    weather_service.get_daily_forecast.return_value = []
-    weather_service.get_active_alerts.return_value = []
-    weather_service.get_production_impact.return_value = {}
+    weather_service.get_critical_alerts = AsyncMock(return_value=[])
+    weather_service.get_current_conditions = AsyncMock(return_value={})
+    weather_service.get_daily_forecast = AsyncMock(return_value=[])
+    weather_service.get_active_alerts = AsyncMock(return_value=[])
+    weather_service.get_production_impact = AsyncMock(return_value={})
 
     cache_service = AsyncMock()
-    cache_service.get.return_value = None
+    cache_service.get = AsyncMock(return_value=None)
+    cache_service.set = AsyncMock()
 
     # Création du service unifié
     unified_service = TableauBordUnifieService(
@@ -94,7 +100,7 @@ async def test_tableau_bord_ml_integration():
         finance_service=finance_service,
         inventory_service=inventory_service,
         weather_service=weather_service,
-        projects_ml_service=projects_ml_service,
+        projets_ml=projets_ml,
         cache_service=cache_service
     )
 
@@ -106,6 +112,15 @@ async def test_tableau_bord_ml_integration():
     assert "alerts" in dashboard_data
     assert "predictions" in dashboard_data
     assert "timestamp" in dashboard_data
+
+    # Vérification des modules
+    modules = dashboard_data["modules"]
+    assert "hr" in modules
+    assert "production" in modules
+    assert "finance" in modules
+    assert "inventory" in modules
+    assert "weather" in modules
+    assert "projets" in modules
 
     # Vérification des alertes
     alerts = dashboard_data["alerts"]
@@ -120,28 +135,32 @@ async def test_tableau_bord_ml_integration():
     assert "inventory" in predictions
     assert "hr" in predictions
 
-    # Vérification des modules
-    modules = dashboard_data["modules"]
-    assert "hr" in modules
-    assert "production" in modules
-    assert "finance" in modules
-    assert "inventory" in modules
-    assert "weather" in modules
-    assert "projects" in modules
-
 @pytest.mark.asyncio
 async def test_tableau_bord_ml_cache():
     """Test du cache pour les données ML du tableau de bord"""
     # Configuration du mock de cache
     cached_data = {
-        "timestamp": "2024-01-01T00:00:00",
-        "modules": {},
+        "timestamp": datetime.now().isoformat(),
+        "modules": {
+            "hr": {"total_employees": 100},
+            "production": {"daily_production": 1000},
+            "finance": {"daily_revenue": 50000},
+            "inventory": {"total_items": 500},
+            "weather": {"current_conditions": {}},
+            "projets": {"active_projects": 5}
+        },
         "alerts": [],
-        "predictions": {}
+        "predictions": {
+            "production": {},
+            "finance": {},
+            "inventory": {},
+            "hr": {}
+        }
     }
 
     cache_service = AsyncMock()
-    cache_service.get.return_value = cached_data
+    cache_service.get = AsyncMock(return_value=cached_data)
+    cache_service.set = AsyncMock()
 
     # Configuration des autres services
     hr_service = AsyncMock()
@@ -149,7 +168,7 @@ async def test_tableau_bord_ml_cache():
     finance_service = AsyncMock()
     inventory_service = AsyncMock()
     weather_service = AsyncMock()
-    projects_ml_service = AsyncMock()
+    projets_ml = AsyncMock()
 
     # Création du service unifié
     unified_service = TableauBordUnifieService(
@@ -158,7 +177,7 @@ async def test_tableau_bord_ml_cache():
         finance_service=finance_service,
         inventory_service=inventory_service,
         weather_service=weather_service,
-        projects_ml_service=projects_ml_service,
+        projets_ml=projets_ml,
         cache_service=cache_service
     )
 
@@ -173,7 +192,36 @@ async def test_tableau_bord_ml_cache():
     inventory_service.get_total_items.assert_not_called()
 
     # Configuration du cache pour simuler une expiration
-    cache_service.get.return_value = None
+    cache_service.get = AsyncMock(return_value=None)
+
+    # Configuration des retours pour le second appel
+    hr_service.get_total_employees = AsyncMock(return_value=100)
+    hr_service.get_active_contracts_count = AsyncMock(return_value=95)
+    hr_service.get_completed_trainings_count = AsyncMock(return_value=50)
+    hr_service.get_training_completion_rate = AsyncMock(return_value=0.85)
+    hr_service.get_recent_activities = AsyncMock(return_value=[])
+
+    production_service.get_daily_production = AsyncMock(return_value=1000)
+    production_service.get_efficiency_rate = AsyncMock(return_value=0.92)
+    production_service.get_active_sensors_count = AsyncMock(return_value=10)
+    production_service.get_quality_metrics = AsyncMock(return_value={"defect_rate": 0.02})
+    production_service.get_recent_activities = AsyncMock(return_value=[])
+
+    finance_service.get_daily_revenue = AsyncMock(return_value=50000)
+    finance_service.get_monthly_expenses = AsyncMock(return_value=40000)
+    finance_service.get_cash_flow = AsyncMock(return_value=10000)
+    finance_service.get_budget_status = AsyncMock(return_value="on_track")
+    finance_service.get_recent_transactions = AsyncMock(return_value=[])
+
+    inventory_service.get_total_items = AsyncMock(return_value=500)
+    inventory_service.get_low_stock_items = AsyncMock(return_value=[])
+    inventory_service.get_total_stock_value = AsyncMock(return_value=100000)
+    inventory_service.get_recent_movements = AsyncMock(return_value=[])
+
+    projets_ml.get_active_projects_count = AsyncMock(return_value=5)
+    projets_ml.get_completion_predictions = AsyncMock(return_value={})
+    projets_ml.get_resource_optimization = AsyncMock(return_value={})
+    projets_ml.get_recent_activities = AsyncMock(return_value=[])
 
     # Deuxième appel - devrait régénérer les données
     data2 = await unified_service.get_unified_dashboard_data()
@@ -184,3 +232,38 @@ async def test_tableau_bord_ml_cache():
     production_service.get_daily_production.assert_called_once()
     finance_service.get_daily_revenue.assert_called_once()
     inventory_service.get_total_items.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_tableau_bord_ml_error_handling():
+    """Test de la gestion des erreurs dans le tableau de bord ML"""
+    # Configuration des mocks avec des erreurs
+    hr_service = AsyncMock()
+    hr_service.get_total_employees = AsyncMock(side_effect=Exception("Erreur HR"))
+
+    production_service = AsyncMock()
+    finance_service = AsyncMock()
+    inventory_service = AsyncMock()
+    weather_service = AsyncMock()
+    projets_ml = AsyncMock()
+    cache_service = AsyncMock()
+    cache_service.get = AsyncMock(return_value=None)
+
+    unified_service = TableauBordUnifieService(
+        hr_service=hr_service,
+        production_service=production_service,
+        finance_service=finance_service,
+        inventory_service=inventory_service,
+        weather_service=weather_service,
+        projets_ml=projets_ml,
+        cache_service=cache_service
+    )
+
+    # Exécution
+    data = await unified_service.get_unified_dashboard_data()
+
+    # Vérifications
+    assert "modules" in data
+    assert "hr" in data["modules"]
+    assert "error" in data["modules"]["hr"]
+    assert "message" in data["modules"]["hr"]
+    assert "Erreur HR" in data["modules"]["hr"]["message"]

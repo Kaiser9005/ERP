@@ -19,13 +19,15 @@ from models.iot_sensor import IoTSensor, SensorData
 from services.iot_service import IoTService
 from services.finance_comptabilite.analyse import AnalyseFinanceCompta
 from services.cache_service import CacheService
+from services.weather_service import WeatherService
 
 class GestionIoT:
     """Gestion de l'intégration IoT avec la finance et la comptabilité avec ML"""
     
     def __init__(self, db: Session):
         self.db = db
-        self.iot_service = IoTService(db)
+        self.weather_service = WeatherService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.analyse = AnalyseFinanceCompta(db)
         self.cache = CacheService()
 

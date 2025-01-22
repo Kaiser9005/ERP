@@ -5,7 +5,6 @@ import {
   CompteComptable,
   EcritureComptable,
   JournalComptable,
-  GrandLivre,
   CompteBalance,
   ComptabiliteStats,
   CompteComptableFormData,
@@ -15,7 +14,9 @@ import {
   BudgetAnalysis,
   Balance,
   RapportComptable,
-  CompteResultatType
+  CompteResultatType,
+  GetGrandLivreParams,
+  GrandLivreResponseType
 } from '../types/comptabilite';
 
 const API_BASE = '/api/v1/comptabilite';
@@ -126,17 +127,14 @@ export const createJournal = async (data: Partial<JournalComptable>): Promise<Jo
 };
 
 // Rapports
-export const getGrandLivre = async (params?: {
-  compte_id?: string;
-  date_debut?: Date;
-  date_fin?: Date;
-}): Promise<GrandLivre[]> => {
+
+export const getGrandLivre = async (params?: GetGrandLivreParams): Promise<GrandLivreResponseType> => {
   const formattedParams = {
     ...params,
     date_debut: params?.date_debut ? format(params.date_debut, 'yyyy-MM-dd') : undefined,
     date_fin: params?.date_fin ? format(params.date_fin, 'yyyy-MM-dd') : undefined,
   };
-  const response = await api.get<ApiResponse<GrandLivre[]>>(`${API_BASE}/grand-livre`, { params: formattedParams });
+  const response = await api.get<ApiResponse<GrandLivreResponseType>>(`${API_BASE}/grand-livre`, { params: formattedParams });
   return response.data.data;
 };
 

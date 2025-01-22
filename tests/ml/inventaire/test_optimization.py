@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from models.inventory import Stock, MouvementStock, CategoryProduit, UniteMesure
-from services.ml.inventaire.optimization import StockOptimizer
+from services.ml.inventaire.optimization import OptimiseurStock
 
 @pytest.fixture
 def mock_stock():
@@ -61,21 +61,21 @@ def mock_weather_data():
 
 def test_optimizer_initialization():
     """Test l'initialisation de l'optimiseur"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     assert not optimizer.is_trained
     assert optimizer.base_model is not None
     assert optimizer.optimizer is not None
 
 def test_optimize_without_training(mock_stock, mock_mouvements, mock_weather_data):
     """Test l'optimisation sans entraînement"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     with pytest.raises(ValueError, match="L'optimiseur doit être entraîné"):
         optimizer.optimize_stock_levels(mock_stock, mock_mouvements, mock_weather_data)
 
 def test_training_and_optimization(mock_stock, mock_mouvements, mock_weather_data):
     """Test l'entraînement et l'optimisation"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     # Création de données d'entraînement
     stocks = [mock_stock]
@@ -98,7 +98,7 @@ def test_training_and_optimization(mock_stock, mock_mouvements, mock_weather_dat
 
 def test_seasonal_factor(mock_stock, mock_mouvements):
     """Test le calcul du facteur saisonnier"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     factor = optimizer._seasonal_factor(mock_stock, mock_mouvements)
     
     assert isinstance(factor, float)
@@ -106,7 +106,7 @@ def test_seasonal_factor(mock_stock, mock_mouvements):
 
 def test_expiration_factor(mock_stock):
     """Test le calcul du facteur de péremption"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     # Test avec date de péremption future
     mock_stock.date_peremption = datetime.now(datetime.timezone.utc) + timedelta(days=100)
@@ -125,7 +125,7 @@ def test_expiration_factor(mock_stock):
 
 def test_weather_factor(mock_stock, mock_weather_data):
     """Test le calcul du facteur météorologique"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     # Test avec conditions optimales
     factor = optimizer._weather_factor(mock_stock, mock_weather_data)
@@ -143,7 +143,7 @@ def test_weather_factor(mock_stock, mock_weather_data):
 
 def test_trend_factor(mock_mouvements):
     """Test le calcul du facteur de tendance"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     # Test avec mouvements
     factor = optimizer._trend_factor(mock_mouvements)
@@ -156,7 +156,7 @@ def test_trend_factor(mock_mouvements):
 
 def test_adjustments_calculation(mock_stock, mock_mouvements, mock_weather_data):
     """Test le calcul des ajustements"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     adjustments = optimizer._calculate_adjustments(
         mock_stock, mock_mouvements, mock_weather_data
     )
@@ -173,10 +173,10 @@ def test_adjustments_calculation(mock_stock, mock_mouvements, mock_weather_data)
         assert isinstance(factor, float)
         assert 0.5 <= factor <= 1.5
 
-@patch('services.ml.inventaire.optimization.cache_result')
+@patch('services.cache_service.cache_result')
 def test_cache_behavior(mock_cache, mock_stock, mock_mouvements, mock_weather_data):
     """Test le comportement du cache"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     optimizer.train([mock_stock], {"test-stock-1": mock_mouvements})
     
     # Première optimisation
@@ -190,7 +190,7 @@ def test_cache_behavior(mock_cache, mock_stock, mock_mouvements, mock_weather_da
 
 def test_error_handling():
     """Test la gestion des erreurs"""
-    optimizer = StockOptimizer()
+    optimizer = OptimiseurStock()
     
     # Test avec des données invalides
     with pytest.raises(ValueError):

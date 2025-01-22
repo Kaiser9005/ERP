@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './ProtectedRoute';
-import DashboardPage from '../components/dashboard/DashboardPage';
+import RouteProtege from '../components/auth/RouteProtege';
+import PageTableauBord from '../components/tableau-bord/PageTableauBord';
 import PageFinance from '../components/finance/PageFinance';
 import PageInventaire from '../components/inventaire/PageInventaire';
 import ProjectRoutes from './projects';
@@ -13,16 +13,14 @@ import ParametrageLayout from '../components/parametrage/ParametrageLayout';
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<ProtectedRoute />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="finance/*" element={<PageFinance />} />
-        <Route path="inventaire/*" element={<PageInventaire />} />
-        <Route path="projects/*" element={<ProjectRoutes />} />
-        <Route path="rh/*" element={<HRRoutes />} />
-        <Route path="comptabilite/*" element={<ComptabilitePage />} />
-        <Route path="parametrage/*" element={<ParametrageLayout />} />
-        <Route path="production/*" element={<ProductionRoutes />} />
-      </Route>
+      <Route path="/" element={<RouteProtege><PageTableauBord /></RouteProtege>} />
+      <Route path="/finance/*" element={<RouteProtege><PageFinance /></RouteProtege>} />
+      <Route path="/inventaire/*" element={<RouteProtege><PageInventaire /></RouteProtege>} />
+      <Route path="/projects/*" element={<RouteProtege><ProjectRoutes /></RouteProtege>} />
+      <Route path="/rh/*" element={<RouteProtege><HRRoutes /></RouteProtege>} />
+      <Route path="/comptabilite/*" element={<RouteProtege><ComptabilitePage /></RouteProtege>} />
+      <Route path="/parametrage/*" element={<RouteProtege><ParametrageLayout /></RouteProtege>} />
+      <Route path="/production/*" element={<RouteProtege><ProductionRoutes /></RouteProtege>} />
     </Routes>
   );
 };

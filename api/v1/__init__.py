@@ -8,7 +8,8 @@ from .endpoints import (
     dashboard,
     auth,
     parametrage,
-    iot_monitoring
+    iot_monitoring,
+    taches
 )
 
 api_router = APIRouter()
@@ -18,6 +19,7 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Tableau 
 api_router.include_router(employes.router, prefix="/employes", tags=["Employés"])
 api_router.include_router(inventaire.router, prefix="/inventaire", tags=["Inventaire"])
 api_router.include_router(production.router, prefix="/production", tags=["Production"])
+api_router.include_router(taches.router, prefix="/taches", tags=["Tâches"])
 api_router.include_router(weather.router, prefix="/weather", tags=["Météo"])
 api_router.include_router(activities.router, prefix="/activities", tags=["Activités"])
 api_router.include_router(parametrage.router, prefix="/parametrage", tags=["Paramétrage"])

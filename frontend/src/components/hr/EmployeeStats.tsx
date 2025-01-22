@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import StatCard from '../common/StatCard';
+import CarteStatistique from '../common/CarteStatistique';
 import { People, EventAvailable, Sick, School } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { getEmployeeStats } from '../../services/hr';
@@ -15,7 +15,7 @@ const formatVariation = (value: number): { valeur: number; type: VariationType }
 });
 
 const EmployeeStats: React.FC = () => {
-  const { data: stats } = useQuery<EmployeeStatsType>({
+  const { data: stats, isLoading } = useQuery<EmployeeStatsType>({
     queryKey: queryKeys.hr.stats(),
     queryFn: getEmployeeStats
   });
@@ -23,42 +23,46 @@ const EmployeeStats: React.FC = () => {
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} sm={6} md={3}>
-        <StatCard
-          title="Effectif Total"
-          value={stats?.totalEmployees || 0}
+        <CarteStatistique
+          titre="Effectif Total"
+          valeur={stats?.totalEmployees || 0}
           variation={stats?.employeesVariation ? formatVariation(stats.employeesVariation) : undefined}
-          icon={<People />}
-          color="primary"
+          icone={<People />}
+          couleur="primary"
+          chargement={isLoading}
         />
       </Grid>
 
       <Grid item xs={12} sm={6} md={3}>
-        <StatCard
-          title="Présents Aujourd'hui"
-          value={stats?.presentToday || 0}
+        <CarteStatistique
+          titre="Présents Aujourd'hui"
+          valeur={stats?.presentToday || 0}
           variation={stats?.presenceVariation ? formatVariation(stats.presenceVariation) : undefined}
-          icon={<EventAvailable />}
-          color="success"
+          icone={<EventAvailable />}
+          couleur="success"
+          chargement={isLoading}
         />
       </Grid>
 
       <Grid item xs={12} sm={6} md={3}>
-        <StatCard
-          title="En Congé"
-          value={stats?.onLeave || 0}
+        <CarteStatistique
+          titre="En Congé"
+          valeur={stats?.onLeave || 0}
           variation={stats?.leaveVariation ? formatVariation(stats.leaveVariation) : undefined}
-          icon={<Sick />}
-          color="warning"
+          icone={<Sick />}
+          couleur="warning"
+          chargement={isLoading}
         />
       </Grid>
 
       <Grid item xs={12} sm={6} md={3}>
-        <StatCard
-          title="En Formation"
-          value={stats?.inTraining || 0}
+        <CarteStatistique
+          titre="En Formation"
+          valeur={stats?.inTraining || 0}
           variation={stats?.trainingVariation ? formatVariation(stats.trainingVariation) : undefined}
-          icon={<School />}
-          color="info"
+          icone={<School />}
+          couleur="info"
+          chargement={isLoading}
         />
       </Grid>
     </Grid>

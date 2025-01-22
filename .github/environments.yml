@@ -1,0 +1,105 @@
+# Configuration des environnements GitHub Actions
+
+# Environnement de développement
+development:
+  description: "Environnement de développement pour les branches de feature"
+  variables:
+    VITE_API_URL: "http://localhost:8000"
+    VITE_WEATHER_LOCATION: "Ebondi,Cameroon"
+    VITE_IOT_WEBSOCKET_URL: "ws://localhost:8000/ws"
+    VITE_ANALYTICS_REFRESH_INTERVAL: "300000"
+  required_secrets:
+    - VITE_WEATHER_API_KEY
+    - OPENWEATHER_API_KEY
+    - IOT_API_KEY
+  deployment_branch_policy:
+    protected_branches: false
+    custom_branches:
+      - "feature/*"
+      - "bugfix/*"
+
+# Environnement de staging
+staging:
+  description: "Environnement de staging pour la branche develop"
+  variables:
+    VITE_API_URL: "https://api.staging.erp-agricole.com"
+    VITE_WEATHER_LOCATION: "Ebondi,Cameroon"
+    VITE_IOT_WEBSOCKET_URL: "wss://api.staging.erp-agricole.com/ws"
+    VITE_ANALYTICS_REFRESH_INTERVAL: "300000"
+  required_secrets:
+    - VITE_WEATHER_API_KEY
+    - OPENWEATHER_API_KEY
+    - IOT_API_KEY
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - SENTRY_AUTH_TOKEN
+  deployment_branch_policy:
+    protected_branches: true
+    custom_branches:
+      - "develop"
+
+# Environnement de production
+production:
+  description: "Environnement de production pour la branche main"
+  variables:
+    VITE_API_URL: "https://api.erp-agricole.com"
+    VITE_WEATHER_LOCATION: "Ebondi,Cameroon"
+    VITE_IOT_WEBSOCKET_URL: "wss://api.erp-agricole.com/ws"
+    VITE_ANALYTICS_REFRESH_INTERVAL: "300000"
+  required_secrets:
+    - VITE_WEATHER_API_KEY
+    - OPENWEATHER_API_KEY
+    - IOT_API_KEY
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - SENTRY_AUTH_TOKEN
+  deployment_branch_policy:
+    protected_branches: true
+    custom_branches:
+      - "main"
+  required_reviewers:
+    - lead-dev
+    - devops-engineer
+  deployment_protection_rules:
+    - required_deployments: ["staging"]
+    - wait_timer: 30
+    - required_approvals: 2
+
+# Variables globales (partagées entre tous les environnements)
+global_variables:
+  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.12"
+  POSTGRES_VERSION: "14"
+  REDIS_VERSION: "7"
+
+# Protection des secrets
+secret_scanning:
+  enabled: true
+  push_protection: true
+  alerts: true
+
+# Règles de déploiement
+deployment_rules:
+  required_status_checks:
+    - "test-backend"
+    - "test-frontend"
+    - "lint"
+  enforce_admins: true
+  required_linear_history: true
+  allow_force_pushes: false
+  allow_deletions: false
+
+# Configuration des notifications
+notifications:
+  slack:
+    channel: "#deployments"
+    events:
+      - deployment_started
+      - deployment_success
+      - deployment_failure
+  email:
+    recipients:
+      - devops@erp-agricole.com
+    events:
+      - deployment_failure
+      - security_alert

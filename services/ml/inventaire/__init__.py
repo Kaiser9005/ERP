@@ -3,10 +3,10 @@ Module ML pour l'inventaire
 Fournit des services de prédiction et d'optimisation pour la gestion des stocks
 """
 
-from .base import InventoryMLModel as ModeleInventaireML
-from .optimization import StockOptimizer as OptimiseurStock
-from .analysis import StockAnalyzer as AnalyseurStock
-from .quality import QualityPredictor as PredicteurQualite
+from .base import ModeleInventaireML
+from .optimization import OptimiseurStock
+from .analysis import AnalyseurStock
+from .quality import PredicteurQualite
 
 __all__ = [
     'ModeleInventaireML',

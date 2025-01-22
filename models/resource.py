@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, Integer, Float, Enum, ForeignKey
+from sqlalchemy import Column, String, Float, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 from models.base import BaseModel
 
@@ -22,7 +24,7 @@ class ResourceStatus(str, PyEnum):
 
 class Resource(BaseModel):
     """Modèle pour les ressources du projet"""
-    __tablename__ = "resources"
+    __tablename__ = "ressources"
 
     name = Column(String(100), nullable=False)
     description = Column(String(500))
@@ -42,13 +44,13 @@ class Resource(BaseModel):
     maintenance_cost = Column(Float, default=0)
     
     # Relations
-    location_id = Column(Integer, ForeignKey("locations.id"))
-    category_id = Column(Integer, ForeignKey("resource_categories.id"))
+    location_id = Column(UUID(as_uuid=True), ForeignKey("locations.id"))
+    category_id = Column(UUID(as_uuid=True), ForeignKey("resource_categories.id"))
     
     # Relations bidirectionnelles
     location = relationship("Location", back_populates="resources")
     category = relationship("ResourceCategory", back_populates="resources")
-    task_assignments = relationship("TaskResource", back_populates="resource")
+    utilisations_tache = relationship("RessourceTache", back_populates="ressource")
     maintenance_records = relationship("ResourceMaintenance", back_populates="resource")
 
 class ResourceCategory(BaseModel):
@@ -65,7 +67,7 @@ class ResourceMaintenance(BaseModel):
     """Enregistrements de maintenance des ressources"""
     __tablename__ = "resource_maintenance"
 
-    resource_id = Column(Integer, ForeignKey("resources.id"), nullable=False)
+    resource_id = Column(UUID(as_uuid=True), ForeignKey("ressources.id"), nullable=False)
     description = Column(String(500), nullable=False)
     cost = Column(Float, default=0)
     duration_hours = Column(Float)

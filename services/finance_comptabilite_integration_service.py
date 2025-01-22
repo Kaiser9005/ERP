@@ -91,7 +91,7 @@ class FinanceComptabiliteIntegrationService:
     def __init__(self, db: Session):
         self.db = db
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.cache = CacheService()
         self.storage = StorageService()
         self.analyse = AnalyseFinanceCompta(db)

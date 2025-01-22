@@ -28,11 +28,7 @@ const mockMouvements: MouvementStock[] = [
     type_mouvement: TypeMouvement.ENTREE,
     quantite: 100,
     reference_document: 'BL-2024-001',
-    responsable: {
-      id: '1',
-      nom: 'Dupont',
-      prenom: 'Jean'
-    },
+    responsable_id: '1',
     produit_id: '1',
     produit: {
       id: '1',
@@ -52,22 +48,8 @@ const mockMouvements: MouvementStock[] = [
     type_mouvement: TypeMouvement.SORTIE,
     quantite: 20,
     reference_document: 'BS-2024-001',
-    responsable: {
-      id: '2',
-      nom: 'Martin',
-      prenom: 'Sophie'
-    },
+    responsable_id: '2',
     produit_id: '2',
-    produit: {
-      id: '2',
-      code: 'PRD002',
-      nom: 'Pesticide',
-      categorie: CategoryProduit.INTRANT,
-      unite_mesure: UniteMesure.L,
-      prix_unitaire: 5000,
-      seuil_alerte: 20,
-      specifications: {}
-    },
     cout_unitaire: 5000
   }
 ];

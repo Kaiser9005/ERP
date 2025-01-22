@@ -3,7 +3,7 @@ Service d'unification du tableau de bord avec intégration ML.
 Regroupe les données de tous les modules pour présentation unifiée.
 """
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 from services.hr_analytics_service import HRAnalyticsService
@@ -14,7 +14,7 @@ from services.weather_service import WeatherService
 from services.ml.projets.service import ProjetsMLService
 from services.cache_service import CacheService
 
-from .alertes import get_critical_alerts
+from .alertes import get_critical_alerts, AlertPriority
 from .predictions import get_ml_predictions
 
 class TableauBordUnifieService:
@@ -42,36 +42,75 @@ class TableauBordUnifieService:
         Récupère et agrège les données de tous les modules pour le tableau de bord unifié.
         Utilise le cache pour optimiser les performances.
         """
-        cache_key = "unified_dashboard_data"
-        cached_data = await self.cache_service.get(cache_key)
+        try:
+            cache_key = "unified_dashboard_data"
+            cached_data = await self.cache_service.get(cache_key)
+            
+            if cached_data:
+                return cached_data
+
+            data = {
+                "timestamp": datetime.now().isoformat(),
+                "modules": {
+                    "hr": await self._get_module_data(self._get_hr_summary, "hr"),
+                    "production": await self._get_module_data(self._get_production_summary, "production"),
+                    "finance": await self._get_module_data(self._get_finance_summary, "finance"),
+                    "inventory": await self._get_module_data(self._get_inventory_summary, "inventory"),
+                    "weather": await self._get_module_data(self._get_weather_summary, "weather"),
+                    "projets": await self._get_module_data(self._get_projets_summary, "projets")
+                },
+                "alerts": await get_critical_alerts(
+                    hr_service=self.hr_service,
+                    production_service=self.production_service,
+                    finance_service=self.finance_service,
+                    inventory_service=self.inventory_service,
+                    weather_service=self.weather_service
+                ),
+                "predictions": await get_ml_predictions(
+                    projets_ml=self.projets_ml,
+                    finance_service=self.finance_service,
+                    inventory_service=self.inventory_service,
+                    hr_analytics=self.hr_service,
+                    cache_service=self.cache_service
+                )
+            }
+
+            await self.cache_service.set(cache_key, data, self.cache_ttl)
+            return data
+            
+        except Exception as e:
+            # En cas d'erreur, on retourne une structure minimale avec une alerte
+            return {
+                "timestamp": datetime.now().isoformat(),
+                "modules": {},
+                "alerts": [{
+                    "type": "SYSTEM",
+                    "priority": AlertPriority.CRITIQUE,
+                    "message": f"Erreur lors de la récupération des données: {str(e)}",
+                    "source": "tableau_bord"
+                }],
+                "predictions": {}
+            }
+
+    async def _get_module_data(self, func: callable, module_name: str) -> Dict[str, Any]:
+        """
+        Récupère les données d'un module avec gestion des erreurs.
         
-        if cached_data:
-            return cached_data
-
-        data = {
-            "timestamp": datetime.now().isoformat(),
-            "modules": {
-                "hr": await self._get_hr_summary(),
-                "production": await self._get_production_summary(),
-                "finance": await self._get_finance_summary(),
-                "inventory": await self._get_inventory_summary(),
-                "weather": await self._get_weather_summary(),
-                "projets": await self._get_projets_summary()
-            },
-            "alerts": await get_critical_alerts(
-                hr_service=self.hr_service,
-                production_service=self.production_service,
-                finance_service=self.finance_service,
-                inventory_service=self.inventory_service,
-                weather_service=self.weather_service
-            ),
-            "predictions": await get_ml_predictions(
-                projets_ml=self.projets_ml
-            )
-        }
-
-        await self.cache_service.set(cache_key, data, self.cache_ttl)
-        return data
+        Args:
+            func: Fonction à exécuter pour obtenir les données
+            module_name: Nom du module pour les messages d'erreur
+            
+        Returns:
+            Données du module ou message d'erreur
+        """
+        try:
+            return await func()
+        except Exception as e:
+            return {
+                "error": True,
+                "message": f"Erreur {module_name}: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            }
 
     async def _get_hr_summary(self) -> Dict[str, Any]:
         """Résumé des indicateurs RH clés."""
@@ -135,17 +174,24 @@ class TableauBordUnifieService:
         Récupère les détails complets d'un module spécifique.
         Utilisé pour l'expansion des widgets du dashboard.
         """
-        if module == "hr":
-            return await self.hr_service.get_detailed_analytics()
-        elif module == "production":
-            return await self.production_service.get_detailed_analytics()
-        elif module == "finance":
-            return await self.finance_service.get_detailed_analytics()
-        elif module == "inventory":
-            return await self.inventory_service.get_detailed_analytics()
-        elif module == "weather":
-            return await self.weather_service.get_detailed_analytics()
-        elif module == "projets":
-            return await self.projets_ml.get_detailed_analytics()
-        else:
-            raise ValueError(f"Module inconnu: {module}")
+        try:
+            if module == "hr":
+                return await self.hr_service.get_detailed_analytics()
+            elif module == "production":
+                return await self.production_service.get_detailed_analytics()
+            elif module == "finance":
+                return await self.finance_service.get_detailed_analytics()
+            elif module == "inventory":
+                return await self.inventory_service.get_detailed_analytics()
+            elif module == "weather":
+                return await self.weather_service.get_detailed_analytics()
+            elif module == "projets":
+                return await self.projets_ml.get_detailed_analytics()
+            else:
+                raise ValueError(f"Module inconnu: {module}")
+        except Exception as e:
+            return {
+                "error": True,
+                "message": f"Erreur lors de la récupération des détails du module {module}: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            }

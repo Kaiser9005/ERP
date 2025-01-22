@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from models.production import Parcelle, Recolte
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
-from services.ml.production.rendement import RendementPredictor
+from services.ml.production.rendement import PredicteurRendement
 
 @pytest.fixture
 def db_session():
@@ -31,7 +31,7 @@ def iot_service():
 @pytest.fixture
 def predictor(db_session, weather_service, iot_service):
     """Fixture pour le prédicteur."""
-    service = RendementPredictor(db_session)
+    service = PredicteurRendement(db_session)
     service.weather_service = weather_service
     service.iot_service = iot_service
     return service
@@ -70,8 +70,8 @@ def sample_iot_data():
         "valeur": 22.0 + i*0.5
     } for i in range(10)]
 
-class TestRendementPredictor:
-    """Tests pour RendementPredictor."""
+class TestPredicteurRendement:
+    """Tests pour PredicteurRendement."""
 
     async def test_predict_rendement(
         self,

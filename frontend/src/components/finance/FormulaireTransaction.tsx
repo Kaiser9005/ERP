@@ -15,7 +15,8 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { creerTransaction, modifierTransaction, getTransaction, getComptes, Transaction, TypeTransaction, StatutTransaction, Compte } from '../../services/finance';
+import { createTransaction, updateTransaction, getTransaction, getComptes } from '../../services/finance';
+import type { Transaction, TypeTransaction, StatutTransaction, Compte, TransactionFormData } from '../../types/finance';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 
@@ -23,6 +24,7 @@ interface FormData extends Omit<Transaction, 'id' | 'date'> {
   date: Date;
   compte_source_id?: string;
   compte_destination_id?: string;
+  statut: StatutTransaction;
 }
 
 const schema = yup.object({
@@ -81,13 +83,20 @@ const FormulaireTransaction: React.FC = () => {
 
   const mutation = useMutation(
     (data: FormData) => {
-      const transactionData: Omit<Transaction, 'id'> = {
-        ...data,
-        date: data.date.toISOString()
+      const transactionData: TransactionFormData = {
+        date_transaction: data.date.toISOString(),
+        montant: data.montant,
+        type_transaction: data.type as TypeTransaction,
+        description: data.description,
+        categorie: data.categorie || '',
+        reference: data.reference || '',
+        compte_source: data.compte_source_id,
+        compte_destination: data.compte_destination_id,
+        statut: data.statut
       };
       return estModification 
-        ? modifierTransaction(id!, transactionData)
-        : creerTransaction(transactionData);
+        ? updateTransaction(id!, transactionData)
+        : createTransaction(transactionData);
     },
     {
       onSuccess: () => {

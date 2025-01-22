@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { creerProduit, modifierProduit, getProduit, verifierCodeUnique } from '../../services/inventaire';
+import { creerProduit, modifierProduit, getProduit } from '../../services/inventaire';
 import PageHeader from '../layout/PageHeader';
 import { LoadingButton } from '@mui/lab';
 import { Info, Help } from '@mui/icons-material';
@@ -52,7 +52,9 @@ const schema = yup.object({
         const product = await getProduit(currentId);
         if (product.code === value) return true;
       }
-      return await verifierCodeUnique(value);
+      return await getProduit(value)
+      .then(product => !product)
+      .catch(() => false);
     }),
   nom: yup.string()
     .required('Le nom est requis')
@@ -78,9 +80,10 @@ const schema = yup.object({
 
 const UNITES_MESURE = [
   { value: UniteMesure.KG, label: 'Kilogramme' },
-  { value: UniteMesure.L, label: 'Litre' },
+  { value: UniteMesure.LITRE, label: 'Litre' },
   { value: UniteMesure.UNITE, label: 'Unité' },
-  { value: UniteMesure.CARTON, label: 'Carton' }
+  { value: UniteMesure.TONNE, label: 'Tonne' },
+  { value: UniteMesure.METRE, label: 'Mètre' }
 ];
 
 const FormulaireProduit: React.FC = () => {

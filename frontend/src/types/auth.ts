@@ -1,4 +1,4 @@
-export interface User {
+export interface Utilisateur {
   id: string;
   email: string;
   nom: string;
@@ -7,14 +7,14 @@ export interface User {
   permissions: string[];
 }
 
-export interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+export interface ContexteAuthType {
+  utilisateur: Utilisateur | null;
+  estAuthentifie: boolean;
+  connexion: (nomUtilisateur: string, motDePasse: string) => Promise<void>;
+  deconnexion: () => void;
 }
 
-export interface LoginCredentials {
+export interface IdentifiantsConnexion {
   email: string;
-  password: string;
+  motDePasse: string;
 }

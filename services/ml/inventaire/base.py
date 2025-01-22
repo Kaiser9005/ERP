@@ -12,7 +12,7 @@ import joblib
 from models.inventory import CategoryProduit, Stock, MouvementStock
 from services.cache_service import cache_result
 
-class InventoryMLModel:
+class ModeleInventaireML:  # Renommé pour correspondre à l'import attendu
     """Modèle ML de base pour les prédictions d'inventaire"""
 
     def __init__(self):
@@ -33,7 +33,7 @@ class InventoryMLModel:
             stock.quantite,
             float(stock.valeur_unitaire or 0),
             1 if stock.date_peremption else 0,
-            (stock.date_peremption - datetime.utcnow()).days if stock.date_peremption else 0
+            (stock.date_peremption - datetime.now(datetime.timezone.utc)).days if stock.date_peremption else 0
         ])
 
         # Features des conditions actuelles
@@ -58,7 +58,7 @@ class InventoryMLModel:
 
         return np.array(features).reshape(1, -1)
 
-    @cache_result(timeout=3600)
+    @cache_result(ttl_seconds=3600)  # Changé de timeout à ttl_seconds
     def predict_stock_optimal(self, stock: Stock, mouvements: List[MouvementStock]) -> Dict:
         """Prédit le niveau de stock optimal"""
         if not self._is_trained:
@@ -71,7 +71,7 @@ class InventoryMLModel:
         return {
             "niveau_optimal": float(prediction),
             "confiance": float(self.model.score(features_scaled, [stock.quantite])),
-            "date_prediction": datetime.utcnow().isoformat()
+            "date_prediction": datetime.now(datetime.timezone.utc).isoformat()
         }
 
     def train(self, stocks: List[Stock], mouvements: Dict[str, List[MouvementStock]]):

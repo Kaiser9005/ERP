@@ -5,7 +5,8 @@ import {
   Typography,
   Box,
   Grid,
-  LinearProgress
+  LinearProgress,
+  Alert
 } from '@mui/material';
 import { useQuery } from 'react-query';
 import { productionService } from '../../services/production';
@@ -16,6 +17,9 @@ import {
   LocalFlorist,
   WaterDrop
 } from '@mui/icons-material';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { validate as uuidValidate } from 'uuid';
 
 interface StatCardProps {
   title: string;
@@ -38,96 +42,109 @@ const StatCard: React.FC<StatCardProps> = ({
   color,
   progress,
   trend
-}) => (
-  <Card>
-    <CardContent>
-      <Box display="flex" alignItems="center" mb={2}>
-        <Box
-          sx={{
-            backgroundColor: `${color}.lighter`,
-            borderRadius: '50%',
-            p: 1,
-            mr: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          {icon}
-        </Box>
-        <Typography variant="subtitle1" color="text.secondary">
-          {title}
-        </Typography>
-      </Box>
-
-      <Typography variant="h4" gutterBottom>
-        {value.toLocaleString()}
-        <Typography
-          component="span"
-          variant="subtitle1"
-          color="text.secondary"
-          sx={{ ml: 1 }}
-        >
-          {unit}
-        </Typography>
-      </Typography>
-
-      {progress !== undefined && (
-        <Box>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{ mb: 1, backgroundColor: `${color}.lighter` }}
-            color={color as any}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {progress}% de l'objectif
-          </Typography>
-        </Box>
-      )}
-
-      {trend && (
-        <Box display="flex" alignItems="center" mt={1}>
-          <TrendingUp
-            color={trend.isPositive ? 'success' : 'error'}
-            sx={{ mr: 1 }}
-          />
-          <Typography
-            variant="body2"
-            color={trend.isPositive ? 'success.main' : 'error.main'}
+}) => {
+  const { t } = useTranslation();
+  return (
+    <Card>
+      <CardContent>
+        <Box display="flex" alignItems="center" mb={2}>
+          <Box
+            sx={{
+              backgroundColor: `${color}.lighter`,
+              borderRadius: '50%',
+              p: 1,
+              mr: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            {trend.value}% par rapport au mois dernier
+            {icon}
+          </Box>
+          <Typography variant="subtitle1" color="text.secondary">
+            {t(title)}
           </Typography>
         </Box>
-      )}
-    </CardContent>
-  </Card>
-);
+
+        <Typography variant="h4" gutterBottom>
+          {value.toLocaleString()}
+          <Typography
+            component="span"
+            variant="subtitle1"
+            color="text.secondary"
+            sx={{ ml: 1 }}
+          >
+            {unit}
+          </Typography>
+        </Typography>
+
+        {progress !== undefined && (
+          <Box>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{ mb: 1, backgroundColor: `${color}.lighter` }}
+              color={color as any}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {t('production.stats.objectifCompletion', { progress })}
+            </Typography>
+          </Box>
+        )}
+
+        {trend && (
+          <Box display="flex" alignItems="center" mt={1}>
+            <TrendingUp
+              color={trend.isPositive ? 'success' : 'error'}
+              sx={{ mr: 1 }}
+            />
+            <Typography
+              variant="body2"
+              color={trend.isPositive ? 'success.main' : 'error.main'}
+            >
+              {trend.value}% par rapport au mois dernier
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const ProductionStats: React.FC = () => {
+  const { t } = useTranslation();
+  const { parcelle_id } = useParams();
+  let validatedParcelleId: string | undefined = undefined;
+  let isValidUUID = false;
+  if (parcelle_id) {
+    isValidUUID = uuidValidate(parcelle_id);
+    if (isValidUUID) {
+      validatedParcelleId = parcelle_id;
+    }
+  }
   const { data: stats, isLoading } = useQuery(
-    'production-stats',
-    () => productionService.getProductionStats('global')
+    ['production-stats', validatedParcelleId],
+    () => validatedParcelleId ? productionService.getProductionStats(validatedParcelleId) : Promise.reject('Invalid parcelle_id')
   );
 
   if (isLoading) {
-    return <Typography>Chargement...</Typography>;
+    return <Typography>{t('commun.chargement')}</Typography>;
   }
 
   if (!stats) {
-    return <Typography>Aucune donnée disponible</Typography>;
+    return <Typography>{t('commun.aucuneDonnee')}</Typography>;
   }
 
   return (
     <Box>
       <Typography variant="h5" gutterBottom>
-        Statistiques de Production
+        {t('production.stats.titre')}
       </Typography>
 
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Production Palmiers"
+            title="production.stats.palmier"
             value={stats.palmier.production_totale}
             unit="kg"
             icon={<Agriculture sx={{ color: 'primary.main' }} />}
@@ -142,7 +159,7 @@ const ProductionStats: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Production Papayes"
+            title="production.stats.papaye"
             value={stats.papaye.production_totale}
             unit="kg"
             icon={<LocalFlorist sx={{ color: 'success.main' }} />}
@@ -157,7 +174,7 @@ const ProductionStats: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Rendement Moyen"
+            title="production.stats.rendementMoyen"
             value={stats.rendement_moyen}
             unit="kg/ha"
             icon={<TrendingUp sx={{ color: 'info.main' }} />}
@@ -171,7 +188,7 @@ const ProductionStats: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Utilisation Eau"
+            title="production.stats.utilisationEau"
             value={stats.utilisation_eau}
             unit="m³"
             icon={<WaterDrop sx={{ color: 'warning.main' }} />}
@@ -186,18 +203,18 @@ const ProductionStats: React.FC = () => {
 
       <Box mt={3}>
         <Typography variant="subtitle1" gutterBottom>
-          Répartition par Culture
+          {t('production.stats.repartition')}
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" gutterBottom>
-                  {CultureType.PALMIER}
+                  {t(`culture.\${CultureType.PALMIER.toLowerCase()}`)}
                 </Typography>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">
-                    Surface Active
+                    {t('production.stats.surfaceActive')}
                   </Typography>
                   <Typography>
                     {stats.palmier.surface_active} hectares
@@ -205,7 +222,7 @@ const ProductionStats: React.FC = () => {
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="body2" color="text.secondary">
-                    Rendement
+                    {t('production.stats.rendement')}
                   </Typography>
                   <Typography>
                     {stats.palmier.rendement} kg/ha
@@ -219,11 +236,11 @@ const ProductionStats: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle2" gutterBottom>
-                  {CultureType.PAPAYE}
+                  {t(`culture.\${CultureType.PAPAYE.toLowerCase()}`)}
                 </Typography>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body2" color="text.secondary">
-                    Surface Active
+                    {t('production.stats.surfaceActive')}
                   </Typography>
                   <Typography>
                     {stats.papaye.surface_active} hectares
@@ -231,7 +248,7 @@ const ProductionStats: React.FC = () => {
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="body2" color="text.secondary">
-                    Rendement
+                    {t('production.stats.rendement')}
                   </Typography>
                   <Typography>
                     {stats.papaye.rendement} kg/ha

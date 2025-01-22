@@ -150,7 +150,7 @@ FOFAL ERP est un système de gestion intégré pour l'exploitation agricole FOFA
 - Analytics ML
 - Cache Redis optimisé
 
-### 4. Ressources Humaines (45%)
+### 4. Ressources Humaines (95%)
 - Gestion des employés
 - Gestion des contrats
   - Création et suivi des contrats

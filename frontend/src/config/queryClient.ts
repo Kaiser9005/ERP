@@ -62,7 +62,7 @@ export const queryKeys = {
     ecritures: () => [...queryKeys.comptabilite.all, 'ecritures'] as const,
     ecriture: (id: string) => [...queryKeys.comptabilite.ecritures(), id] as const,
     balance: () => [...queryKeys.comptabilite.all, 'balance'] as const,
-    grandLivre: () => [...queryKeys.comptabilite.all, 'grand-livre'] as const,
+    grandLivre: (p0?: { compte_id: string; date_debut: string; date_fin: string; }) => [...queryKeys.comptabilite.all, 'grand-livre'] as const,
     budgetAnalysis: (periode: string) => [...queryKeys.comptabilite.all, 'budget', 'analysis', periode] as const
   },
 

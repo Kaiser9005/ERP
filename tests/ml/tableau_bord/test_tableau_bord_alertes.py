@@ -5,7 +5,7 @@ Tests pour le service d'alertes du tableau de bord.
 import pytest
 from unittest.mock import AsyncMock
 
-from services.ml.tableau_bord.alertes import get_critical_alerts
+from services.ml.tableau_bord.alertes import get_critical_alerts, AlertPriority
 
 @pytest.mark.asyncio
 async def test_get_critical_alerts():
@@ -13,27 +13,27 @@ async def test_get_critical_alerts():
     # Configuration des mocks avec différentes priorités
     hr_service = AsyncMock()
     hr_service.get_critical_alerts.return_value = [
-        {"type": "hr", "message": "Alerte RH", "priority": 2}
+        {"type": "hr", "message": "Alerte RH", "priority": AlertPriority.ELEVEE}
     ]
 
     production_service = AsyncMock()
     production_service.get_critical_alerts.return_value = [
-        {"type": "production", "message": "Alerte Production", "priority": 1}
+        {"type": "production", "message": "Alerte Production", "priority": AlertPriority.MOYENNE}
     ]
 
     finance_service = AsyncMock()
     finance_service.get_critical_alerts.return_value = [
-        {"type": "finance", "message": "Alerte Finance", "priority": 3}
+        {"type": "finance", "message": "Alerte Finance", "priority": AlertPriority.CRITIQUE}
     ]
 
     inventory_service = AsyncMock()
     inventory_service.get_critical_alerts.return_value = [
-        {"type": "inventory", "message": "Alerte Stock", "priority": 1}
+        {"type": "inventory", "message": "Alerte Stock", "priority": AlertPriority.FAIBLE}
     ]
 
     weather_service = AsyncMock()
     weather_service.get_critical_alerts.return_value = [
-        {"type": "weather", "message": "Alerte Météo", "priority": 2}
+        {"type": "weather", "message": "Alerte Météo", "priority": AlertPriority.ELEVEE}
     ]
 
     # Exécution
@@ -53,7 +53,7 @@ async def test_get_critical_alerts():
     assert priorities == sorted(priorities, reverse=True)
     
     # Vérification que la première alerte est celle de plus haute priorité
-    assert alerts[0]["type"] == "finance"  # Priorité 3
+    assert alerts[0]["type"] == "finance"  # Priorité CRITIQUE
     
     # Vérification des appels aux services
     hr_service.get_critical_alerts.assert_called_once()
@@ -103,22 +103,22 @@ async def test_get_critical_alerts_error_handling():
 
     production_service = AsyncMock()
     production_service.get_critical_alerts.return_value = [
-        {"type": "production", "message": "Alerte Production", "priority": 1}
+        {"type": "production", "message": "Alerte Production", "priority": AlertPriority.MOYENNE}
     ]
 
     finance_service = AsyncMock()
     finance_service.get_critical_alerts.return_value = [
-        {"type": "finance", "message": "Alerte Finance", "priority": 2}
+        {"type": "finance", "message": "Alerte Finance", "priority": AlertPriority.ELEVEE}
     ]
 
     inventory_service = AsyncMock()
     inventory_service.get_critical_alerts.return_value = [
-        {"type": "inventory", "message": "Alerte Stock", "priority": 1}
+        {"type": "inventory", "message": "Alerte Stock", "priority": AlertPriority.FAIBLE}
     ]
 
     weather_service = AsyncMock()
     weather_service.get_critical_alerts.return_value = [
-        {"type": "weather", "message": "Alerte Météo", "priority": 2}
+        {"type": "weather", "message": "Alerte Météo", "priority": AlertPriority.ELEVEE}
     ]
 
     # Exécution
@@ -131,8 +131,11 @@ async def test_get_critical_alerts_error_handling():
     )
 
     # Vérifications
-    assert len(alerts) == 4  # Les alertes des services fonctionnels
-    assert all(alert["type"] != "hr" for alert in alerts)  # Pas d'alertes HR
+    assert len(alerts) == 5  # 4 alertes des services fonctionnels + 1 alerte système
+    system_alerts = [a for a in alerts if a["type"] == "SYSTEM"]
+    assert len(system_alerts) == 1
+    assert "Erreur HR" in system_alerts[0]["message"]
+    assert system_alerts[0]["priority"] == AlertPriority.CRITIQUE
 
 @pytest.mark.asyncio
 async def test_get_critical_alerts_priority_validation():
@@ -145,12 +148,12 @@ async def test_get_critical_alerts_priority_validation():
 
     production_service = AsyncMock()
     production_service.get_critical_alerts.return_value = [
-        {"type": "production", "message": "Alerte Production", "priority": "haute"}  # Priorité non numérique
+        {"type": "production", "message": "Alerte Production", "priority": "CRITIQUE"}  # Priorité non numérique
     ]
 
     finance_service = AsyncMock()
     finance_service.get_critical_alerts.return_value = [
-        {"type": "finance", "message": "Alerte Finance", "priority": 1}  # Priorité valide
+        {"type": "finance", "message": "Alerte Finance", "priority": AlertPriority.FAIBLE}  # Priorité valide
     ]
 
     inventory_service = AsyncMock()
@@ -169,6 +172,9 @@ async def test_get_critical_alerts_priority_validation():
     )
 
     # Vérifications
-    assert len(alerts) > 0
-    # Les alertes avec priorités invalides devraient avoir une priorité par défaut de 0
-    assert all(isinstance(alert.get("priority", 0), (int, float)) for alert in alerts)
+    assert len(alerts) == 3  # 3 alertes (hr, production, finance)
+    # Les alertes avec priorités invalides devraient avoir la priorité FAIBLE par défaut
+    for alert in alerts:
+        assert isinstance(alert["priority"], AlertPriority)
+        if alert["type"] in ["hr", "production"]:
+            assert alert["priority"] == AlertPriority.FAIBLE

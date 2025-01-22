@@ -1,17 +1,21 @@
 """Configuration de l'environnement Alembic pour les migrations de base de données."""
 
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, text
 from sqlalchemy import pool
 from alembic import context
 import os
 import sys
+import logging
 
 # Ajout du chemin racine au PYTHONPATH pour l'import des modèles
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from models.base import Base
 from core.config import settings
+
+# Configuration du logging
+logger = logging.getLogger('alembic.env')
 
 # Objet de configuration Alembic
 config = context.config
@@ -39,6 +43,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table_schema="public",
     )
 
     with context.begin_transaction():
@@ -60,14 +65,35 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-        )
+        try:
+            # Désactiver l'autocommit pour gérer manuellement les transactions
+            connection.execution_options(isolation_level="SERIALIZABLE")
+            
+            # Définir le schéma de recherche
+            connection.execute(text("SET search_path TO public"))
+            
+            # Configuration du contexte avec le schéma explicite
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+                compare_type=True,
+                version_table_schema="public",
+                transaction_per_migration=True,
+            )
 
-        with context.begin_transaction():
-            context.run_migrations()
+            # Exécuter les migrations dans une transaction
+            with context.begin_transaction():
+                logger.info("Début des migrations")
+                context.run_migrations()
+                logger.info("Migrations terminées avec succès")
+                
+                # Forcer le commit
+                connection.commit()
+
+        except Exception as e:
+            logger.error(f"Erreur pendant les migrations: {str(e)}")
+            connection.rollback()
+            raise
 
 # Choix du mode d'exécution
 if context.is_offline_mode():

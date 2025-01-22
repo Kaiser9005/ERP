@@ -4,32 +4,35 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Boolean, JSON
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 from models.base import Base
-from models.hr import Employee
+from models.hr import Employe
 
 class Formation(Base):
-    """Modèle pour les formations des employés"""
+    """Modèle pour les formations"""
     __tablename__ = "formations"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    titre = Column(String(100), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    nom = Column(String(100), nullable=False)
     description = Column(String(500))
-    type = Column(String(50), nullable=False)  # 'technique', 'securite', 'agricole'
-    duree = Column(Integer, nullable=False)  # En heures
-    competences_requises = Column(JSON)
-    competences_acquises = Column(JSON)
-    materiel_requis = Column(JSON)
-    conditions_meteo = Column(JSON)  # Conditions météo requises/restrictions
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    type = Column(String(50), nullable=False)  # technique, securite, management, qualite, autre
+    duree = Column(Integer)  # en heures
+    prerequis = Column(String(500))
+    created_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.now(datetime.timezone.utc))
+
+    # Relations
+    participations = relationship("ParticipationFormation", back_populates="formation")
+    details_agricoles = relationship("FormationAgricole", back_populates="formation", uselist=False)
+    sessions = relationship("SessionFormation", back_populates="formation")
 
 class SessionFormation(Base):
     """Modèle pour les sessions de formation"""
     __tablename__ = "sessions_formation"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    formation_id = Column(String(36), ForeignKey("formations.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    formation_id = Column(UUID(as_uuid=True), ForeignKey("formations.id"), nullable=False)
     date_debut = Column(DateTime, nullable=False)
     date_fin = Column(DateTime, nullable=False)
     lieu = Column(String(100))
@@ -37,18 +40,21 @@ class SessionFormation(Base):
     statut = Column(String(20), default="planifie")  # planifie, en_cours, termine, annule
     nb_places = Column(Integer)
     notes = Column(String(500))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.now(datetime.timezone.utc))
 
-    formation = relationship("Formation", backref="sessions")
+    # Relations
+    formation = relationship("Formation", back_populates="sessions")
+    participations = relationship("ParticipationFormation", back_populates="session")
 
 class ParticipationFormation(Base):
     """Modèle pour la participation des employés aux formations"""
     __tablename__ = "participations_formation"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    session_id = Column(String(36), ForeignKey("sessions_formation.id"), nullable=False)
-    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    formation_id = Column(UUID(as_uuid=True), ForeignKey("formations.id"), nullable=False)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions_formation.id"), nullable=False)
+    employe_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
     statut = Column(String(20), default="inscrit")  # inscrit, present, absent, complete
     note = Column(Integer)  # Note sur 100
     commentaires = Column(String(500))
@@ -57,16 +63,18 @@ class ParticipationFormation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    session = relationship("SessionFormation", backref="participations")
-    employee = relationship("Employee", backref="participations_formations")
+    # Relations
+    formation = relationship("Formation", back_populates="participations")
+    session = relationship("SessionFormation", back_populates="participations")
+    employe = relationship("Employe", back_populates="participations_formations")
 
 class Evaluation(Base):
     """Modèle pour les évaluations des employés"""
     __tablename__ = "evaluations"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
-    evaluateur_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    employe_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
+    evaluateur_id = Column(UUID(as_uuid=True), ForeignKey("employes.id"), nullable=False)
     date_evaluation = Column(DateTime, nullable=False)
     type = Column(String(50), nullable=False)  # periodique, formation, projet
     periode_debut = Column(DateTime)
@@ -82,5 +90,17 @@ class Evaluation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    employee = relationship("Employee", foreign_keys=[employee_id], backref="evaluations_recues")
-    evaluateur = relationship("Employee", foreign_keys=[evaluateur_id], backref="evaluations_donnees")
+    # Relations
+    employe = relationship("Employe", foreign_keys=[employe_id], back_populates="evaluations_recues")
+    evaluateur = relationship("Employe", foreign_keys=[evaluateur_id], back_populates="evaluations_donnees")
+    details_agricoles = relationship("EvaluationAgricole", back_populates="evaluation", uselist=False)
+
+class ThemeFormation(Base):
+    """Modèle pour les thèmes de formation"""
+    __tablename__ = "themes_formation"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    nom = Column(String(100), nullable=False)
+    description = Column(String(500))
+    created_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.now(datetime.timezone.utc))

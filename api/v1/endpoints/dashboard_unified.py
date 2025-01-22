@@ -1,32 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
+from sqlalchemy.orm import Session
 
-from services.dashboard_unified_service import DashboardUnifiedService
+from services.ml.tableau_bord.unification import TableauBordUnifieService
 from services.hr_analytics_service import HRAnalyticsService
 from services.production_service import ProductionService
 from services.finance_service import FinanceService
 from services.inventory_service import InventoryService
 from services.weather_service import WeatherService
-from services.projects_ml_service import ProjectsMLService
+from services.ml.projets.service import ProjetsMLService
 from services.cache_service import CacheService
+from db.database import get_db
 
 router = APIRouter()
 
-async def get_dashboard_service():
+async def get_dashboard_service(db: Session = Depends(get_db)):
     """Injection des dépendances pour le service dashboard unifié."""
-    return DashboardUnifiedService(
+    return TableauBordUnifieService(
         hr_service=HRAnalyticsService(),
         production_service=ProductionService(),
         finance_service=FinanceService(),
         inventory_service=InventoryService(),
         weather_service=WeatherService(),
-        projects_ml_service=ProjectsMLService(),
+        projets_ml=ProjetsMLService(db),
         cache_service=CacheService()
     )
 
-@router.get("/dashboard/unified", response_model=Dict[str, Any])
+@router.get("/unified", response_model=Dict[str, Any])
 async def get_unified_dashboard(
-    service: DashboardUnifiedService = Depends(get_dashboard_service)
+    service: TableauBordUnifieService = Depends(get_dashboard_service)
 ) -> Dict[str, Any]:
     """
     Récupère les données du dashboard unifié.
@@ -42,10 +44,10 @@ async def get_unified_dashboard(
             detail=f"Erreur lors de la récupération des données du dashboard: {str(e)}"
         )
 
-@router.get("/dashboard/module/{module}", response_model=Dict[str, Any])
+@router.get("/module/{module}", response_model=Dict[str, Any])
 async def get_module_details(
     module: str,
-    service: DashboardUnifiedService = Depends(get_dashboard_service)
+    service: TableauBordUnifieService = Depends(get_dashboard_service)
 ) -> Dict[str, Any]:
     """
     Récupère les détails d'un module spécifique.

@@ -1,202 +1,202 @@
 export interface ModuleStats {
   timestamp: string;
   modules: {
-    hr: HRSummary;
-    production: ProductionSummary;
-    finance: FinanceSummary;
-    inventory: InventorySummary;
-    weather: WeatherSummary;
-    projects: ProjectsSummary;
+    rh: ResumRH;
+    production: ResumeProduction;
+    finance: ResumeFinance;
+    inventaire: ResumeInventaire;
+    meteo: ResumeMeteo;
+    projets: ResumeProjets;
   };
-  alerts: Alert[];
-  predictions: MLPredictions;
+  alertes: Alerte[];
+  predictions: PredictionsML;
 }
 
-export interface HRSummary {
-  total_employees: number;
-  active_contracts: number;
-  completed_trainings: number;
-  training_completion_rate: number;
-  recent_activities: Activity[];
+export interface ResumRH {
+  total_employes: number;
+  contrats_actifs: number;
+  formations_terminees: number;
+  taux_completion_formation: number;
+  activites_recentes: Activite[];
 }
 
-export interface ProductionSummary {
-  daily_production: number;
-  efficiency_rate: number;
-  active_sensors: number;
-  quality_metrics: QualityMetrics;
-  recent_activities: Activity[];
+export interface ResumeProduction {
+  production_journaliere: number;
+  taux_efficacite: number;
+  capteurs_actifs: number;
+  metriques_qualite: MetriquesQualite;
+  activites_recentes: Activite[];
 }
 
-export interface FinanceSummary {
-  daily_revenue: number;
-  monthly_expenses: number;
-  cash_flow: number;
-  budget_status: BudgetStatus;
-  recent_transactions: Transaction[];
+export interface ResumeFinance {
+  revenu_journalier: number;
+  depenses_mensuelles: number;
+  tresorerie: number;
+  statut_budget: StatutBudget;
+  transactions_recentes: Transaction[];
 }
 
-export interface InventorySummary {
-  total_items: number;
-  low_stock_items: StockItem[];
-  stock_value: number;
-  recent_movements: StockMovement[];
+export interface ResumeInventaire {
+  total_articles: number;
+  articles_stock_bas: ArticleStock[];
+  valeur_stock: number;
+  mouvements_recents: MouvementStock[];
 }
 
-export interface WeatherSummary {
-  current_conditions: WeatherConditions;
-  daily_forecast: WeatherForecast[];
-  alerts: WeatherAlert[];
-  production_impact: ProductionImpact;
+export interface ResumeMeteo {
+  conditions_actuelles: ConditionsMeteo;
+  previsions_journalieres: PrevisionMeteo[];
+  alertes: AlerteMeteo[];
+  impact_production: ImpactProduction;
 }
 
-export interface ProjectsSummary {
-  active_projects: number;
-  completion_predictions: CompletionPrediction[];
-  resource_optimization: ResourceOptimization;
-  recent_activities: Activity[];
+export interface ResumeProjets {
+  projets_actifs: number;
+  predictions_completion: PredictionCompletion[];
+  optimisation_ressources: OptimisationRessources;
+  activites_recentes: Activite[];
 }
 
-export interface Activity {
+export interface Activite {
   id: string;
   type: string;
   description: string;
-  timestamp: string;
-  user: string;
+  horodatage: string;
+  utilisateur: string;
   module: string;
-  status: string;
+  statut: string;
 }
 
-export interface QualityMetrics {
-  overall_score: number;
-  defect_rate: number;
-  compliance_rate: number;
-  efficiency_score: number;
+export interface MetriquesQualite {
+  score_global: number;
+  taux_defauts: number;
+  taux_conformite: number;
+  score_efficacite: number;
 }
 
-export interface BudgetStatus {
-  current: number;
-  planned: number;
-  variance: number;
-  status: 'under' | 'over' | 'on_track';
+export interface StatutBudget {
+  actuel: number;
+  prevu: number;
+  ecart: number;
+  statut: 'inferieur' | 'superieur' | 'conforme';
 }
 
 export interface Transaction {
   id: string;
-  amount: number;
+  montant: number;
   type: string;
-  category: string;
-  timestamp: string;
+  categorie: string;
+  horodatage: string;
   description: string;
 }
 
-export interface StockItem {
+export interface ArticleStock {
   id: string;
-  name: string;
-  current_quantity: number;
-  minimum_quantity: number;
-  unit: string;
-  last_updated: string;
+  nom: string;
+  quantite_actuelle: number;
+  quantite_minimale: number;
+  unite: string;
+  derniere_maj: string;
 }
 
-export interface StockMovement {
+export interface MouvementStock {
   id: string;
-  item_id: string;
-  type: 'in' | 'out';
-  quantity: number;
-  timestamp: string;
-  reason: string;
+  article_id: string;
+  type: 'entree' | 'sortie';
+  quantite: number;
+  horodatage: string;
+  raison: string;
 }
 
-export interface WeatherConditions {
+export interface ConditionsMeteo {
   temperature: number;
-  humidity: number;
-  wind_speed: number;
+  humidite: number;
+  vitesse_vent: number;
   precipitation: number;
   condition: string;
 }
 
-export interface WeatherForecast {
+export interface PrevisionMeteo {
   date: string;
-  temperature_high: number;
-  temperature_low: number;
-  precipitation_chance: number;
+  temperature_max: number;
+  temperature_min: number;
+  probabilite_precipitation: number;
   condition: string;
 }
 
-export interface WeatherAlert {
+export interface AlerteMeteo {
   id: string;
   type: string;
-  severity: 'low' | 'medium' | 'high';
+  severite: 'faible' | 'moyenne' | 'elevee';
   description: string;
-  start_time: string;
-  end_time: string;
+  debut: string;
+  fin: string;
 }
 
-export interface ProductionImpact {
-  risk_level: 'low' | 'medium' | 'high';
-  affected_areas: string[];
-  recommendations: string[];
+export interface ImpactProduction {
+  niveau_risque: 'faible' | 'moyen' | 'eleve';
+  zones_affectees: string[];
+  recommandations: string[];
 }
 
-export interface CompletionPrediction {
-  project_id: string;
-  project_name: string;
-  predicted_completion: string;
-  confidence: number;
-  risk_factors: string[];
+export interface PredictionCompletion {
+  projet_id: string;
+  nom_projet: string;
+  completion_prevue: string;
+  confiance: number;
+  facteurs_risque: string[];
 }
 
-export interface ResourceOptimization {
-  recommendations: string[];
-  potential_savings: number;
-  efficiency_gain: number;
+export interface OptimisationRessources {
+  recommandations: string[];
+  economies_potentielles: number;
+  gain_efficacite: number;
 }
 
-export interface Alert {
+export interface Alerte {
   id: string;
   module: string;
   type: string;
-  severity: 'low' | 'medium' | 'high';
+  severite: 'faible' | 'moyenne' | 'elevee';
   message: string;
-  timestamp: string;
-  status: 'active' | 'acknowledged' | 'resolved';
-  priority: number;
+  horodatage: string;
+  statut: 'active' | 'reconnue' | 'resolue';
+  priorite: number;
 }
 
-export interface MLPredictions {
+export interface PredictionsML {
   production: {
-    output_forecast: number;
-    quality_prediction: number;
-    maintenance_predictions: string[];
+    prevision_sortie: number;
+    prediction_qualite: number;
+    predictions_maintenance: string[];
   };
   finance: {
-    revenue_forecast: number;
-    expense_forecast: number;
-    cash_flow_prediction: number;
+    prevision_revenus: number;
+    prevision_depenses: number;
+    prediction_tresorerie: number;
   };
-  inventory: {
-    stock_predictions: StockPrediction[];
-    reorder_recommendations: string[];
+  inventaire: {
+    predictions_stock: PredictionStock[];
+    recommandations_reapprovisionnement: string[];
   };
-  hr: {
-    attendance_forecast: number;
-    training_needs: string[];
-    performance_predictions: string[];
+  rh: {
+    prevision_presence: number;
+    besoins_formation: string[];
+    predictions_performance: string[];
   };
 }
 
-export interface StockPrediction {
-  item_id: string;
-  item_name: string;
-  predicted_quantity: number;
-  confidence: number;
-  reorder_point: number;
+export interface PredictionStock {
+  article_id: string;
+  nom_article: string;
+  quantite_prevue: number;
+  confiance: number;
+  seuil_reapprovisionnement: number;
 }
 
-export type ModuleType = 'hr' | 'production' | 'finance' | 'inventory' | 'weather' | 'projects';
+export type TypeModule = 'rh' | 'production' | 'finance' | 'inventaire' | 'meteo' | 'projets';
 
-export interface ModuleDetails {
-  module: ModuleType;
-  expanded: boolean;
+export interface DetailsModule {
+  module: TypeModule;
+  etendu: boolean;
 }

@@ -10,13 +10,13 @@ import pandas as pd
 
 from models.inventory import Stock, MouvementStock, CategoryProduit
 from services.cache_service import cache_result
-from .base import InventoryMLModel
+from .base import ModeleInventaireML
 
-class StockOptimizer:
+class OptimiseurStock:  # Renommé pour correspondre à l'import attendu
     """Optimiseur de stocks utilisant le ML"""
 
     def __init__(self):
-        self.base_model = InventoryMLModel()
+        self.base_model = ModeleInventaireML()
         self.optimizer = GradientBoostingRegressor(
             n_estimators=100,
             learning_rate=0.1,
@@ -25,7 +25,7 @@ class StockOptimizer:
         )
         self._is_trained = False
 
-    @cache_result(timeout=3600)
+    @cache_result(ttl_seconds=3600)
     def optimize_stock_levels(self, 
                             stock: Stock, 
                             mouvements: List[MouvementStock],
@@ -49,7 +49,7 @@ class StockOptimizer:
             "niveau_max": float(optimal_level * 1.2),  # Capacité maximale
             "ajustements": adjustments,
             "confiance": float(base_prediction["confiance"]),
-            "date_optimisation": datetime.utcnow().isoformat()
+            "date_optimisation": datetime.now(datetime.timezone.utc).isoformat()
         }
 
     def _calculate_adjustments(self, 
@@ -88,7 +88,7 @@ class StockOptimizer:
         monthly_avg = df.groupby('month')['quantite'].mean()
         
         # Facteur basé sur le mois actuel
-        current_month = datetime.utcnow().month
+        current_month = datetime.now(datetime.timezone.utc).month
         if current_month in monthly_avg.index:
             month_factor = monthly_avg[current_month] / monthly_avg.mean()
             return float(np.clip(month_factor, 0.8, 1.2))
@@ -100,7 +100,7 @@ class StockOptimizer:
         if not stock.date_peremption:
             return 1.0
 
-        days_until_expiry = (stock.date_peremption - datetime.utcnow()).days
+        days_until_expiry = (stock.date_peremption - datetime.now(datetime.timezone.utc)).days
         
         if days_until_expiry <= 0:
             return 0.5  # Réduction drastique pour produits périmés
@@ -138,7 +138,7 @@ class StockOptimizer:
 
         # Analyse des derniers mouvements
         recent_mouvements = [m for m in mouvements 
-                           if m.date_mouvement >= datetime.utcnow() - timedelta(days=30)]
+                           if m.date_mouvement >= datetime.now(datetime.timezone.utc) - timedelta(days=30)]
         
         if not recent_mouvements:
             return 1.0

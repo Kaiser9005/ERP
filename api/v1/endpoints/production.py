@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from models.hr import Employe
 from db.database import get_db
 from schemas.production import (
     ParcelleCreate, ParcelleUpdate, ParcelleInDB,
@@ -14,6 +15,8 @@ from core.security import get_current_user
 from uuid import UUID
 from datetime import date, datetime, timedelta
 from sqlalchemy import func
+
+from services.production_service import ProductionService
 
 router = APIRouter()
 
@@ -41,13 +44,23 @@ def list_parcelles(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Liste des parcelles avec filtres"""
-    query = db.query(Parcelle)
+    """Liste des parcelles avec filtres et nom du responsable"""
+    query = db.query(Parcelle).join(Employe, Parcelle.responsable_id == Employe.id)
     if culture_type:
         query = query.filter(Parcelle.culture_type == culture_type)
     if statut:
         query = query.filter(Parcelle.statut == statut)
-    return query.offset(skip).limit(limit).all()
+    
+    parcelles = query.offset(skip).limit(limit).all()
+    
+    # Enrichir les données avec le nom du responsable
+    parcelles_avec_responsable = []
+    for parcelle in parcelles:
+        parcelle_data = ParcelleInDB.model_validate(parcelle).dict()
+        parcelle_data['nom_responsable'] = parcelle.responsable.nom if parcelle.responsable else None
+        parcelles_avec_responsable.append(parcelle_data)
+    
+    return parcelles_avec_responsable
 
 @router.get("/parcelles/{parcelle_id}", response_model=ParcelleInDB)
 def get_parcelle(
@@ -182,29 +195,33 @@ def list_production_events(
 # Endpoints Statistiques
 
 @router.get("/stats/", response_model=ProductionStats)
-def get_production_stats(
+async def get_production_stats(
+    parcelle_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Obtenir les statistiques de production"""
-    total_surface = db.query(func.sum(Parcelle.surface_hectares)).scalar() or 0
-    parcelles_actives = db.query(Parcelle).filter(Parcelle.statut == "ACTIVE").count()
+    """Obtenir les statistiques de production pour une parcelle spécifique ou pour l'ensemble des parcelles"""
+    production_service = ProductionService(db)
+    stats = await production_service.get_production_stats(parcelle_id=str(parcelle_id) if parcelle_id else None)
+    return stats
 
-    # Récoltes du mois en cours
-    debut_mois = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    fin_mois = (debut_mois + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+@router.get("/graphique")
+async def get_production_graph(
+    periode: Optional[str] = Query("mois", description="Période d'agrégation: 'jour', 'semaine', 'mois'"),
+    date_debut: Optional[date] = Query(None),
+    date_fin: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Obtenir les données pour le graphique de production"""
+    if not date_debut:
+        date_debut = datetime.now().date() - timedelta(days=30)
+    if not date_fin:
+        date_fin = datetime.now().date()
 
-    production_mensuelle = db.query(func.sum(Recolte.quantite_kg))\
-        .filter(Recolte.date_recolte.between(debut_mois, fin_mois))\
-        .scalar() or 0
-
-    # Calcul du rendement moyen
-    rendement_moyen = production_mensuelle / total_surface if total_surface > 0 else 0
-
-    return ProductionStats(
-        total_surface=total_surface,
-        parcelles_actives=parcelles_actives,
-        recolte_en_cours=db.query(Recolte).filter(Recolte.date_recolte >= debut_mois).count(),
-        production_mensuelle=production_mensuelle,
-        rendement_moyen=rendement_moyen
+    production_service = ProductionService(db)
+    return await production_service.get_production_graph_data(
+        periode=periode,
+        date_debut=date_debut,
+        date_fin=date_fin
     )

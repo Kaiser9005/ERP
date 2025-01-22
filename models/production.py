@@ -42,6 +42,8 @@ class Parcelle(Base):
     responsable = relationship("Employe", back_populates="parcelles_gerees")
     cycles_culture = relationship("CycleCulture", back_populates="parcelle")
     recoltes = relationship("Recolte", back_populates="parcelle")
+    taches = relationship("Tache", back_populates="parcelle")
+    capteurs = relationship("IoTSensor", back_populates="parcelle")
 
 class CycleCulture(Base):
     """Modèle représentant un cycle de culture"""

@@ -201,6 +201,22 @@ const ParcelleForm: React.FC = () => {
 
               <Grid item xs={12} md={6}>
                 <Controller
+                  name="responsable_id"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Responsable"
+                      fullWidth
+                      error={!!errors.responsable_id}
+                      helperText={errors.responsable_id?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
                   name="coordonnees_gps.latitude"
                   control={control}
                   render={({ field }) => (

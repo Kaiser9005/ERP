@@ -86,7 +86,15 @@ export interface Balance {
   total_passif: number;
 }
 
-export interface GrandLivre {
+import { ReactNode } from 'react';
+
+export interface GrandLivreResponseType {
+  debit: number;
+  credit: number;
+  date(date: any): ReactNode;
+  piece: ReactNode;
+  libelle: ReactNode;
+  solde(solde: any): ReactNode;
   compte: {
     id: string;
     numero: string;
@@ -98,21 +106,37 @@ export interface GrandLivre {
     fin: string;
   };
   solde_initial: number;
-  ecritures: Array<{
-    date: string;
-    journal: string;
-    piece: string;
-    libelle: string;
-    debit: number;
-    credit: number;
-    solde_cumule: number;
-  }>;
+  ecritures: GrandLivreEcriture[];
   totaux: {
     debit: number;
     credit: number;
     solde: number;
   };
   metadata?: Record<string, any>;
+}
+
+export interface GetGrandLivreParams {
+  date_debut?: Date;
+  date_fin?: Date;
+  compte_id?: string[];
+}
+
+export interface GrandLivreEcriture {
+  credit: number;
+  debit: number;
+  id: string;
+  date: string;
+  piece: string;
+  libelle: string;
+  ecritures: Array<{
+    date: Date;
+    piece: string;
+    libelle: string;
+    debit: number;
+    credit: number;
+    solde_cumule: number;
+  }>;
+  solde?: number;
 }
 
 export interface BudgetAnalysis {
@@ -265,6 +289,12 @@ export interface ComptabiliteStats {
     value: number;
     type: 'increase' | 'decrease';
   };
+}
+
+export interface GetGrandLivreParams {
+  date_debut?: Date;
+  date_fin?: Date;
+  compte_id?: string[];
 }
 
 export interface CompteResultatType {

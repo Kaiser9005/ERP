@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Table
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 from datetime import datetime, timedelta
@@ -16,11 +16,7 @@ if root_dir not in sys.path:
 
 from main import app
 from db.database import Base, get_db
-from models import (
-    Utilisateur, Role, TypeRole,
-    Parcelle, Recolte, CultureType, ParcelleStatus,
-    Produit, Stock, CategoryProduit, UniteMesure
-)
+from models.auth import Utilisateur, Role, TypeRole, Permission, role_permission
 
 # Base de données en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -32,14 +28,31 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Créer uniquement les tables nécessaires pour les tests d'authentification
+def setup_test_db():
+    # Créer une nouvelle base de métadonnées pour les tests
+    from sqlalchemy import MetaData
+    metadata = MetaData()
+    
+    # Copier uniquement les tables nécessaires
+    for table in [Utilisateur.__table__, Role.__table__, Permission.__table__, role_permission]:
+        table.to_metadata(metadata)
+    
+    # Créer les tables
+    metadata.create_all(bind=engine)
+
 @pytest.fixture(scope="function")
 def db() -> Generator[Session, None, None]:
-    Base.metadata.create_all(bind=engine)
+    # Supprimer et recréer les tables avant chaque test
+    setup_test_db()
+    
     db = TestingSessionLocal()
     try:
         yield db
     finally:
+        db.rollback()  # S'assurer qu'aucune transaction n'est en cours
         db.close()
+        # Supprimer les tables après chaque test
         Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
@@ -48,7 +61,7 @@ def client(db: Session) -> Generator[TestClient, None, None]:
         try:
             yield db
         finally:
-            pass
+            db.rollback()  # S'assurer qu'aucune transaction n'est en cours
     
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
@@ -76,57 +89,6 @@ def test_user(db: Session) -> Utilisateur:
     db.commit()
     db.refresh(user)
     return user
-
-@pytest.fixture(scope="function")
-def test_data(db: Session, test_user: Utilisateur) -> Dict[str, Any]:
-    # Création d'une parcelle
-    parcelle = Parcelle(
-        code="P001",
-        culture_type=CultureType.PALMIER,
-        surface_hectares=10.5,
-        date_plantation=datetime.now().date(),
-        statut=ParcelleStatus.ACTIVE,
-        responsable_id=test_user.id
-    )
-    db.add(parcelle)
-
-    # Création de récoltes
-    for i in range(5):
-        recolte = Recolte(
-            parcelle_id=parcelle.id,
-            date_recolte=(datetime.now() - timedelta(days=i)).date(),
-            quantite_kg=500 + i * 100,
-            qualite="A",
-            equipe_recolte=[str(test_user.id)]
-        )
-        db.add(recolte)
-
-    # Création de produits et stocks
-    produit = Produit(
-        code="PRD001",
-        nom="Engrais NPK",
-        categorie=CategoryProduit.INTRANT,
-        unite_mesure=UniteMesure.KG,
-        seuil_alerte=100,
-        prix_unitaire=1500
-    )
-    db.add(produit)
-
-    stock = Stock(
-        produit_id=produit.id,
-        quantite=250,
-        valeur_unitaire=1500
-    )
-    db.add(stock)
-
-    db.commit()
-    return {
-        "parcelle": parcelle,
-        "produit": produit,
-        "stock": stock
-    }
-
-# Nouvelles fixtures pour les tests ML
 
 @pytest.fixture(scope="function")
 def ml_test_data() -> Dict[str, Any]:

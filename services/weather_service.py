@@ -6,9 +6,10 @@ from redis import Redis
 from fastapi import HTTPException
 from core.config import settings
 from services.notification_service import NotificationService
+from models.notification import TypeNotification, ModuleNotification
 
 class WeatherService:
-    def __init__(self):
+    def __init__(self, db=None):
         self.api_key = settings.WEATHER_API_KEY
         self.base_url = settings.WEATHER_API_URL
         self.location = "Ebondi,Cameroon"  # Localisation des plantations FOFAL
@@ -259,10 +260,12 @@ class WeatherService:
             "details": error_details,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
-        await self.notification_service.send_notification(
-            "admin",
-            "Erreur Service Météo",
-            json.dumps(error_data)
+        await self.notification_service.create_notification(
+            titre="Erreur Service Météo",
+            message=json.dumps(error_data),
+            type=TypeNotification.ERROR,
+            module=ModuleNotification.WEATHER,
+            destinataire_id="admin"
         )
 
     async def _send_risk_notification(self, risks: Dict[str, Any]) -> None:
@@ -273,8 +276,10 @@ class WeatherService:
         if risks["temperature"]["level"] == "HIGH":
             message += f"- Température: {risks['temperature']['message']}"
         
-        await self.notification_service.send_notification(
-            "production",
-            "Alerte Risque Météo",
-            message
+        await self.notification_service.create_notification(
+            titre="Alerte Risque Météo",
+            message=message,
+            type=TypeNotification.WARNING,
+            module=ModuleNotification.WEATHER,
+            destinataire_id="production"
         )

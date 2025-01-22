@@ -47,7 +47,23 @@ class Payroll(Base):
     # Métadonnées
     created_at = Column(Date, nullable=False, default=date.today)
     updated_at = Column(Date, nullable=False, default=date.today, onupdate=date.today)
+
+    def __repr__(self):
+        return f"<Payroll {self.id} - {self.contract.employee.name} - {self.period_start}>"
+
+class LignePaie(Base):
+    """Modèle pour les lignes de paie"""
+    __tablename__ = "hr_payroll_lines"
+
+    id = Column(String, primary_key=True)
+    payroll_id = Column(String, ForeignKey("hr_payrolls.id"), nullable=False)
+    description = Column(String(200), nullable=False)
+    amount = Column(Float, nullable=False)
+    type = Column(String(50), nullable=False) # bonus, deduction, contribution
     
+    # Relations
+    payroll = relationship("Payroll", backref="lines")
+
     def __repr__(self):
         return f"<Payroll {self.id} - {self.contract.employee.name} - {self.period_start}>"
     
@@ -63,7 +79,7 @@ class Payroll(Base):
         
         # Calcul du net
         self.net_total = self.gross_total - self.employee_contributions
-        
+
         return self.gross_total, self.net_total
     
     def to_dict(self):

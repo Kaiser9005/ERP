@@ -7,7 +7,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 from typing import Dict, Any
 
-from .utils import (
+from tests.ml.utils import (
     generate_test_predictions,
     generate_test_alerts,
     clear_test_cache,
@@ -75,19 +75,19 @@ def mock_ml_services():
     weather_service.get_current_conditions.return_value = {}
     weather_service.get_daily_forecast.return_value = []
 
-    projects_ml_service = AsyncMock()
-    projects_ml_service.get_production_predictions.return_value = {
+    projets_ml = AsyncMock()  # Renommé de projects_ml_service à projets_ml
+    projets_ml.get_production_predictions.return_value = {
         "yield_prediction": 1200,
         "quality_prediction": 0.95
     }
-    projects_ml_service.get_finance_predictions.return_value = {
+    projets_ml.get_finance_predictions.return_value = {
         "revenue_prediction": 150000,
         "expense_prediction": 120000
     }
-    projects_ml_service.get_inventory_predictions.return_value = {
+    projets_ml.get_inventory_predictions.return_value = {
         "stock_level_predictions": {"item_1": 100}
     }
-    projects_ml_service.get_hr_predictions.return_value = {
+    projets_ml.get_hr_predictions.return_value = {
         "turnover_prediction": 0.15
     }
 
@@ -95,13 +95,13 @@ def mock_ml_services():
     cache_service.get.return_value = None
 
     return {
-        "hr": hr_service,
-        "production": production_service,
-        "finance": finance_service,
-        "inventory": inventory_service,
-        "weather": weather_service,
-        "projects_ml": projects_ml_service,
-        "cache": cache_service
+        "hr_service": hr_service,
+        "production_service": production_service,
+        "finance_service": finance_service,
+        "inventory_service": inventory_service,
+        "weather_service": weather_service,
+        "projets_ml": projets_ml,  # Renommé pour correspondre au service
+        "cache_service": cache_service
     }
 
 @pytest.fixture

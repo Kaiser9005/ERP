@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from models.inventory import Stock, MouvementStock, CategoryProduit
 from services.cache_service import cache_result
 
-class StockAnalyzer:
+class AnalyseurStock:  # Renommé pour correspondre à la nomenclature française
     """Analyseur de stocks utilisant le ML"""
 
     def __init__(self):
@@ -20,7 +20,7 @@ class StockAnalyzer:
         self.cluster_model = KMeans(n_clusters=3, random_state=42)
         self._is_trained = False
 
-    @cache_result(timeout=3600)
+    @cache_result(ttl_seconds=3600)
     def analyze_stock_patterns(self, 
                              stock: Stock,
                              mouvements: List[MouvementStock],
@@ -32,7 +32,7 @@ class StockAnalyzer:
                 "saisonnalite": None,
                 "anomalies": [],
                 "recommendations": ["Données insuffisantes pour l'analyse"],
-                "date_analyse": datetime.utcnow().isoformat()
+                "date_analyse": datetime.now(datetime.timezone.utc).isoformat()
             }
 
         # Création du DataFrame pour l'analyse
@@ -58,7 +58,7 @@ class StockAnalyzer:
             "saisonnalite": saisonnalite,
             "anomalies": anomalies,
             "recommendations": recommendations,
-            "date_analyse": datetime.utcnow().isoformat()
+            "date_analyse": datetime.now(datetime.timezone.utc).isoformat()
         }
 
     def _prepare_dataframe(self, 
@@ -66,7 +66,7 @@ class StockAnalyzer:
                           mouvements: List[MouvementStock],
                           periode_jours: int) -> pd.DataFrame:
         """Prépare les données pour l'analyse"""
-        date_debut = datetime.utcnow() - timedelta(days=periode_jours)
+        date_debut = datetime.now(datetime.timezone.utc) - timedelta(days=periode_jours)
         
         # Création du DataFrame des mouvements
         df = pd.DataFrame([{
@@ -187,7 +187,7 @@ class StockAnalyzer:
         # Recommandations basées sur la saisonnalité
         if saisonnalite:
             patterns_mois = saisonnalite["patterns_mois"]
-            mois_actuel = str(datetime.utcnow().month)
+            mois_actuel = str(datetime.now(datetime.timezone.utc).month)
             if mois_actuel in patterns_mois:
                 if patterns_mois[mois_actuel] > 0:
                     recommendations.append(

@@ -168,23 +168,3 @@ export const getVueBudget = async (periode: string): Promise<VueBudgetaire[]> =>
 
 // Alias pour la compatibilité avec le code existant
 export { getStatsFinance as getFinanceStats };
-
-export default {
-  getTransactions,
-  getTransaction,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
-  getBudgets,
-  getBudget,
-  createBudget,
-  updateBudget,
-  deleteBudget,
-  getBudgetAnalysis,
-  getAnalyseBudget,
-  getDonneesTresorerie,
-  getProjectionsFinancieres,
-  getCashFlowData,
-  getStatsFinance,
-  getVueBudget
-};

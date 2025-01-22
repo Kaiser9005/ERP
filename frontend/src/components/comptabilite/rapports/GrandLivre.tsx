@@ -17,7 +17,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import type { CompteComptable, LigneGrandLivre } from '../../../types/comptabilite';
+import type { CompteComptable, GrandLivreEcriture, GrandLivreResponseType } from '../../../types/comptabilite';
 import { getComptes, getGrandLivre } from '../../../services/comptabilite';
 import { formatCurrency, formatDate } from '../../../utils/format';
 import { queryKeys } from '../../../config/queryClient';
@@ -27,7 +27,7 @@ interface QueryError {
 }
 
 const GrandLivre: React.FC = () => {
-  const [selectedCompte, setSelectedCompte] = useState<string>('');
+  const [selectedCompte, setSelectedCompte] = useState<string[]>([]);
   const [dateDebut, setDateDebut] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
@@ -42,9 +42,9 @@ const GrandLivre: React.FC = () => {
     queryFn: () => getComptes()
   });
 
-  const { data: lignes = [], isLoading: loadingLignes, error: lignesError, refetch: refetchLignes } = useQuery<LigneGrandLivre[], QueryError>({
+  const { data: grandLivreData, isLoading: loadingLignes, error: lignesError, refetch: refetchLignes } = useQuery<{ ecritures: GrandLivreEcriture[], solde_initial: number }, QueryError>({
     queryKey: queryKeys.comptabilite.grandLivre({
-      compte_id: selectedCompte,
+      compte_id: selectedCompte.join(','),
       date_debut: dateDebut,
       date_fin: dateFin
     }),
@@ -56,6 +56,9 @@ const GrandLivre: React.FC = () => {
     enabled: !!selectedCompte
   });
 
+  const lignes = grandLivreData?.ecritures || [];
+  const soldeInitial = grandLivreData?.solde_initial || 0;
+
   const handleSearch = () => {
     if (!selectedCompte) return;
     refetchLignes();
@@ -64,15 +67,15 @@ const GrandLivre: React.FC = () => {
   const calculateTotals = () => {
     return lignes.reduce(
       (acc, ligne) => ({
-        debit: acc.debit + ligne.debit,
-        credit: acc.credit + ligne.credit,
+        debit: acc.debit + (ligne.ecritures[0]?.debit || 0),
+        credit: acc.credit + (ligne.ecritures[0]?.credit || 0),
       }),
       { debit: 0, credit: 0 }
     );
   };
 
   const getCompteInfo = () => {
-    const compte = comptes.find(c => c.id === selectedCompte);
+    const compte = comptes.find(c => selectedCompte.includes(c.id));
     return compte ? `${compte.numero} - ${compte.libelle}` : '';
   };
 
@@ -92,8 +95,8 @@ const GrandLivre: React.FC = () => {
             label="Compte"
             select
             fullWidth
-            value={selectedCompte}
-            onChange={(e) => setSelectedCompte(e.target.value)}
+            value={selectedCompte[0] || ''}
+            onChange={(e) => setSelectedCompte([e.target.value])}
             disabled={loadingComptes}
           >
             {comptes.map((compte) => (
@@ -175,9 +178,9 @@ const GrandLivre: React.FC = () => {
                     <TableCell>{formatDate(ligne.date)}</TableCell>
                     <TableCell>{ligne.piece}</TableCell>
                     <TableCell>{ligne.libelle}</TableCell>
-                    <TableCell align="right">{formatCurrency(ligne.debit)}</TableCell>
-                    <TableCell align="right">{formatCurrency(ligne.credit)}</TableCell>
-                    <TableCell align="right">{formatCurrency(ligne.solde)}</TableCell>
+                    <TableCell align="right">{formatCurrency(ligne.ecritures[0]?.debit)}</TableCell>
+                    <TableCell align="right">{formatCurrency(ligne.ecritures[0]?.credit)}</TableCell>
+                    <TableCell align="right">{formatCurrency(ligne.solde || 0)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow>
@@ -196,7 +199,7 @@ const GrandLivre: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="subtitle1" component="div">
-                      {formatCurrency(lignes[lignes.length - 1]?.solde || 0)}
+                      {formatCurrency(grandLivreData?.solde_initial || 0 + calculateTotals().debit - calculateTotals().credit)}
                     </Typography>
                   </TableCell>
                 </TableRow>

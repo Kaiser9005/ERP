@@ -37,6 +37,25 @@ class RoleResponse(RoleBase):
     class Config:
         orm_mode = True
 
+class FirstAdminCreate(BaseModel):
+    """Schéma pour la création du premier administrateur"""
+    username: str
+    email: EmailStr
+    password: str
+    nom: str
+    prenom: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "username": "admin",
+                "email": "admin@example.com",
+                "password": "StrongP@ssw0rd",
+                "nom": "Admin",
+                "prenom": "Super"
+            }
+        }
+
 class UserCreate(BaseModel):
     email: EmailStr
     username: str
@@ -61,6 +80,8 @@ class UserResponse(BaseModel):
     prenom: str
     role: RoleResponse
     is_active: bool
+    is_superuser: bool
+    is_staff: bool
     preferences: Optional[Dict]
     derniere_connexion: Optional[str]
 

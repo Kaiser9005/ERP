@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
-from models.task import Task, TaskStatus
+from models.tache import Tache as Task, StatutTache as TaskStatus  # Renommé pour utiliser les noms français
 from models.resource import Resource, ResourceType
 from models.iot_sensor import IoTSensor, SensorType, SensorStatus
 from services.weather_service import WeatherService
@@ -22,7 +22,7 @@ class ProjectsMLService:
         """Initialisation du service."""
         self.db = db
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.cache = CacheService()
         
         # Initialisation du modèle ML
@@ -72,12 +72,12 @@ class ProjectsMLService:
         for sensor in sensors:
             readings = await self.iot_service.get_sensor_readings(
                 sensor.id,
-                start_date=datetime.utcnow() - timedelta(days=7)
+                start_date=datetime.now(datetime.timezone.utc) - timedelta(days=7)  # Utilisation de timezone.utc
             )
             
             stats = await self.iot_service.get_sensor_stats(
                 sensor.id,
-                start_date=datetime.utcnow() - timedelta(days=7)
+                start_date=datetime.now(datetime.timezone.utc) - timedelta(days=7)  # Utilisation de timezone.utc
             )
             
             health = await self.iot_service.check_sensor_health(sensor.id)

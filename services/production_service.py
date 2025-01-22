@@ -18,7 +18,7 @@ from models.production import (
 )
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
-from services.production_ml_service import ProductionMLService
+from services.ml.production.service import ProductionMLService
 from services.cache_service import CacheService
 
 class ProductionService:
@@ -27,7 +27,7 @@ class ProductionService:
     def __init__(self, db: Session):
         self.db = db
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.ml_service = ProductionMLService(db)
         self.cache = CacheService()
 
@@ -276,3 +276,45 @@ class ProductionService:
             } for rec in meteo_impact["recommandations"]])
             
         return recommendations
+
+    async def get_production_graph_data(
+        self,
+        periode: str = "mois",
+        date_debut: Optional[date] = None,
+        date_fin: Optional[date] = None
+    ) -> Dict[str, Any]:
+        """Récupère les données pour le graphique de production"""
+        if not date_debut:
+            date_debut = datetime.now().date() - timedelta(days=30)
+        if not date_fin:
+            date_fin = datetime.now().date()
+
+        # Requête de base pour les récoltes
+        query = self.db.query(
+            func.date_trunc(periode, Recolte.date_recolte).label('periode'),
+            func.sum(Recolte.quantite_kg).label('quantite')
+        ).filter(
+            Recolte.date_recolte.between(date_debut, date_fin)
+        )
+
+        # Groupement selon la période
+        query = query.group_by(func.date_trunc(periode, Recolte.date_recolte))
+        query = query.order_by(func.date_trunc(periode, Recolte.date_recolte))
+
+        # Exécution de la requête
+        resultats = query.all()
+
+        # Formatage des données
+        donnees = []
+        for resultat in resultats:
+            donnees.append({
+                "periode": resultat.periode.strftime("%Y-%m-%d"),
+                "quantite": float(resultat.quantite)
+            })
+
+        return {
+            "periode": periode,
+            "date_debut": date_debut.isoformat(),
+            "date_fin": date_fin.isoformat(),
+            "donnees": donnees
+        }

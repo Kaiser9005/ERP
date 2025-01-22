@@ -57,7 +57,8 @@ const JournauxList: React.FC = () => {
         date_debut: new Date(dateDebut),
         date_fin: new Date(dateFin)
       });
-      setEcritures(data);
+      const ecrituresData: EcritureComptable[] = data;
+      setEcritures(ecrituresData);
       setOpenDialog(true);
     } catch (error) {
       console.error('Erreur lors du chargement des écritures:', error);
@@ -77,7 +78,8 @@ const JournauxList: React.FC = () => {
           date_debut: new Date(dateDebut),
           date_fin: new Date(dateFin)
         });
-        setEcritures(data);
+        const ecrituresData: EcritureComptable[] = data;
+        setEcritures(ecrituresData);
       } catch (error) {
         console.error('Erreur lors du chargement des écritures:', error);
       }

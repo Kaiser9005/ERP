@@ -9,8 +9,8 @@ Ce module fournit des services d'apprentissage automatique pour :
 """
 
 from .base import BaseProductionML
-from .rendement import RendementPredictor
-from .cycle import CycleOptimizer
+from .rendement import PredicteurRendement
+from .cycle import OptimiseurCycle
 from .meteo import MeteoAnalyzer
 from .qualite import QualitePredictor
 from .service import ProductionMLService
@@ -18,8 +18,8 @@ from .service import ProductionMLService
 __all__ = [
     'BaseProductionML',
     'ProductionMLService',
-    'RendementPredictor',
-    'CycleOptimizer', 
+    'PredicteurRendement',
+    'OptimiseurCycle',
     'MeteoAnalyzer',
     'QualitePredictor'
 ]

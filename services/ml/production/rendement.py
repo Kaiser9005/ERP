@@ -11,13 +11,13 @@ from .base import BaseProductionML
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
 
-class RendementPredictor(BaseProductionML):
+class PredicteurRendement(BaseProductionML):
     """Service ML pour la prédiction des rendements"""
     
     def __init__(self, db: Session):
         super().__init__(db)
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
 
     async def predict_rendement(
         self,

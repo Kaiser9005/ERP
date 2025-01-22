@@ -1,18 +1,18 @@
 import axios from 'axios';
-import { ModuleStats, ModuleType } from '../types/dashboard';
+import { ModuleStats, TypeModule } from '../types/dashboard';
 
 const BASE_URL = '/api/v1/dashboard';
 
-export const DashboardService = {
+export const ServiceTableauBord = {
   /**
-   * Récupère les données du dashboard unifié
+   * Récupère les données du tableau de bord unifié
    */
-  async getUnifiedDashboard(): Promise<ModuleStats> {
+  async getTableauBordUnifie(): Promise<ModuleStats> {
     try {
       const response = await axios.get(`${BASE_URL}/unified`);
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des données du dashboard:', error);
+      console.error('Erreur lors de la récupération des données du tableau de bord:', error);
       throw error;
     }
   },
@@ -21,7 +21,7 @@ export const DashboardService = {
    * Récupère les détails d'un module spécifique
    * @param module - Le module dont on veut récupérer les détails
    */
-  async getModuleDetails(module: ModuleType): Promise<any> {
+  async getDetailsModule(module: TypeModule): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/module/${module}`);
       return response.data;
@@ -35,7 +35,7 @@ export const DashboardService = {
    * Rafraîchit les données d'un module spécifique
    * @param module - Le module à rafraîchir
    */
-  async refreshModule(module: ModuleType): Promise<any> {
+  async rafraichirModule(module: TypeModule): Promise<any> {
     try {
       const response = await axios.post(`${BASE_URL}/module/${module}/refresh`);
       return response.data;
@@ -48,7 +48,7 @@ export const DashboardService = {
   /**
    * Récupère les alertes critiques de tous les modules
    */
-  async getCriticalAlerts(): Promise<any> {
+  async getAlertesCritiques(): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/alerts/critical`);
       return response.data;
@@ -61,7 +61,7 @@ export const DashboardService = {
   /**
    * Récupère les prédictions ML pour tous les modules
    */
-  async getMLPredictions(): Promise<any> {
+  async getPredictionsML(): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/predictions`);
       return response.data;
@@ -73,27 +73,27 @@ export const DashboardService = {
 
   /**
    * Met à jour le statut d'une alerte
-   * @param alertId - L'ID de l'alerte
-   * @param status - Le nouveau statut
+   * @param idAlerte - L'ID de l'alerte
+   * @param statut - Le nouveau statut
    */
-  async updateAlertStatus(alertId: string, status: 'acknowledged' | 'resolved'): Promise<any> {
+  async mettreAJourStatutAlerte(idAlerte: string, statut: 'reconnue' | 'resolue'): Promise<any> {
     try {
-      const response = await axios.put(`${BASE_URL}/alerts/${alertId}`, { status });
+      const response = await axios.put(`${BASE_URL}/alerts/${idAlerte}`, { status: statut });
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors de la mise à jour du statut de l'alerte ${alertId}:`, error);
+      console.error(`Erreur lors de la mise à jour du statut de l'alerte ${idAlerte}:`, error);
       throw error;
     }
   },
 
   /**
    * Récupère l'historique des activités pour tous les modules
-   * @param limit - Nombre d'activités à récupérer
+   * @param limite - Nombre d'activités à récupérer
    */
-  async getRecentActivities(limit: number = 10): Promise<any> {
+  async getActivitesRecentes(limite: number = 10): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/activities/recent`, {
-        params: { limit }
+        params: { limit: limite }
       });
       return response.data;
     } catch (error) {
@@ -105,7 +105,7 @@ export const DashboardService = {
   /**
    * Récupère les données de performance pour tous les modules
    */
-  async getPerformanceMetrics(): Promise<any> {
+  async getMetriquesPerformance(): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/performance`);
       return response.data;
@@ -118,7 +118,7 @@ export const DashboardService = {
   /**
    * Récupère les recommandations d'optimisation pour tous les modules
    */
-  async getOptimizationRecommendations(): Promise<any> {
+  async getRecommandationsOptimisation(): Promise<any> {
     try {
       const response = await axios.get(`${BASE_URL}/recommendations`);
       return response.data;
@@ -129,4 +129,4 @@ export const DashboardService = {
   }
 };
 
-export default DashboardService;
+export default ServiceTableauBord;

@@ -9,15 +9,16 @@ import logging
 import torch
 import numpy as np
 from dataclasses import dataclass
+from sqlalchemy.orm import Session
 
 from models.inventory import Stock, MouvementStock
 from services.cache_service import cache_result
 from services.weather_service import WeatherService
 from services.iot_service import IoTService
-from services.ml.inventaire.base import ModeleInventaireML as InventoryMLModel
-from services.ml.inventaire.optimization import OptimiseurStock as StockOptimizer
-from services.ml.inventaire.analysis import AnalyseurStock as StockAnalyzer
-from services.ml.inventaire.quality import PredicteurQualite as QualityPredictor
+from services.ml.inventaire.base import ModeleInventaireML
+from services.ml.inventaire.optimization import OptimiseurStock
+from services.ml.inventaire.analysis import AnalyseurStock
+from services.ml.inventaire.quality import PredicteurQualite
 from services.ml.core.config import (
     get_model_config,
     get_cache_config,
@@ -41,21 +42,22 @@ class MLContext:
 class InventoryMLService:
     """Service principal ML optimisé pour l'inventaire"""
 
-    def __init__(self):
+    def __init__(self, db: Session):
         # Configuration optimisée
+        self.db = db
         self.resource_limits = get_resource_limits()
         self.monitoring_config = get_monitoring_config()
         self.cache_config = get_cache_config()
         
         # Initialisation modèles avec optimisations
-        self.base_model = self._init_model(InventoryMLModel())
-        self.optimizer = self._init_model(StockOptimizer())
-        self.analyzer = self._init_model(StockAnalyzer())
-        self.quality_predictor = self._init_model(QualityPredictor())
+        self.base_model = self._init_model(ModeleInventaireML())
+        self.optimizer = self._init_model(OptimiseurStock())
+        self.analyzer = self._init_model(AnalyseurStock())
+        self.quality_predictor = self._init_model(PredicteurQualite())
         
         # Services externes
-        self.weather_service = WeatherService()
-        self.iot_service = IoTService()
+        self.weather_service = WeatherService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         
         # État et optimisations
         self._is_trained = False
@@ -120,7 +122,7 @@ class InventoryMLService:
             resource_limits=self.resource_limits
         )
 
-    @cache_result(timeout=3600)
+    @cache_result(ttl_seconds=3600)
     def get_stock_insights(self,
                           stock: Stock,
                           mouvements: List[MouvementStock],

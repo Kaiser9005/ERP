@@ -17,12 +17,26 @@ import {
   Chip
 } from '@mui/material';
 import { useQuery } from 'react-query';
-import { getAnalyseBudget, AnalyseBudgetaire } from '../../services/finance';
+import { getAnalyseBudget } from '../../services/finance';
+import type { AnalyseBudgetaire } from '../../types/finance';
 import { formatCurrency } from '../../utils/format';
-import { useTheme } from '@mui/material/styles';
+
+interface CategoryData {
+  prevu: number;
+  realise: number;
+  ecart: number;
+  ecart_pourcentage: number;
+}
+
+interface ImpactMeteo {
+    score: number;
+    facteurs: string[];
+    projections: {
+      [key: string]: string;
+    };
+  }
 
 const AnalyseBudget: React.FC = () => {
-  const theme = useTheme();
   const periodeActuelle = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const { data: analyse, isLoading, error } = useQuery<AnalyseBudgetaire>(
@@ -105,7 +119,7 @@ const AnalyseBudget: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(analyse.categories).map(([categorie, donnees]) => (
+            {Object.entries(analyse.categories).map(([categorie, donnees]: [string, CategoryData]) => (
               <TableRow key={categorie}>
                 <TableCell>{categorie}</TableCell>
                 <TableCell align="right">{formatCurrency(donnees.prevu)}</TableCell>
@@ -143,7 +157,7 @@ const AnalyseBudget: React.FC = () => {
           <Typography variant="subtitle1" gutterBottom>
             Projections par catégorie :
           </Typography>
-          {Object.entries(analyse.impact_meteo.projections).map(([categorie, projection]) => (
+          {Object.entries(analyse.impact_meteo.projections).map(([categorie, projection]: [string, string]) => (
             <Typography key={categorie} color="textSecondary" paragraph>
               <strong>{categorie}:</strong> {projection}
             </Typography>
@@ -157,7 +171,7 @@ const AnalyseBudget: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Recommandations
           </Typography>
-          {analyse.recommandations.map((recommandation, index) => (
+          {analyse.recommandations.map((recommandation: string, index: number) => (
             <Alert key={index} severity="info" sx={{ mb: 1 }}>
               {recommandation}
             </Alert>

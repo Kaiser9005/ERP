@@ -21,7 +21,7 @@ from models.comptabilite import (
     ExerciceComptable
 )
 from models.production import Parcelle, CycleCulture
-from models.iot_sensor import IoTSensor, SensorData
+from models.iot_sensor import IoTSensor, SensorReading
 from models.finance import Transaction, Budget, CategorieTransaction
 
 from services.weather_service import WeatherService

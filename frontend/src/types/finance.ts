@@ -10,7 +10,9 @@ export interface Compte {
 export enum TypeTransaction {
   RECETTE = 'RECETTE',
   DEPENSE = 'DEPENSE',
-  VIREMENT = 'VIREMENT'
+  VIREMENT = 'VIREMENT',
+  ENTREE = "ENTREE",
+  SORTIE = "SORTIE"
 }
 
 export enum StatutTransaction {

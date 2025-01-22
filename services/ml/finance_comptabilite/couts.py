@@ -28,7 +28,7 @@ class GestionCouts:
         self.db = db
         self.analyse = AnalyseFinanceCompta(db)
         self.weather_service = WeatherService(db)
-        self.iot_service = IoTService(db)
+        self.iot_service = IoTService(db, self.weather_service)
         self.cache = CacheService()
 
     async def _get_couts_parcelle(
