@@ -129,7 +129,7 @@ jobs:
     - name: Installation des linters
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black isort mypy
+        pip install flake8 black isort mypy bandit
         
     - name: Linting
       run: |
@@ -137,12 +137,56 @@ jobs:
         black . --check
         isort . --check-only
         mypy .
+        bandit -r .
+
+  migrate-db:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        run: alembic upgrade head
+
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
   test-frontend:
+    needs: build-backend
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -200,101 +244,3 @@ jobs:
         file: ./frontend/coverage/coverage-final.json
         flags: frontend
         fail_ci_if_error: true
-
-  deploy-staging:
-    needs: [test-backend, test-frontend]
-    if: github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref == 'refs/heads/develop' && 'development' || 'staging' }}
-      url: ${{ github.ref == 'refs/heads/develop' && 'https://dev.erp-agricole.com' || 'https://staging.erp-agricole.com' }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-west-3
-    
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-    
-    - name: Build and push backend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/erp-backend:staging-$IMAGE_TAG .
-        docker push $ECR_REGISTRY/erp-backend:staging-$IMAGE_TAG
-    
-    - name: Build and push frontend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        cd frontend
-        docker build -t $ECR_REGISTRY/erp-frontend:staging-$IMAGE_TAG .
-        docker push $ECR_REGISTRY/erp-frontend:staging-$IMAGE_TAG
-    
-    - name: Update ECS services
-      run: |
-        aws ecs update-service --cluster erp-staging --service erp-backend --force-new-deployment
-        aws ecs update-service --cluster erp-staging --service erp-frontend --force-new-deployment
-
-  deploy-production:
-    needs: [test-backend, test-frontend]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://erp-agricole.com
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-west-3
-    
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-    
-    - name: Build and push backend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/erp-backend:prod-$IMAGE_TAG .
-        docker push $ECR_REGISTRY/erp-backend:prod-$IMAGE_TAG
-    
-    - name: Build and push frontend image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        cd frontend
-        docker build -t $ECR_REGISTRY/erp-frontend:prod-$IMAGE_TAG .
-        docker push $ECR_REGISTRY/erp-frontend:prod-$IMAGE_TAG
-    
-    - name: Update ECS services
-      run: |
-        aws ecs update-service --cluster erp-production --service erp-backend --force-new-deployment
-        aws ecs update-service --cluster erp-production --service erp-frontend --force-new-deployment
-
-    - name: Create Sentry release
-      uses: getsentry/action-release@v1
-      env:
-        SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        SENTRY_ORG: erp-agricole
-        SENTRY_PROJECT: erp
-      with:
-        environment: production
-        version: ${{ github.sha }}

@@ -2,117 +2,44 @@
 
 ### Composants Clés et leurs Interactions
 
-1. **Backend (FastAPI) :**
-   - API RESTful complète
-   - Authentification JWT (problème création admin)
-   - Services métier implémentés
-   - Tests complets mais non fonctionnels
+-   **Frontend (React)** : Interface utilisateur, gestion des interactions utilisateur, affichage des données.
+-   **Backend (FastAPI)** : API RESTful, logique métier, gestion des données, interactions avec la base de données.
+-   **Base de Données (PostgreSQL)** : Stockage persistant des données.
+-   **Services ML** : Services d'analyse et de prédiction.
 
-2. **Frontend (React) :**
-   - Interface utilisateur complète
-   - Gestion d'état avec Context
-   - Composants modulaires
-   - Tests unitaires implémentés
+### Flux de Données
 
-3. **Base de Données :**
-   - PostgreSQL avec SQLAlchemy
-   - Migrations Alembic
-   - Modèles complets
-   - Tests d'intégration présents
-
-4. **Services ML :**
-   - Infrastructure complète
-   - Modèles prédictifs
-   - Tests ML implémentés
-   - Intégration avec services métier
-
-### État des Tests
-
-1. **Tests Unitaires :**
-   - Implémentés : ✓
-   - Fonctionnels : ✗
-   - Problèmes :
-     * Syntaxe async/await incorrecte
-     * Imports problématiques
-     * Noms de classes incohérents
-
-2. **Tests d'Intégration :**
-   - Implémentés : ✓
-   - Fonctionnels : ✗
-   - Problèmes :
-     * Dépendances manquantes
-     * Configuration incorrecte
-     * Erreurs d'importation
-
-3. **Tests E2E :**
-   - Implémentés : ✓
-   - Fonctionnels : ✗
-   - Problèmes :
-     * Configuration Playwright
-     * Authentification bloquée
-     * Scénarios incomplets
-
-### Points Bloquants
-
-1. **Critique :**
-   - Création premier admin impossible
-   - Erreur "Internal Server Error"
-   - Impact sur tous les tests d'authentification
-
-2. **Structurels :**
-   - Incohérences de nommage (Employee/Employe)
-   - Fonction cache_result manquante
-   - Imports relatifs problématiques
-
-3. **Configuration :**
-   - Tests async mal structurés
-   - Cache Redis non initialisé
-   - Variables d'environnement incomplètes
+1.  L'utilisateur interagit avec l'interface frontend.
+2.  Le frontend envoie des requêtes à l'API backend.
+3.  Le backend traite les requêtes, interagit avec la base de données et les services ML si nécessaire.
+4.  Le backend renvoie les données au frontend.
+5.  Le frontend affiche les données à l'utilisateur.
 
 ### Dépendances Externes
 
-- **Bibliothèques Python :**
-  * FastAPI, SQLAlchemy : Configurées
-  * pytest, pytest-async : Tests présents
-  * ML libraries : Intégrées
+-   **Bibliothèques Python** :
+    -   `fastapi` : Framework web pour le backend.
+    -   `SQLAlchemy` : ORM pour interagir avec la base de données.
+    -   `requests` : Pour les requêtes HTTP.
+    -   `pandas` : Pour la manipulation de données.
+    -   `scikit-learn` : Pour les algorithmes de machine learning.
+-   **Bibliothèques React** :
+    -   `react-router-dom` : Pour la gestion des routes.
+    -   `axios` : Pour les requêtes HTTP.
+    -   `react-hook-form` : Pour la gestion des formulaires.
+    -   `@tanstack/react-query` : Pour la gestion des données asynchrones.
+-   **Services Externes** :
+    -   API Météo : Pour les données météorologiques.
+    -   API IoT : Pour les données des capteurs.
 
-- **Bibliothèques React :**
-  * Material-UI : Implémentée
-  * React Query : Configurée
-  * Testing Library : Tests présents
+### Changements Significatifs Récents
 
-### Prochaines Actions
+-   (Décrire les changements importants récents)
 
-1. **Priorité Immédiate :**
-   - Résoudre l'erreur de création admin
-   - Corriger les tests d'authentification
-   - Valider le workflow complet
+### Intégration du Feedback Utilisateur et son Impact sur le Développement
 
-2. **Corrections Structurelles :**
-   - Harmoniser les noms de classes
-   - Implémenter cache_result
-   - Corriger les imports
+-   (Décrire comment le feedback utilisateur est intégré dans le processus de développement)
 
-3. **Validation :**
-   - Exécuter les tests par module
-   - Corriger les erreurs de syntaxe
-   - Valider les intégrations
+### Notes Additionnelles
 
-### Points de Surveillance
-
-1. **Performance :**
-   - Tests de charge présents
-   - Monitoring à configurer
-   - Cache à optimiser
-
-2. **Sécurité :**
-   - Tests de sécurité implémentés
-   - Audit à effectuer
-   - Tokens à valider
-
-3. **Maintenance :**
-   - Documentation à mettre à jour
-   - Logs à centraliser
-   - Monitoring à configurer
-
-Cette vue d'ensemble reflète l'état actuel du code, avec un accent particulier sur le problème critique de création d'admin et l'état des tests qui sont implémentés mais non fonctionnels.
+-   (Ajouter toute autre information pertinente)
